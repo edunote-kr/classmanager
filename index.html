@@ -210,46 +210,119 @@ textarea { resize:vertical; }
   font-weight:800;
 }
 </style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, addDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAgSVfgqsbYwjLQI_yMv6-iA7DEfXjLaBE",
+  authDomain: "edunote-b199a.firebaseapp.com",
+  projectId: "edunote-b199a",
+  storageBucket: "edunote-b199a.firebasestorage.app",
+  messagingSenderId: "623822141828",
+  appId: "1:623822141828:web:d0ad8eef240e14e9ab45d1"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+
+// 전역으로 노출
+window.fbAuth = auth;
+window.fbDb = db;
+window.fbCreateUser = createUserWithEmailAndPassword;
+window.fbSignIn = signInWithEmailAndPassword;
+window.fbSignOut = signOut;
+window.fbOnAuthStateChanged = onAuthStateChanged;
+window.fbDoc = doc;
+window.fbSetDoc = setDoc;
+window.fbGetDoc = getDoc;
+window.fbCollection = collection;
+window.fbGetDocs = getDocs;
+window.fbQuery = query;
+window.fbWhere = where;
+window.fbAddDoc = addDoc;
+window.fbDeleteDoc = deleteDoc;
+window.fbUpdateDoc = updateDoc;
+window.fbGoogleProvider = googleProvider;
+window.fbSignInWithPopup = signInWithPopup;
+</script>
 </head>
 <body>
 <!-- 로그인 화면 -->
-<div id="loginScreen" style="position:fixed;inset:0;background:linear-gradient(135deg,#1e293b,#0f172a);display:flex;align-items:center;justify-content:center;z-index:9999">
-  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+<div id="loginScreen" style="position:fixed;inset:0;background:linear-gradient(135deg,#1e293b,#0f172a);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+    <!-- 로고 -->
     <div style="text-align:center;margin-bottom:24px">
-      <div style="font-size:18px;font-weight:900;color:#1e293b">에듀노트 - 과제 관리 솔루션</div>
-      <div style="font-size:11px;font-weight:500;color:#94a3b8;margin-top:4px">by 김민석</div>
+      <div style="font-size:22px;font-weight:900;color:#6366f1;font-family:Georgia,serif">EduNote</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:2px">과제 관리 솔루션 by 김민석</div>
     </div>
-    <!-- 학원 선택 -->
-    <div id="schoolStep">
-      <div style="margin-bottom:16px">
-        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:8px">학원 선택</label>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <button onclick="selectSchool('KMS')" style="padding:12px;background:#f8fafc;border:2px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left;color:#1e293b">
-            🏫 KMS ENGLISH x EPIC
-          </button>
-          <button onclick="selectSchool('EPIC')" style="padding:12px;background:#f8fafc;border:2px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left;color:#1e293b">
-            🏫 에픽리드앤톡 X 엠베스트SE
-          </button>
-        </div>
-      </div>
+
+    <!-- 탭 -->
+    <div style="display:flex;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:20px">
+      <button id="tabLogin" onclick="switchAuthTab('login')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff">로그인</button>
+      <button id="tabSignup" onclick="switchAuthTab('signup')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:#94a3b8">회원가입</button>
     </div>
-    <!-- 로그인 -->
-    <div id="loginStep" style="display:none">
-      <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <button onclick="backToSchool()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#6366f1">←</button>
-        <div id="schoolLabel" style="font-size:13px;font-weight:800;color:#6366f1"></div>
-      </div>
+
+    <!-- 로그인 폼 -->
+    <div id="loginForm">
       <div style="margin-bottom:12px">
-        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">이름</label>
-        <input type="text" id="loginName" placeholder="이름을 입력하세요" onkeydown="if(event.key==='Enter')document.getElementById('loginPw').focus()" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;color:#1e293b">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">아이디</label>
+        <input type="text" id="loginId" placeholder="아이디 입력" onkeydown="if(event.key==='Enter')document.getElementById('loginPassword').focus()" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
       </div>
       <div style="margin-bottom:20px">
         <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">비밀번호</label>
-        <input type="password" id="loginPw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+        <input type="password" id="loginPassword" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doFirebaseLogin()" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
       </div>
-      <button onclick="doLogin()" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">로그인</button>
-      <div id="loginError" style="color:#ef4444;font-size:12px;text-align:center;margin-top:10px;display:none">이름 또는 비밀번호가 틀렸습니다.</div>
+      <button onclick="doFirebaseLogin()" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px">로그인</button>
+      <!-- 구분선 -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="flex:1;height:1px;background:#e2e8f0"></div>
+        <span style="font-size:11px;color:#94a3b8">또는</span>
+        <div style="flex:1;height:1px;background:#e2e8f0"></div>
+      </div>
+      <!-- 구글 로그인 -->
+      <button onclick="doGoogleLogin()" style="width:100%;padding:11px;background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;color:#374151">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px;height:18px">
+        Google로 로그인
+      </button>
     </div>
+
+    <!-- 회원가입 폼 -->
+    <div id="signupForm" style="display:none">
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">아이디</label>
+        <input type="text" id="signupId" placeholder="영문/숫자 (예: kimminseok)" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">이름</label>
+        <input type="text" id="signupName" placeholder="실명 입력" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">학원명</label>
+        <input type="text" id="signupSchool" placeholder="학원명 입력" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">비밀번호</label>
+        <input type="password" id="signupPassword" placeholder="6자리 이상" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      </div>
+      <button onclick="doFirebaseSignup()" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px">회원가입</button>
+      <!-- 구분선 -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="flex:1;height:1px;background:#e2e8f0"></div>
+        <span style="font-size:11px;color:#94a3b8">또는</span>
+        <div style="flex:1;height:1px;background:#e2e8f0"></div>
+      </div>
+      <button onclick="doGoogleLogin()" style="width:100%;padding:11px;background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;color:#374151">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px;height:18px">
+        Google로 가입
+      </button>
+    </div>
+
+    <div id="authError" style="color:#ef4444;font-size:12px;text-align:center;margin-top:10px;display:none"></div>
   </div>
 </div>
 
@@ -1081,19 +1154,24 @@ function importData(e) {
       persist();
       renderAll();
       switchTab('list');
-      // GAS에 선생님 기록 전체 한번에 저장
-      showLoading(true);
-      window._importing = true;
-      gasPost({action:'saveTeacherRecords', data:records, teacher:currentUser})
-        .then(function(res){
-          if (res && res.ok) {
-            showToast(data.length + '개 기록을 불러왔습니다!');
-          } else {
-            showToast('저장 실패. 다시 시도해주세요.', 'error');
-          }
-        })
-        .catch(function(){ showToast('네트워크 오류', 'error'); })
-        .finally(function(){ showLoading(false); window._importing = false; });
+      // Firestore에 저장
+      if (window.fbDb && currentSchool && currentSchool.length > 10) {
+        showLoading(true);
+        window._importing = true;
+        Promise.all(data.map(function(rec) {
+          var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(rec.id));
+          return window.fbSetDoc(ref, rec);
+        })).then(function(){
+          showToast(data.length + '개 기록을 불러왔습니다!');
+        }).catch(function(){
+          showToast('일부 저장 실패.', 'error');
+        }).finally(function(){
+          showLoading(false);
+          window._importing = false;
+        });
+      } else {
+        showToast(data.length + '개 기록을 불러왔습니다!');
+      }
     } catch(e) {
       showToast('파일을 읽을 수 없습니다.', 'error');
     }
@@ -1107,9 +1185,16 @@ var students = [];
 
 function persistStudents(){
   localStorage.setItem(stuKey(),JSON.stringify(students));
-  // 본인 teacher 학생만 GAS에 저장 (다른 선생님 데이터 보호)
-  var myStudents = students.filter(function(s){ return s.teacher === currentUser; });
-  gasPost({action:'saveStudents',data:myStudents,teacher:currentUser}).catch(function(){});
+  // Firestore에 저장
+  if (window.fbDb && currentSchool && currentSchool.length > 10) {
+    var uid = currentSchool;
+    // 기존 학생 모두 삭제 후 재저장
+    var myStudents = students.filter(function(s){ return s.teacher === currentUser; });
+    myStudents.forEach(function(s) {
+      var ref = window.fbDoc(window.fbDb, 'users', uid, 'students', String(s.id));
+      window.fbSetDoc(ref, s).catch(function(){});
+    });
+  }
   updateClassSelect();
 }
 
@@ -1379,7 +1464,17 @@ function todayStr() { return new Date().toISOString().slice(0,10); }
 function formatDate(d) { return d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}); }
 function recKey() { return 'kms_records_'+(currentUser||'_'); }
 function stuKey() { return 'kms_students_'+(currentUser||'_'); }
-function persist() { localStorage.setItem(recKey(), JSON.stringify(records)); }
+function persist() {
+  localStorage.setItem(recKey(), JSON.stringify(records));
+  // Firestore에도 저장 (Firebase 모드)
+  if (window.fbDb && currentSchool && currentSchool.length > 10) {
+    var uid = currentSchool;
+    records.forEach(function(rec) {
+      var ref = window.fbDoc(window.fbDb, 'users', uid, 'records', String(rec.id));
+      window.fbSetDoc(ref, rec).catch(function(){});
+    });
+  }
+}
 
 function switchTab(tab) {
   activeTab = tab;
@@ -1587,7 +1682,17 @@ async function saveRecord() {
   var _s=document.getElementById('filterStudent');if(_s)_s.value='';
   switchTab('list');
   showLoading(true);
-  gasPost({action:'saveRecord',data:rec}).catch(function(){showToast('네트워크 오류','error');}).then(function(){showLoading(false);});
+  // Firestore에 저장
+  if (window.fbDb && currentSchool && currentSchool.length > 10) {
+    var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(rec.id));
+    window.fbSetDoc(ref, rec)
+      .then(function(){ showToast('✅ 저장 완료!'); })
+      .catch(function(){ showToast('저장 실패. 다시 시도해주세요.', 'error'); })
+      .finally(function(){ showLoading(false); });
+  } else {
+    showToast('✅ 저장 완료!');
+    showLoading(false);
+  }
   } catch(err) { showToast('저장 오류: '+err.message, 'error'); showLoading(false); }
 }
 
@@ -1735,7 +1840,11 @@ function deleteRecord(id) {
   if (!confirm('삭제하시겠습니까?')) return;
   records=records.filter(function(r){return String(r.id)!==String(id);});
   persist();renderAll();showToast('삭제되었습니다.','info');
-  gasPost({action:'deleteRecord',id:String(id)}).catch(function(){});
+  // Firestore에서도 삭제
+  if (window.fbDb && currentSchool && currentSchool.length > 10) {
+    var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(id));
+    window.fbDeleteDoc(ref).catch(function(){});
+  }
 }
 
 function renderAll() {
@@ -1811,9 +1920,202 @@ function toggleInputGroup(id) {
 }
 
 
-// ── 로그인 관련 ────────────────────────────────────────────
+// ── Firebase 인증 ────────────────────────────────────────────
+function switchAuthTab(tab) {
+  var isLogin = tab === 'login';
+  document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('signupForm').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('tabLogin').style.background = isLogin ? 'linear-gradient(135deg,#6366f1,#4f46e5)' : 'transparent';
+  document.getElementById('tabLogin').style.color = isLogin ? '#fff' : '#94a3b8';
+  document.getElementById('tabSignup').style.background = isLogin ? 'transparent' : 'linear-gradient(135deg,#6366f1,#4f46e5)';
+  document.getElementById('tabSignup').style.color = isLogin ? '#94a3b8' : '#fff';
+  document.getElementById('authError').style.display = 'none';
+}
+
+function showAuthError(msg) {
+  var el = document.getElementById('authError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function doFirebaseLogin() {
+  var id = document.getElementById('loginId').value.trim().toLowerCase();
+  var pw = document.getElementById('loginPassword').value;
+  if (!id || !pw) { showAuthError('아이디와 비밀번호를 입력해주세요.'); return; }
+  // 아이디 → 내부 이메일로 변환
+  var email = id + '@edunote.kr';
+  showLoading(true);
+  window.fbSignIn(window.fbAuth, email, pw)
+    .then(function(cred) { return loadUserProfile(cred.user); })
+    .catch(function(err) {
+      showLoading(false);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        showAuthError('아이디 또는 비밀번호가 틀렸습니다.');
+      } else {
+        showAuthError('로그인 오류: ' + err.message);
+      }
+    });
+}
+
+function doFirebaseSignup() {
+  var id     = document.getElementById('signupId').value.trim().toLowerCase();
+  var name   = document.getElementById('signupName').value.trim();
+  var school = document.getElementById('signupSchool').value.trim();
+  var pw     = document.getElementById('signupPassword').value;
+  if (!id || !name || !school || !pw) { showAuthError('모든 항목을 입력해주세요.'); return; }
+  if (!/^[a-z0-9_]+$/.test(id)) { showAuthError('아이디는 영문 소문자, 숫자, _ 만 사용 가능해요.'); return; }
+  if (['admin','관리자','administrator','root','master','edunote'].includes(id)) {
+    showAuthError('사용할 수 없는 아이디입니다.'); return;
+  }
+  if (pw.length < 6) { showAuthError('비밀번호는 6자리 이상이어야 합니다.'); return; }
+  var email = id + '@edunote.kr';
+  showLoading(true);
+  window.fbCreateUser(window.fbAuth, email, pw)
+    .then(function(cred) {
+      return window.fbSetDoc(window.fbDoc(window.fbDb, 'users', cred.user.uid), {
+        userId: id,
+        name: name,
+        schoolName: school,
+        email: email,
+        role: 'teacher',
+        createdAt: new Date().toISOString()
+      });
+    })
+    .then(function() { return loadUserProfile(window.fbAuth.currentUser); })
+    .catch(function(err) {
+      showLoading(false);
+      if (err.code === 'auth/email-already-in-use') {
+        showAuthError('이미 사용 중인 아이디입니다.');
+      } else {
+        showAuthError('가입 오류: ' + err.message);
+      }
+    });
+}
+
+function doGoogleLogin() {
+  showLoading(true);
+  window.fbSignInWithPopup(window.fbAuth, window.fbGoogleProvider)
+    .then(function(result) {
+      var user = result.user;
+      // 구글 사용자 프로필 확인/생성
+      return window.fbGetDoc(window.fbDoc(window.fbDb, 'users', user.uid))
+        .then(function(snap) {
+          if (!snap.exists()) {
+            // 첫 구글 로그인 → 학원명 입력 필요
+            showLoading(false);
+            var school = prompt('학원명을 입력해주세요:');
+            if (!school) { window.fbSignOut(window.fbAuth); return; }
+            return window.fbSetDoc(window.fbDoc(window.fbDb, 'users', user.uid), {
+              userId: user.email,
+              name: user.displayName || user.email,
+              schoolName: school,
+              email: user.email,
+              role: 'teacher',
+              createdAt: new Date().toISOString()
+            }).then(function() { return loadUserProfile(user); });
+          } else {
+            return loadUserProfile(user);
+          }
+        });
+    })
+    .catch(function(err) {
+      showLoading(false);
+      if (err.code !== 'auth/popup-closed-by-user') {
+        showAuthError('구글 로그인 오류: ' + err.message);
+      }
+    });
+}
+
+function loadUserProfile(fbUser) {
+  return window.fbGetDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid))
+    .then(function(snap) {
+      var profile = snap.exists() ? snap.data() : {};
+      currentUser   = profile.name || fbUser.email;
+      currentSchool = fbUser.uid;
+      GAS_URL       = '';
+
+      // 헤더 학원명 업데이트
+      var titleEl = document.querySelector('.header-title');
+      if (titleEl) titleEl.textContent = 'EduNote - 과제 관리 솔루션';
+
+      document.getElementById('loginScreen').style.display = 'none';
+      showLoading(false);
+
+      // 로그아웃 버튼 표시
+      var lb = document.getElementById('logoutBtn');
+      if (lb) lb.style.display = 'inline-block';
+
+      // 캐시 확인 후 init
+      var cachedUser = localStorage.getItem('kms_cache_user');
+      if (cachedUser !== currentUser) {
+        localStorage.removeItem(recKey());
+        localStorage.removeItem(stuKey());
+      }
+      localStorage.setItem('kms_cache_user', currentUser);
+      localStorage.setItem('kms_cache_school', currentSchool);
+
+      initWithFirebase(fbUser.uid);
+    });
+}
+
+function initWithFirebase(uid) {
+  showLoading(true);
+  records  = (JSON.parse(localStorage.getItem(recKey())||'[]')).map(normalizeRec);
+  students = JSON.parse(localStorage.getItem(stuKey())||'[]');
+  renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
+
+  // Firestore에서 데이터 불러오기
+  var recRef = window.fbCollection(window.fbDb, 'users', uid, 'records');
+  var stuRef = window.fbCollection(window.fbDb, 'users', uid, 'students');
+
+  Promise.all([
+    window.fbGetDocs(recRef),
+    window.fbGetDocs(stuRef)
+  ]).then(function(results) {
+    var recSnap = results[0];
+    var stuSnap = results[1];
+
+    var fbRecs = [];
+    recSnap.forEach(function(d) { fbRecs.push(Object.assign({id: d.id}, d.data())); });
+    var fbStus = [];
+    stuSnap.forEach(function(d) { fbStus.push(Object.assign({id: d.id}, d.data())); });
+
+    if (fbRecs.length > 0 || records.length === 0) {
+      records = fbRecs.map(normalizeRec);
+      persist();
+    }
+    if (fbStus.length > 0 || students.length === 0) {
+      students = fbStus;
+      localStorage.setItem(stuKey(), JSON.stringify(students));
+    }
+
+    renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
+    showToast('☁️ 불러오기 완료!');
+  }).catch(function() {
+    showToast('오프라인 모드', 'info');
+  }).finally(function() { showLoading(false); });
+}
+
+function doLogout() {
+  if (window._importing) { showToast('저장 중입니다.', 'error'); return; }
+  if (window.fbAuth && window.fbAuth.currentUser) {
+    window.fbSignOut(window.fbAuth);
+  }
+  currentUser = null; currentSchool = null; GAS_URL = '';
+  localStorage.removeItem('kms_cache_user');
+  localStorage.removeItem('kms_cache_school');
+  location.reload();
+}
+
 function initLoginSelect() {
-  // 학원 선택 화면만 표시
+  // Firebase 자동 로그인 체크
+  if (window.fbOnAuthStateChanged && window.fbAuth) {
+    window.fbOnAuthStateChanged(window.fbAuth, function(user) {
+      if (user && document.getElementById('loginScreen').style.display !== 'none') {
+        loadUserProfile(user);
+      }
+    });
+  }
 }
 
 function selectSchool(schoolKey) {
@@ -1843,48 +2145,62 @@ function backToSchool() {
 }
 
 function doLogin() {
-  var name = document.getElementById('loginName').value;
+  var name = document.getElementById('loginName').value.trim();
   var pw   = document.getElementById('loginPw').value;
   var errEl = document.getElementById('loginError');
   if (!name || !pw) { errEl.style.display='block'; return; }
-  if (ACCOUNTS[name] && ACCOUNTS[name] === pw) {
-    currentUser = name;
-    document.getElementById('loginScreen').style.display = 'none';
 
-    // 헤더 학원명/연락처 업데이트
-    var school = SCHOOLS[currentSchool];
-    var titleEl = document.querySelector('.header-title');
-    if (titleEl) titleEl.textContent = school.name;
-    var phoneEl = document.querySelector('.header-phone');
-    if (phoneEl) phoneEl.textContent = '상담: ' + school.phone;
-    var logoEl = document.querySelector('.header-logo');
-    if (logoEl && school.logo) logoEl.src = school.logo;
-
-    // 사용자 배지
-    var userBadge = document.createElement('div');
-    userBadge.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.7);text-align:right;line-height:1.4';
-    userBadge.innerHTML = '👤 '+name+(name===ADMIN_NAME?' <span style="background:#f59e0b;color:#1e293b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800">관리자</span>':'')
-      +'<br><button onclick="doLogout()" style="font-size:10px;background:rgba(255,255,255,0.15);border:none;color:#fff;padding:1px 8px;border-radius:4px;cursor:pointer;font-family:inherit;margin-top:2px">로그아웃</button>';
-    var hdr = document.querySelector('.header-inner') || document.querySelector('.app > div');
-    if (hdr) hdr.appendChild(userBadge);
-
-    if (name === ADMIN_NAME) setupAdminFilter();
-    var lb = document.getElementById('logoutBtn');
-    if (lb) lb.style.display = 'inline-block';
-    // 이전 로그인한 선생님과 다르면 캐시 초기화
-    var cachedUser   = localStorage.getItem('kms_cache_user');
-    var cachedSchool = localStorage.getItem('kms_cache_school');
-    if (cachedUser !== name || cachedSchool !== currentSchool) {
-      localStorage.removeItem(recKey());
-      localStorage.removeItem(stuKey());
+  // 모든 학원에서 계정 자동 검색
+  var foundSchoolKey = null;
+  Object.keys(SCHOOLS).forEach(function(key) {
+    if (SCHOOLS[key].accounts[name] && SCHOOLS[key].accounts[name] === pw) {
+      foundSchoolKey = key;
     }
-    localStorage.setItem('kms_cache_user', name);
-    localStorage.setItem('kms_cache_school', currentSchool);
-    init();
-  } else {
+  });
+
+  if (!foundSchoolKey) {
     errEl.style.display = 'block';
     document.getElementById('loginPw').value = '';
+    return;
   }
+
+  var school = SCHOOLS[foundSchoolKey];
+  currentUser   = name;
+  currentSchool = foundSchoolKey;
+  ACCOUNTS      = school.accounts;
+  GAS_URL       = school.gasUrl;
+
+  document.getElementById('loginScreen').style.display = 'none';
+
+  // 헤더 업데이트
+  var titleEl = document.querySelector('.header-title');
+  if (titleEl) titleEl.textContent = school.name;
+  var phoneEl = document.querySelector('.header-phone');
+  if (phoneEl) phoneEl.textContent = '상담: ' + school.phone;
+  var logoEl = document.querySelector('.header-logo');
+  if (logoEl && school.logo) logoEl.src = school.logo;
+
+  // 사용자 배지 (학원명 표시)
+  var userBadge = document.createElement('div');
+  userBadge.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.7);text-align:right;line-height:1.4';
+  userBadge.innerHTML = '👤 '+name+(name===ADMIN_NAME?' <span style="background:#f59e0b;color:#1e293b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800">관리자</span>':'')
+    +'<br><span style="font-size:10px;color:rgba(255,255,255,0.5)">'+school.name+'</span>';
+  var hdr = document.querySelector('.header-inner') || document.querySelector('.app > div');
+  if (hdr) hdr.appendChild(userBadge);
+
+  if (name === ADMIN_NAME) setupAdminFilter();
+  var lb = document.getElementById('logoutBtn');
+  if (lb) lb.style.display = 'inline-block';
+
+  var cachedUser   = localStorage.getItem('kms_cache_user');
+  var cachedSchool = localStorage.getItem('kms_cache_school');
+  if (cachedUser !== name || cachedSchool !== currentSchool) {
+    localStorage.removeItem(recKey());
+    localStorage.removeItem(stuKey());
+  }
+  localStorage.setItem('kms_cache_user', name);
+  localStorage.setItem('kms_cache_school', currentSchool);
+  init();
 }
 
 function doLogout() {
