@@ -877,26 +877,6 @@ textarea { resize:vertical; }
 
   <!-- STATS PANEL -->
   <div class="panel" id="panel-stats">
-    <div class="stat-grid" id="statCards"></div>
-    <div class="card">
-      <div class="card-title" style="color:#6366f1">지난 과제 평균 이행도</div>
-      <div style="display:flex;align-items:center;gap:16px">
-        <svg width="70" height="70" style="transform:rotate(-90deg);flex-shrink:0">
-          <circle cx="35" cy="35" r="29" fill="none" stroke="#e2e8f0" stroke-width="7"/>
-          <circle id="bigArc" cx="35" cy="35" r="29" fill="none" stroke="#6366f1" stroke-width="7"
-            stroke-dasharray="182.21" stroke-dashoffset="182.21"
-            stroke-linecap="round" style="transition:stroke-dashoffset 0.6s ease"/>
-        </svg>
-        <div>
-          <div id="avgPct" style="font-size:30px;font-weight:900;color:#6366f1">0%</div>
-          <div id="avgSub" style="font-size:13px;color:#94a3b8">총 0개 기록 기준</div>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title" style="color:#6366f1">이행도 분포</div>
-      <div class="dist-wrap" id="distWrap"></div>
-    </div>
   </div>
 
 </div>
@@ -2133,33 +2113,6 @@ function renderStats() {
   const total   = records.length;
   const pending = records.filter(r=>r.homework).length;
   const avg     = total ? Math.round(records.reduce((a,b)=>a+(b.lastCompletion||0),0)/total) : 0;
-
-  document.getElementById('statCards').innerHTML = [
-    {label:'전체 기록',icon:'📋',val:total,color:'#6366f1'},
-    {label:'과제 있는 수업',icon:'📝',val:pending,color:'#7c3aed'},
-    {label:'평균 이행도',icon:'📈',val:avg+'%',color:'#16a34a'},
-  ].map(c=>`
-    <div class="stat-card" style="border-color:${c.color}33">
-      <div class="stat-icon">${c.icon}</div>
-      <div class="stat-val" style="color:${c.color}">${c.val}</div>
-      <div class="stat-label">${c.label}</div>
-    </div>`).join('');
-
-  const circ = 2*Math.PI*29;
-  document.getElementById('bigArc').style.strokeDashoffset = circ*(1-avg/100);
-  document.getElementById('avgPct').textContent = avg+'%';
-  document.getElementById('avgSub').textContent = `총 ${total}개 기록 기준`;
-
-  document.getElementById('distWrap').innerHTML = LEVELS.map(l=>{
-    const count = records.filter(r=>(r.lastCompletion||0)===l.value).length;
-    const pct   = total ? Math.round(count/total*100) : 0;
-    return `<div class="dist-item">
-      <div class="dist-emoji">${l.emoji}</div>
-      <div class="dist-count" style="color:${l.color}">${count}</div>
-      <div class="dist-label">${l.label}</div>
-      <div class="dist-pct">${pct}%</div>
-    </div>`;
-  }).join('');
 
   // ── 학생별 통계 (월별 → 반별 → 학생별) ──
   var stuMap = {};
