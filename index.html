@@ -355,6 +355,32 @@ textarea { resize:vertical; }
     </div>
 
     <div class="card">
+      <div class="card-title" style="color:#16a34a">학습 태도</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
+          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-best" value="최상" onchange="updateAttitude()">
+          최상
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
+          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-good" value="상" onchange="updateAttitude()">
+          상
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
+          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-mid" value="중" onchange="updateAttitude()">
+          중
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
+          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-low" value="하" onchange="updateAttitude()">
+          하
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
+          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-absent" value="결석" onchange="updateAttitude()">
+          결석
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-title" style="color:#d97706">지난 과제 이행도</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-size:12px;font-weight:800;color:#d97706">📝 지난 과제</span>
@@ -756,32 +782,6 @@ textarea { resize:vertical; }
           </div>
         </div>
       </div>
-
-    <div class="card">
-      <div class="card-title" style="color:#16a34a">학습 태도</div>
-      <div style="display:flex;gap:16px;flex-wrap:wrap">
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
-          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-best" value="최상" onchange="updateAttitude()">
-          최상
-        </label>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
-          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-good" value="상" onchange="updateAttitude()">
-          상
-        </label>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
-          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-mid" value="중" onchange="updateAttitude()">
-          중
-        </label>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
-          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-low" value="하" onchange="updateAttitude()">
-          하
-        </label>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
-          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-absent" value="결석" onchange="updateAttitude()">
-          결석
-        </label>
-      </div>
-    </div>
 
     <div class="card">
       <div class="card-title" style="color:#7c3aed">오늘 과제</div>
