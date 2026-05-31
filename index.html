@@ -60,7 +60,7 @@ header {
 .tab.active { background:linear-gradient(135deg,#6366f1,#8b5cf6); border-color:transparent; color:#fff; }
 
 /* ── Content ── */
-.content { padding:20px; max-width:800px; margin:0 auto; }
+.content { padding:20px; max-width:100%; margin:0 auto; box-sizing:border-box; }
 .panel { display:none; flex-direction:column; gap:14px; }
 .panel.active { display:flex; }
 
@@ -69,7 +69,7 @@ header {
 .card-title { font-size:11px; font-weight:800; margin-bottom:12px; text-transform:uppercase; letter-spacing:1px; }
 
 /* ── Form ── */
-.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; }
 label.field-label { display:block; font-size:11px; font-weight:700; color:#64748b; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
 input[type=text], input[type=date], select, textarea {
   width:100%; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:9px;
@@ -110,7 +110,6 @@ textarea { resize:vertical; }
 .dist-label { font-size:10px; color:#64748b; }
 .dist-pct   { font-size:10px; color:#94a3b8; }
 
-/* ── 반응형 (PC/태블릿) ── */
 @media (min-width: 768px) {
   header { padding: 16px 5vw; }
   .logo-img { width: 52px; height: 52px; }
@@ -120,7 +119,7 @@ textarea { resize:vertical; }
   .tabs { padding: 16px 5vw 0; gap: 10px; }
   .tab { padding: 13px 0; font-size: 15px; }
 
-  .content { padding: 28px 5vw; max-width: 1200px; }
+  .content { padding: 28px 5vw; }
 
   .card { padding: 24px; border-radius: 16px; }
   .card-title { font-size: 13px; }
@@ -137,6 +136,10 @@ textarea { resize:vertical; }
   .rec-row { font-size: 14px; }
   .rec-memo { font-size: 14px; }
 
+  /* 목록 카드 2열 */
+  #recordList { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
+  .rec-card { margin-bottom: 0; }
+
   .stat-grid { grid-template-columns: repeat(4, 1fr); }
   .stat-val { font-size: 26px; }
 
@@ -148,12 +151,13 @@ textarea { resize:vertical; }
   .content { padding: 32px 5vw; }
   header { padding: 18px 5vw; }
   .tabs { padding: 18px 5vw 0; }
+  #recordList { grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); }
 }
 
 @media (min-width: 1400px) {
-  header { padding: 18px calc((100vw - 1200px)/2); }
-  .tabs { padding: 18px calc((100vw - 1200px)/2) 0; }
-  .content { padding: 32px calc((100vw - 1200px)/2); max-width: 100%; }
+  header { padding: 18px calc((100vw - 1400px)/2 + 40px); }
+  .tabs { padding: 18px calc((100vw - 1400px)/2 + 40px) 0; }
+  .content { padding: 32px calc((100vw - 1400px)/2 + 40px); }
 }
 .alert { background:#fef2f2; border:1px solid #fca5a5; border-radius:10px; padding:11px 16px; margin-bottom:12px; display:flex; align-items:center; gap:8px; font-size:13px; color:#dc2626; font-weight:600; }
 
@@ -305,7 +309,7 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
 
   <!-- 헤더 -->
   <div style="background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:100;padding:0 20px">
-    <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px">
+    <div style="max-width:min(900px,100%);margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:18px;font-weight:900;color:#6366f1">EduNote</div>
         <div style="font-size:11px;color:#94a3b8;display:none" id="landing-sub">과제 관리 솔루션</div>
@@ -584,7 +588,7 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
     <button onclick="doLogout()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">로그아웃</button>
   </div>
 
-  <div style="max-width:900px;margin:0 auto;padding:20px">
+  <div style="max-width:min(900px,100%);margin:0 auto;padding:20px">
 
     <!-- 통계 카드 -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
