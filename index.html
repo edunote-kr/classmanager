@@ -2944,12 +2944,12 @@ function showSchoolUsers(schoolId, schoolName) {
       snap.forEach(function(d) {
         var u = d.data();
         if (u.role === 'superadmin') return;
-        // schoolId 일치 OR 코드 일치
         if (u.schoolId === schoolId ||
             u.schoolId === ownerCode ||
             u.schoolId === teacherCode ||
             u.schoolCode === ownerCode ||
-            u.schoolCode === teacherCode) {
+            u.schoolCode === teacherCode ||
+            (u.schoolName && schoolName && u.schoolName.trim().toLowerCase() === schoolName.trim().toLowerCase())) {
           users.push(Object.assign({uid: d.id}, u));
         }
       });
