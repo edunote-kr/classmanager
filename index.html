@@ -591,10 +591,11 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
   </div>
 
   <!-- 관리자 탭 -->
-  <div style="background:#fff;border-bottom:2px solid #e2e8f0;display:flex;gap:0;padding:0 20px">
-    <button id="atab-overview" onclick="switchAdminTab('overview')" style="padding:12px 18px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid #6366f1;color:#6366f1;background:none;cursor:pointer;font-family:inherit;white-space:nowrap">📊 현황</button>
-    <button id="atab-schools" onclick="switchAdminTab('schools')" style="padding:12px 18px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;color:#94a3b8;background:none;cursor:pointer;font-family:inherit;white-space:nowrap">🏫 학원관리</button>
-    <button id="atab-users" onclick="switchAdminTab('users')" style="padding:12px 18px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;color:#94a3b8;background:none;cursor:pointer;font-family:inherit;white-space:nowrap">👤 사용자</button>
+  <div style="background:#fff;border-bottom:2px solid #e2e8f0;display:flex;gap:0;padding:0 20px;overflow-x:auto">
+    <button id="atab-overview" onclick="switchAdminTab('overview')" style="padding:12px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid #6366f1;color:#6366f1;background:none;cursor:pointer;font-family:inherit;white-space:nowrap">📊 현황</button>
+    <button id="atab-schools" onclick="switchAdminTab('schools')" style="padding:12px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;color:#94a3b8;background:none;cursor:pointer;font-family:inherit;white-space:nowrap">🏫 학원관리</button>
+    <button id="atab-data" onclick="switchAdminTab('data')" style="padding:12px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;color:#94a3b8;background:none;cursor:pointer;font-family:inherit;white-space:nowrap">📋 학원별 데이터</button>
+    <button id="atab-users" onclick="switchAdminTab('users')" style="padding:12px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;color:#94a3b8;background:none;cursor:pointer;font-family:inherit;white-space:nowrap">👤 사용자</button>
   </div>
 
   <div style="max-width:min(900px,100%);margin:0 auto;padding:20px">
@@ -658,7 +659,24 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
       </div>
     </div>
 
-    <!-- ── 탭3: 사용자 ── -->
+    <!-- ── 탭3: 학원별 데이터 ── -->
+    <div id="apanel-data" style="display:none">
+
+      <!-- 학원 선택 -->
+      <div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #e2e8f0;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="adminSchoolSelect" onchange="loadSchoolData()" style="flex:1;min-width:180px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff">
+          <option value="">— 학원 선택 —</option>
+        </select>
+        <button onclick="loadSchoolData()" style="padding:10px 18px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">조회</button>
+      </div>
+
+      <!-- 학원 데이터 내용 -->
+      <div id="adminSchoolData">
+        <div style="text-align:center;color:#94a3b8;padding:40px;font-size:13px">학원을 선택해주세요</div>
+      </div>
+    </div>
+
+    <!-- ── 탭4: 사용자 ── -->
     <div id="apanel-users" style="display:none">
       <div style="background:#fff;border-radius:12px;padding:20px;border:1px solid #e2e8f0">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -2882,7 +2900,7 @@ function submitInquiry() {
 }
 
 function switchAdminTab(tab) {
-  ['overview','schools','users'].forEach(function(t) {
+  ['overview','schools','data','users'].forEach(function(t) {
     var panel = document.getElementById('apanel-' + t);
     var btn   = document.getElementById('atab-' + t);
     if (!panel || !btn) return;
@@ -2897,7 +2915,165 @@ function switchAdminTab(tab) {
     }
   });
   if (tab === 'overview') loadSchoolStats();
+  if (tab === 'data')     populateSchoolSelect();
   if (tab === 'users')    loadAllUsers();
+}
+
+// 학원 선택 드롭다운 채우기
+function populateSchoolSelect() {
+  window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snap) {
+    var sel = document.getElementById('adminSchoolSelect');
+    if (!sel) return;
+    var options = '<option value="">— 학원 선택 —</option>';
+    snap.forEach(function(d) {
+      var s = d.data();
+      options += '<option value="' + d.id + '" data-name="' + (s.name||'') + '">' + (s.name||'') + (s.status==='inactive' ? ' (비활성)' : '') + '</option>';
+    });
+    sel.innerHTML = options;
+  });
+}
+
+// 학원 데이터 조회 (목록 + 통계)
+function loadSchoolData() {
+  var sel = document.getElementById('adminSchoolSelect');
+  var schoolId = sel ? sel.value : '';
+  var schoolName = sel ? (sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].getAttribute('data-name') : '') : '';
+  var el = document.getElementById('adminSchoolData');
+  if (!schoolId) { el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px;font-size:13px">학원을 선택해주세요</div>'; return; }
+
+  el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px;font-size:13px">로딩 중...</div>';
+
+  // 해당 학원 사용자 찾기
+  window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', schoolId)).then(function(schoolSnap) {
+    var schoolData = schoolSnap.exists() ? schoolSnap.data() : {};
+    var ownerCode = schoolData.ownerCode || '';
+    var teacherCode = schoolData.teacherCode || '';
+
+    return window.fbGetDocs(window.fbCollection(window.fbDb, 'users')).then(function(userSnap) {
+      var members = [];
+      userSnap.forEach(function(d) {
+        var u = d.data();
+        if (u.role === 'superadmin') return;
+        if (u.schoolId === schoolId || u.schoolId === ownerCode || u.schoolId === teacherCode ||
+            (u.schoolName && schoolName && u.schoolName.trim() === schoolName.trim())) {
+          members.push(Object.assign({uid: d.id}, u));
+        }
+      });
+
+      if (members.length === 0) {
+        el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px;font-size:13px">소속 사용자가 없습니다</div>';
+        return;
+      }
+
+      // 모든 사용자의 records 가져오기
+      var recordPromises = members.map(function(m) {
+        return window.fbGetDocs(window.fbCollection(window.fbDb, 'users', m.uid, 'records'))
+          .then(function(rSnap) {
+            var recs = [];
+            rSnap.forEach(function(r) { recs.push(Object.assign({_id: r.id, _teacher: m.name || m.userId}, r.data())); });
+            return recs;
+          });
+      });
+
+      return Promise.all(recordPromises).then(function(allRecs) {
+        var records = [].concat.apply([], allRecs);
+        records.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
+        renderAdminSchoolData(schoolName, members, records);
+      });
+    });
+  });
+}
+
+function renderAdminSchoolData(schoolName, members, records) {
+  var el = document.getElementById('adminSchoolData');
+
+  // 통계 집계
+  var totalRecs = records.length;
+  var students = {};
+  records.forEach(function(r) { if (r.student) students[r.student] = true; });
+  var totalStudents = Object.keys(students).length;
+
+  // 이행도 평균
+  var compRecs = records.filter(function(r) { return r.completion !== undefined && r.completion >= 0; });
+  var avgComp = compRecs.length > 0
+    ? Math.round(compRecs.reduce(function(s,r) { return s + (r.completion||0); }, 0) / compRecs.length)
+    : 0;
+
+  // 단어 평균
+  var wordRecs = records.filter(function(r) { return r.wordScore !== undefined && r.wordScore !== ''; });
+  var avgWord = wordRecs.length > 0
+    ? Math.round(wordRecs.reduce(function(s,r) { return s + parseFloat(r.wordScore||0); }, 0) / wordRecs.length * 10) / 10
+    : 0;
+
+  var html = '';
+
+  // 요약 통계
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">'
+    + statBox(totalRecs, '전체 기록', '#6366f1')
+    + statBox(members.length, '선생님', '#0891b2')
+    + statBox(totalStudents, '학생 수', '#16a34a')
+    + statBox(avgComp + '%', '평균이행도', '#f59e0b')
+    + '</div>';
+
+  // 선생님별 탭
+  html += '<div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:16px;overflow:hidden">'
+    + '<div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;font-size:14px;font-weight:800;color:#1e293b">👥 선생님별 현황</div>'
+    + '<div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px">';
+
+  members.forEach(function(m) {
+    var mRecs = records.filter(function(r) { return r._teacher === (m.name||m.userId); });
+    var mStudents = {};
+    mRecs.forEach(function(r) { if (r.student) mStudents[r.student] = true; });
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8fafc;border-radius:8px">'
+      + '<div>'
+      + '<div style="font-size:13px;font-weight:700;color:#1e293b">👤 ' + (m.name||m.userId||'이름없음') + '</div>'
+      + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + (m.role||'teacher') + '</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:12px;text-align:center">'
+      + '<div><div style="font-size:16px;font-weight:900;color:#6366f1">' + mRecs.length + '</div><div style="font-size:10px;color:#94a3b8">기록</div></div>'
+      + '<div><div style="font-size:16px;font-weight:900;color:#16a34a">' + Object.keys(mStudents).length + '</div><div style="font-size:10px;color:#94a3b8">학생</div></div>'
+      + '</div></div>';
+  });
+  html += '</div></div>';
+
+  // 최근 기록 목록 (최대 50개)
+  var recentRecs = records.slice(0, 50);
+  html += '<div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">'
+    + '<div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">'
+    + '<span style="font-size:14px;font-weight:800;color:#1e293b">📋 최근 기록 (' + Math.min(totalRecs,50) + '/' + totalRecs + ')</span>'
+    + '</div>'
+    + '<div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px">';
+
+  if (recentRecs.length === 0) {
+    html += '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">기록이 없습니다</div>';
+  } else {
+    recentRecs.forEach(function(r) {
+      var comp = r.completion >= 0 ? r.completion + '%' : '-';
+      html += '<div style="padding:10px 12px;background:#f8fafc;border-radius:8px;border-left:3px solid #6366f1">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+        + '<span style="font-size:13px;font-weight:700;color:#1e293b">' + (r.student||'학생') + '</span>'
+        + '<span style="font-size:11px;color:#94a3b8">' + (r.date||'') + '</span>'
+        + '</div>'
+        + '<div style="font-size:11px;color:#64748b;display:flex;gap:10px;flex-wrap:wrap">'
+        + '<span>👤 ' + (r._teacher||'') + '</span>'
+        + (r.className ? '<span>📚 ' + r.className + '</span>' : '')
+        + '<span>이행도: ' + comp + '</span>'
+        + (r.wordScore ? '<span>단어: ' + r.wordScore + '점</span>' : '')
+        + '</div>'
+        + (r.homework ? '<div style="font-size:11px;color:#475569;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 ' + r.homework + '</div>' : '')
+        + '</div>';
+    });
+  }
+
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+function statBox(val, label, color) {
+  return '<div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e8f0;text-align:center">'
+    + '<div style="font-size:22px;font-weight:900;color:' + color + '">' + val + '</div>'
+    + '<div style="font-size:11px;color:#94a3b8;margin-top:4px">' + label + '</div>'
+    + '</div>';
 }
 
 function loadSchoolStats() {
@@ -3072,6 +3248,7 @@ function loadSchools() {
       var statusColor = s.status === 'active' ? '#16a34a' : '#ef4444';
       var statusBg    = s.status === 'active' ? '#dcfce7' : '#fee2e2';
       var statusText  = s.status === 'active' ? '활성' : '비활성';
+      var tCount      = s.teacherCount !== undefined ? s.teacherCount : (s.maxTeachers ? s.maxTeachers - 1 : 0);
       return '<div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:14px;background:#f8fafc">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
         + '<span style="font-size:14px;font-weight:800;color:#1e293b">🏫 ' + s.name + '</span>'
@@ -3087,14 +3264,21 @@ function loadSchools() {
         + '<div style="font-size:16px;font-weight:900;color:#1d4ed8;letter-spacing:2px">' + s.teacherCode + '</div>'
         + '</div>'
         + '</div>'
+        // 인원수 인라인 조정
+        + '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:10px">'
+        + '<span style="font-size:12px;color:#475569;white-space:nowrap">👤 원장 1 +</span>'
+        + '<input type="number" id="tc-' + s.id + '" value="' + tCount + '" min="0" max="99" '
+        + 'style="width:52px;padding:4px 6px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:14px;font-weight:700;text-align:center;font-family:inherit">'
+        + '<span style="font-size:12px;color:#475569;white-space:nowrap">명</span>'
+        + '<button onclick="saveSchoolLimit(\'' + s.id + '\')" '
+        + 'style="margin-left:auto;font-size:11px;background:#6366f1;color:#fff;border:none;border-radius:6px;padding:5px 14px;cursor:pointer;font-family:inherit;font-weight:700">저장</button>'
+        + '</div>'
         + '<div style="display:flex;gap:6px;flex-wrap:wrap">'
         + '<span style="font-size:11px;color:#64748b;background:#f1f5f9;padding:3px 10px;border-radius:6px">플랜: ' + s.plan + '</span>'
-        + '<span style="font-size:11px;color:#64748b;background:#f1f5f9;padding:3px 10px;border-radius:6px">원장1 + 선생님' + ((s.teacherCount !== undefined ? s.teacherCount : s.maxTeachers - 1)) + '명</span>'
         + '<button onclick="copyCode(\'' + s.ownerCode + '\')" style="font-size:11px;background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">원장코드 복사</button>'
         + '<button onclick="copyCode(\'' + s.teacherCode + '\')" style="font-size:11px;background:#dbeafe;color:#1d4ed8;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">선생님코드 복사</button>'
         + '<button onclick="toggleSchoolStatus(\'' + s.id + '\',\'' + s.status + '\')" style="font-size:11px;background:' + (s.status==='active' ? '#fee2e2' : '#dcfce7') + ';color:' + (s.status==='active' ? '#dc2626' : '#16a34a') + ';border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">' + (s.status==='active' ? '비활성화' : '활성화') + '</button>'
         + '<button onclick="showSchoolUsers(\'' + s.id + '\',\'' + s.name + '\')" style="font-size:11px;background:#f1f5f9;color:#475569;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">👥 사용자</button>'
-        + '<button onclick="setSchoolLimit(\'' + s.id + '\',\'' + s.name + '\',' + s.maxTeachers + ')" style="font-size:11px;background:#fef9c3;color:#854d0e;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">👥 인원설정</button>'
         + '<button onclick="deleteSchool(\'' + s.id + '\',\'' + s.name + '\')" style="font-size:11px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">🗑️ 삭제</button>'
         + '</div>'
         + '</div>';
@@ -3230,6 +3414,21 @@ function toggleUserStatus(uid, currentStatus, schoolId, schoolName) {
       showSchoolUsers(schoolId, schoolName); // 모달 새로고침
     })
     .catch(function(err) { showAdminToast('오류: ' + err.message, 'error'); });
+}
+
+function saveSchoolLimit(id) {
+  var input = document.getElementById('tc-' + id);
+  if (!input) return;
+  var num = parseInt(input.value);
+  if (isNaN(num) || num < 0) { showAdminToast('올바른 숫자를 입력해주세요.', 'error'); return; }
+  window.fbUpdateDoc(window.fbDoc(window.fbDb, 'schools', id), {
+    maxTeachers: 1 + num,
+    teacherCount: num
+  }).then(function() {
+    showAdminToast('✅ 원장1 + 선생님' + num + '명으로 저장됐습니다!');
+    loadSchools();
+    loadSchoolStats();
+  }).catch(function(err) { showAdminToast('오류: ' + err.message, 'error'); });
 }
 
 function setSchoolLimit(id, name, current) {
