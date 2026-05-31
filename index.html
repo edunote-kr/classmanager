@@ -545,6 +545,14 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
         <input type="text" id="signupSchool" placeholder="학원명 입력" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
       </div>
       <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">학원 코드 <span style="font-size:11px;color:#94a3b8;font-weight:400">(원장/선생님 코드 입력)</span></label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="signupCode" placeholder="6자리 코드 입력" maxlength="10" style="flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;text-transform:uppercase;letter-spacing:2px">
+          <button onclick="verifySchoolCode()" style="padding:10px 14px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">확인</button>
+        </div>
+        <div id="codeResult" style="margin-top:6px;font-size:12px;font-weight:700;display:none"></div>
+      </div>
+      <div style="margin-bottom:12px">
         <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">휴대폰 번호</label>
         <div style="display:flex;gap:8px">
           <input type="tel" id="signupPhone" placeholder="010-0000-0000" style="flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
@@ -645,6 +653,11 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
             <span style="font-size:12px;color:#64748b;white-space:nowrap">👤 원장1 +</span>
             <input type="number" id="newSchoolTeachers" min="0" max="99" value="3" style="width:48px;padding:4px 6px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;font-family:inherit;text-align:center">
             <span style="font-size:12px;color:#64748b;white-space:nowrap">명</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 12px">
+            <span style="font-size:12px;color:#64748b;white-space:nowrap">📅</span>
+            <input type="number" id="newSchoolMonths" min="1" max="24" value="12" style="width:48px;padding:4px 6px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;font-family:inherit;text-align:center">
+            <span style="font-size:12px;color:#64748b;white-space:nowrap">개월</span>
           </div>
           <button onclick="addSchool()" style="padding:10px 20px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">추가</button>
         </div>
@@ -748,7 +761,7 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
     <!-- 학원 코드 (원장만) -->
     <div id="mySchoolCodeSection" style="display:none;margin-bottom:14px">
       <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:8px">학원 코드</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div style="background:#ede9fe;border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:10px;color:#7c3aed;font-weight:700;margin-bottom:4px">원장 코드</div>
           <div id="myOwnerCode" style="font-size:18px;font-weight:900;color:#4f46e5;letter-spacing:2px">------</div>
@@ -760,7 +773,14 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
           <button onclick="copyCode(document.getElementById('myTeacherCode').textContent)" style="margin-top:6px;font-size:10px;background:#3b82f6;color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-family:inherit">복사</button>
         </div>
       </div>
-      <div style="margin-top:8px;font-size:11px;color:#94a3b8;text-align:center">선생님들에게 코드를 공유해주세요</div>
+      <!-- 만료일 표시 -->
+      <div id="myExpirySection" style="display:none;border-radius:10px;padding:12px;text-align:center;margin-bottom:6px">
+        <div style="font-size:11px;color:#64748b;margin-bottom:4px">서비스 만료일</div>
+        <div id="myExpiryDate" style="font-size:16px;font-weight:900"></div>
+        <div id="myExpiryDday" style="font-size:12px;margin-top:4px;font-weight:700"></div>
+        <button id="myRenewBtn" onclick="requestRenewal()" style="margin-top:8px;width:100%;padding:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:none">📞 갱신 문의하기</button>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;text-align:center">선생님들에게 코드를 공유해주세요</div>
     </div>
 
     <!-- 저장 버튼 (원장만) -->
@@ -2513,6 +2533,91 @@ function verifyCode() {
     });
 }
 
+// 학원 코드 검증 (가입 시)
+var verifiedSchoolInfo = null; // { schoolId, schoolDocId, role, name }
+
+function verifySchoolCode() {
+  var code = (document.getElementById('signupCode').value || '').trim().toUpperCase();
+  var resultEl = document.getElementById('codeResult');
+  if (!code) { resultEl.style.display='block'; resultEl.style.color='#ef4444'; resultEl.textContent='코드를 입력해주세요.'; return; }
+
+  verifiedSchoolInfo = null;
+  resultEl.style.display = 'block';
+  resultEl.style.color = '#94a3b8';
+  resultEl.textContent = '확인 중...';
+
+  window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snap) {
+    var found = null;
+    var foundRole = null;
+    snap.forEach(function(d) {
+      var s = d.data();
+      if (s.ownerCode && s.ownerCode.toUpperCase() === code) { found = Object.assign({docId: d.id}, s); foundRole = 'owner'; }
+      if (s.teacherCode && s.teacherCode.toUpperCase() === code) { found = Object.assign({docId: d.id}, s); foundRole = 'teacher'; }
+    });
+
+    if (!found) {
+      resultEl.style.color = '#ef4444';
+      resultEl.textContent = '❌ 유효하지 않은 코드입니다.';
+      return;
+    }
+
+    // 유효기간 체크
+    if (found.expiresAt) {
+      var now = new Date();
+      var exp = new Date(found.expiresAt);
+      if (now > exp) {
+        resultEl.style.color = '#ef4444';
+        resultEl.textContent = '❌ 만료된 코드입니다. (' + found.expiresAt.slice(0,10) + ' 까지)';
+        return;
+      }
+    }
+
+    // 학원 활성화 체크
+    if (found.status === 'inactive') {
+      resultEl.style.color = '#ef4444';
+      resultEl.textContent = '❌ 비활성화된 학원입니다.';
+      return;
+    }
+
+    // 인원 제한 체크 (선생님만)
+    if (foundRole === 'teacher') {
+      var maxT = found.teacherCount !== undefined ? found.teacherCount : (found.maxTeachers ? found.maxTeachers - 1 : 99);
+      // 현재 등록된 선생님 수 조회
+      window.fbGetDocs(window.fbCollection(window.fbDb, 'users')).then(function(uSnap) {
+        var currentTeachers = 0;
+        uSnap.forEach(function(d) {
+          var u = d.data();
+          if (u.role !== 'teacher') return;
+          if (u.schoolId === found.docId || u.schoolId === found.ownerCode || u.schoolId === found.teacherCode ||
+              (u.schoolName && u.schoolName.trim() === found.name.trim())) {
+            currentTeachers++;
+          }
+        });
+
+        if (currentTeachers >= maxT) {
+          resultEl.style.color = '#ef4444';
+          resultEl.textContent = '❌ 정원이 가득 찼습니다. (' + currentTeachers + '/' + maxT + '명)';
+          return;
+        }
+
+        // 통과
+        verifiedSchoolInfo = { schoolDocId: found.docId, role: foundRole, name: found.name };
+        document.getElementById('signupSchool').value = found.name;
+        var dDay = found.expiresAt ? ' · 만료: ' + found.expiresAt.slice(0,10) : '';
+        resultEl.style.color = '#16a34a';
+        resultEl.textContent = '✅ ' + found.name + ' (' + (foundRole==='owner'?'원장':'선생님') + ')' + dDay + ' · ' + (currentTeachers+1) + '/' + maxT + '명';
+      });
+    } else {
+      // 원장 코드는 인원 체크 없이 통과
+      verifiedSchoolInfo = { schoolDocId: found.docId, role: 'owner', name: found.name };
+      document.getElementById('signupSchool').value = found.name;
+      var dDay = found.expiresAt ? ' · 만료: ' + found.expiresAt.slice(0,10) : '';
+      resultEl.style.color = '#16a34a';
+      resultEl.textContent = '✅ ' + found.name + ' (원장)' + dDay;
+    }
+  });
+}
+
 function doFirebaseSignup() {
   var id     = document.getElementById('signupId').value.trim().toLowerCase();
   var name   = document.getElementById('signupName').value.trim();
@@ -2523,6 +2628,7 @@ function doFirebaseSignup() {
   if (pw !== pwConfirm) { showAuthError('비밀번호가 일치하지 않습니다.'); return; }
   if (!idChecked) { showAuthError('아이디 중복확인을 해주세요.'); return; }
   if (!phoneVerifiedNumber) { showAuthError('휴대폰 인증을 완료해주세요.'); return; }
+  if (!verifiedSchoolInfo) { showAuthError('학원 코드 확인을 해주세요.'); return; }
   if (pw.length < 6) { showAuthError('비밀번호는 6자리 이상이어야 합니다.'); return; }
   var email = id + '@edunote.kr';
   showLoading(true);
@@ -2531,10 +2637,11 @@ function doFirebaseSignup() {
       return window.fbSetDoc(window.fbDoc(window.fbDb, 'users', cred.user.uid), {
         userId: id,
         name: name,
-        schoolName: school,
+        schoolName: verifiedSchoolInfo.name,
+        schoolId: verifiedSchoolInfo.schoolDocId,
         email: email,
         phone: phoneVerifiedNumber,
-        role: 'teacher',
+        role: verifiedSchoolInfo.role,
         status: 'inactive',
         createdAt: new Date().toISOString()
       });
@@ -2631,12 +2738,22 @@ function loadUserProfile(fbUser) {
       if (currentSchoolId) {
         return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId))
           .then(function(schoolSnap) {
-            if (schoolSnap.exists() && schoolSnap.data().status === 'inactive') {
-              showLoading(false);
-              window.fbSignOut(window.fbAuth);
-              showAuthError('❌ 서비스가 비활성화된 계정입니다. 관리자에게 문의해주세요.');
-              document.getElementById('loginScreen').style.display = 'flex';
-              return;
+            if (schoolSnap.exists()) {
+              var sd = schoolSnap.data();
+              if (sd.status === 'inactive') {
+                showLoading(false);
+                window.fbSignOut(window.fbAuth);
+                showAuthError('❌ 서비스가 비활성화된 학원입니다. 관리자에게 문의해주세요.');
+                document.getElementById('loginScreen').style.display = 'flex';
+                return;
+              }
+              if (sd.expiresAt && new Date() > new Date(sd.expiresAt)) {
+                showLoading(false);
+                window.fbSignOut(window.fbAuth);
+                showAuthError('❌ 이용 기간이 만료됐습니다. (' + sd.expiresAt.slice(0,10) + ') 관리자에게 문의해주세요.');
+                document.getElementById('loginScreen').style.display = 'flex';
+                return;
+              }
             }
             finishLogin(fbUser, profile);
           });
@@ -3189,13 +3306,17 @@ function addSchool() {
   var name = document.getElementById('newSchoolName').value.trim();
   var plan = document.getElementById('newSchoolPlan').value;
   var teacherCount = parseInt(document.getElementById('newSchoolTeachers').value) || 0;
+  var months = parseInt(document.getElementById('newSchoolMonths').value) || 12;
   if (!name) { showAdminToast('학원명을 입력해주세요.', 'error'); return; }
+
+  // 만료일 계산
+  var expDate = new Date();
+  expDate.setMonth(expDate.getMonth() + months);
+  var expiresAt = expDate.toISOString().slice(0,10);
 
   var ownerCode   = generateCode(6);
   var teacherCode = generateCode(6);
   var schoolId    = generateCode(10);
-
-  // 원장 1명 고정 + 선생님 수 = 총 maxTeachers
   var maxTeachers = 1 + teacherCount;
 
   window.fbSetDoc(window.fbDoc(window.fbDb, 'schools', schoolId), {
@@ -3206,13 +3327,16 @@ function addSchool() {
     teacherCount: teacherCount,
     ownerCode: ownerCode,
     teacherCode: teacherCode,
+    expiresAt: expiresAt,
     status: 'active',
     createdAt: new Date().toISOString()
   }).then(function() {
     document.getElementById('newSchoolName').value = '';
     document.getElementById('newSchoolTeachers').value = '3';
-    showAdminToast('✅ ' + name + ' 추가 완료! (원장1 + 선생님' + teacherCount + '명)');
+    document.getElementById('newSchoolMonths').value = '12';
+    showAdminToast('✅ ' + name + ' 추가! 원장1 + 선생님' + teacherCount + '명 · ' + months + '개월(' + expiresAt + ')');
     loadSchools();
+    loadSchoolStats();
   }).catch(function(err) {
     showAdminToast('오류: ' + err.message, 'error');
   });
@@ -3249,10 +3373,22 @@ function loadSchools() {
       var statusBg    = s.status === 'active' ? '#dcfce7' : '#fee2e2';
       var statusText  = s.status === 'active' ? '활성' : '비활성';
       var tCount      = s.teacherCount !== undefined ? s.teacherCount : (s.maxTeachers ? s.maxTeachers - 1 : 0);
-      return '<div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:14px;background:#f8fafc">'
+      var expStr      = s.expiresAt ? s.expiresAt.slice(0,10) : '미설정';
+      var isExpired   = s.expiresAt && new Date() > new Date(s.expiresAt);
+      return '<div style="border:1.5px solid ' + (isExpired ? '#fca5a5' : '#e2e8f0') + ';border-radius:10px;padding:14px;background:' + (isExpired ? '#fff5f5' : '#f8fafc') + '">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
         + '<span style="font-size:14px;font-weight:800;color:#1e293b">🏫 ' + s.name + '</span>'
+        + '<div style="display:flex;gap:6px;align-items:center">'
+        + (isExpired ? '<span style="font-size:10px;font-weight:700;color:#dc2626;background:#fee2e2;padding:2px 8px;border-radius:10px">만료</span>' : '')
         + '<span style="background:' + statusBg + ';color:' + statusColor + ';font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">' + statusText + '</span>'
+        + '</div>'
+        + '</div>'
+        // 만료일 + 연장 버튼
+        + '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid ' + (isExpired?'#fca5a5':'#e2e8f0') + ';border-radius:8px;padding:8px 12px;margin-bottom:10px">'
+        + '<span style="font-size:12px;color:#64748b;white-space:nowrap">📅 만료일:</span>'
+        + '<span style="font-size:13px;font-weight:700;color:' + (isExpired?'#dc2626':'#1e293b') + '">' + expStr + '</span>'
+        + '<button onclick="extendSchoolExpiry(\'' + s.id + '\',\'' + (s.expiresAt||'') + '\')" '
+        + 'style="margin-left:auto;font-size:11px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:6px;padding:4px 12px;cursor:pointer;font-family:inherit;font-weight:700">📅 연장</button>'
         + '</div>'
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
         + '<div style="background:#ede9fe;border-radius:8px;padding:8px">'
@@ -3416,6 +3552,26 @@ function toggleUserStatus(uid, currentStatus, schoolId, schoolName) {
     .catch(function(err) { showAdminToast('오류: ' + err.message, 'error'); });
 }
 
+function extendSchoolExpiry(id, currentExpiry) {
+  var months = prompt('연장할 개월 수를 입력하세요:', '12');
+  if (!months) return;
+  var num = parseInt(months);
+  if (isNaN(num) || num < 1) { showAdminToast('올바른 개월 수를 입력해주세요.', 'error'); return; }
+
+  // 현재 만료일 기준으로 연장 (이미 지났으면 오늘부터)
+  var base = currentExpiry && new Date(currentExpiry) > new Date() ? new Date(currentExpiry) : new Date();
+  base.setMonth(base.getMonth() + num);
+  var newExpiry = base.toISOString().slice(0,10);
+
+  window.fbUpdateDoc(window.fbDoc(window.fbDb, 'schools', id), { expiresAt: newExpiry })
+    .then(function() {
+      showAdminToast('✅ 만료일이 ' + newExpiry + ' 로 연장됐습니다!');
+      loadSchools();
+      loadSchoolStats();
+    })
+    .catch(function(err) { showAdminToast('오류: ' + err.message, 'error'); });
+}
+
 function saveSchoolLimit(id) {
   var input = document.getElementById('tc-' + id);
   if (!input) return;
@@ -3489,6 +3645,60 @@ function initAdminDashboard() {
   document.getElementById('adminDashboard').style.display = 'block';
   loadSchools();
   loadSchoolStats();
+  checkExpiryAlerts();
+}
+
+function checkExpiryAlerts() {
+  // 만료 체크
+  window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snap) {
+    var expired = [], soon = [];
+    var now = new Date();
+    var in30 = new Date(); in30.setDate(in30.getDate() + 30);
+
+    snap.forEach(function(d) {
+      var s = d.data();
+      if (!s.expiresAt) return;
+      var exp = new Date(s.expiresAt);
+      if (now > exp) expired.push(s.name);
+      else if (exp <= in30) soon.push({ name: s.name, date: s.expiresAt.slice(0,10) });
+    });
+
+    // 갱신 문의 미확인 건
+    window.fbGetDocs(
+      window.fbQuery(window.fbCollection(window.fbDb, 'inquiries'),
+        window.fbWhere('type', '==', 'renewal'),
+        window.fbWhere('status', '==', 'unread'))
+    ).then(function(iSnap) {
+      var renewalCount = iSnap.size;
+
+      if (expired.length === 0 && soon.length === 0 && renewalCount === 0) return;
+
+      var container = document.getElementById('adminDashboard').querySelector('[style*="max-width"]');
+      if (!container) return;
+      var alertEl = document.getElementById('expiryAlert') || document.createElement('div');
+      alertEl.id = 'expiryAlert';
+      alertEl.style.cssText = 'background:#fff;border:2px solid #f59e0b;border-radius:12px;padding:16px;margin-bottom:20px';
+
+      var inner = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div style="flex:1">';
+      inner += '<div style="font-size:14px;font-weight:800;color:#92400e;margin-bottom:8px">🔔 확인 필요</div>';
+
+      if (expired.length > 0)
+        inner += '<div style="margin-bottom:6px"><span style="font-size:11px;color:#64748b">만료:</span> ' + expired.map(function(n){ return '<span style="background:#fee2e2;color:#dc2626;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;margin:2px;display:inline-block">' + n + '</span>'; }).join('') + '</div>';
+
+      if (soon.length > 0)
+        inner += '<div style="margin-bottom:6px"><span style="font-size:11px;color:#64748b">만료 임박:</span> ' + soon.map(function(s){ return '<span style="background:#fef9c3;color:#92400e;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;margin:2px;display:inline-block">' + s.name + ' ~' + s.date + '</span>'; }).join('') + '</div>';
+
+      if (renewalCount > 0)
+        inner += '<div><span style="background:#ede9fe;color:#6d28d9;font-size:12px;font-weight:700;padding:3px 12px;border-radius:6px;cursor:pointer" onclick="switchAdminTab(\'users\')">📩 갱신 문의 ' + renewalCount + '건 미확인</span></div>';
+
+      inner += '</div><button onclick="document.getElementById(\'expiryAlert\').style.display=\'none\'" style="background:none;border:none;font-size:18px;color:#94a3b8;cursor:pointer;flex-shrink:0">×</button></div>';
+      alertEl.innerHTML = inner;
+
+      if (!document.getElementById('expiryAlert')) container.insertAdjacentElement('afterbegin', alertEl);
+    }).catch(function() {
+      // inquiries 권한 없어도 만료 알림은 표시
+    });
+  });
 }
 
 // 원장 또는 관리자 여부 체크
@@ -3580,15 +3790,14 @@ function showMyPage() {
 }
 
 function loadMySchoolCodes(schoolId) {
-  // schoolId로 찾기
   window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', schoolId)).then(function(snap) {
     if (snap.exists()) {
       var d = snap.data();
       document.getElementById('myOwnerCode').textContent = d.ownerCode || '------';
       document.getElementById('myTeacherCode').textContent = d.teacherCode || '------';
+      showMyExpiry(d.expiresAt);
       return;
     }
-    // schoolId가 코드값인 경우 전체 조회
     window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snaps) {
       snaps.forEach(function(s) {
         var d = s.data();
@@ -3596,9 +3805,70 @@ function loadMySchoolCodes(schoolId) {
             (d.name && d.name === document.getElementById('mySchoolName').value)) {
           document.getElementById('myOwnerCode').textContent = d.ownerCode || '------';
           document.getElementById('myTeacherCode').textContent = d.teacherCode || '------';
+          showMyExpiry(d.expiresAt);
         }
       });
     });
+  });
+}
+
+function showMyExpiry(expiresAt) {
+  var sec = document.getElementById('myExpirySection');
+  if (!sec) return;
+  if (!expiresAt) { sec.style.display = 'none'; return; }
+
+  var now = new Date();
+  var exp = new Date(expiresAt);
+  var diff = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+  var isExpired = now > exp;
+
+  sec.style.display = 'block';
+  sec.style.background = isExpired ? '#fee2e2' : (diff <= 30 ? '#fef9c3' : '#f0fdf4');
+
+  document.getElementById('myExpiryDate').textContent = expiresAt.slice(0,10);
+  document.getElementById('myExpiryDate').style.color = isExpired ? '#dc2626' : (diff <= 30 ? '#92400e' : '#16a34a');
+
+  var ddayEl = document.getElementById('myExpiryDday');
+  var renewBtn = document.getElementById('myRenewBtn');
+
+  if (isExpired) {
+    ddayEl.textContent = '⚠️ 서비스가 만료됐습니다';
+    ddayEl.style.color = '#dc2626';
+    renewBtn.style.display = 'block';
+  } else if (diff <= 30) {
+    ddayEl.textContent = 'D-' + diff + ' · 갱신이 필요합니다';
+    ddayEl.style.color = '#92400e';
+    renewBtn.style.display = 'block';
+  } else {
+    ddayEl.textContent = 'D-' + diff + ' · 정상 이용 중';
+    ddayEl.style.color = '#16a34a';
+    renewBtn.style.display = 'none';
+  }
+}
+
+function requestRenewal() {
+  // 갱신 문의 - 관리자에게 Firestore 문의 저장
+  if (!window.fbDb || !window.fbAuth || !window.fbAuth.currentUser) return;
+  var uid = window.fbAuth.currentUser.uid;
+
+  window.fbGetDoc(window.fbDoc(window.fbDb, 'users', uid)).then(function(snap) {
+    if (!snap.exists()) return;
+    var data = snap.data();
+    return window.fbAddDoc(window.fbCollection(window.fbDb, 'inquiries'), {
+      type: 'renewal',
+      name: data.name || '',
+      schoolName: data.schoolName || '',
+      phone: data.phone || '',
+      message: '서비스 갱신 문의',
+      uid: uid,
+      createdAt: new Date().toISOString(),
+      status: 'unread'
+    });
+  }).then(function() {
+    showToast('✅ 갱신 문의가 접수됐습니다! 관리자가 연락드릴게요.');
+    closeMyPage();
+  }).catch(function() {
+    showToast('갱신 문의 전송 실패. 직접 연락해주세요.', 'error');
   });
 }
 
