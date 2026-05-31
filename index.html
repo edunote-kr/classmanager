@@ -2736,9 +2736,14 @@ function loadSchools() {
     document.getElementById('adminTotalSchools').textContent = schools.length;
     document.getElementById('adminActiveSchools').textContent = schools.filter(function(s){ return s.status === 'active'; }).length;
 
-    // 사용자 수
+    // 사용자 수 (superadmin 제외)
     window.fbGetDocs(window.fbCollection(window.fbDb, 'users')).then(function(uSnap) {
-      document.getElementById('adminTotalUsers').textContent = uSnap.size;
+      var userCount = 0;
+      uSnap.forEach(function(d) {
+        var data = d.data();
+        if (data.role !== 'superadmin') userCount++;
+      });
+      document.getElementById('adminTotalUsers').textContent = userCount;
     });
 
     // 목록 렌더링
