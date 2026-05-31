@@ -112,53 +112,113 @@ textarea { resize:vertical; }
 .dist-pct   { font-size:10px; color:#94a3b8; }
 
 @media (min-width: 768px) {
-  header { padding: 16px 5vw; gap: 16px; }
-  .logo-img { width: 52px; height: 52px; }
-  .logo-title { font-size: 20px; letter-spacing: 1px; }
-  .logo-date { font-size: 13px; }
+  /* ── PC 사이드바 레이아웃 ── */
+  #mainApp { display: flex !important; flex-direction: row; min-height: 100vh; }
 
-  .tabs { padding: 16px 5vw 0; gap: 10px; }
-  .tab { padding: 13px 0; font-size: 14px; }
-
-  .content { padding: 28px 5vw; }
-
-  .card { padding: 24px; border-radius: 16px; }
-  .card-title { font-size: 13px; }
-
-  .btn { padding: 11px 22px; font-size: 13px; }
-  .btn-full { padding: 15px; font-size: 16px; }
-
-  input[type=text], input[type=date], select, textarea {
-    font-size: 15px; padding: 12px 16px;
+  /* 사이드바 */
+  #sidebar {
+    display: flex !important;
+    flex-direction: column;
+    width: 220px;
+    min-width: 220px;
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+    padding: 0;
   }
 
-  .rec-card { padding: 20px; }
+  /* 모바일 헤더/탭 숨김 */
+  #mainApp > header { display: none !important; }
+  #mainApp > .tabs  { display: none !important; }
+
+  /* 콘텐츠 영역 */
+  #mainContent {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    background: #f1f5f9;
+  }
+
+  .content { padding: 28px 32px; max-width: 1200px; }
+  .card { padding: 24px; border-radius: 16px; }
+  .card-title { font-size: 13px; }
+  .btn { padding: 11px 22px; font-size: 13px; }
+  .btn-full { padding: 15px; font-size: 16px; }
+  input[type=text], input[type=date], select, textarea { font-size: 15px; padding: 12px 16px; }
+  .rec-card { padding: 20px; margin-bottom: 0; }
   .rec-date { font-size: 13px; }
   .rec-row { font-size: 14px; }
   .rec-memo { font-size: 14px; }
-
-  /* 목록 카드 2열 */
   #recordList { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
-  .rec-card { margin-bottom: 0; }
-
   .stat-grid { grid-template-columns: repeat(4, 1fr); }
   .stat-val { font-size: 26px; }
-
   .grid2 { gap: 20px; }
-  #toast { top: 80px; right: 30px; font-size: 14px; padding: 12px 20px; }
+  #toast { top: 24px; right: 30px; font-size: 14px; padding: 12px 20px; }
 }
 
 @media (min-width: 1024px) {
-  .content { padding: 32px 5vw; }
-  header { padding: 18px 5vw; }
-  .tabs { padding: 18px 5vw 0; }
+  #sidebar { width: 240px; min-width: 240px; }
+  .content { padding: 32px 40px; }
   #recordList { grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); }
 }
 
 @media (min-width: 1400px) {
-  header { padding: 18px calc((100vw - 1400px)/2 + 40px); }
-  .tabs { padding: 18px calc((100vw - 1400px)/2 + 40px) 0; }
-  .content { padding: 32px calc((100vw - 1400px)/2 + 40px); }
+  .content { padding: 36px 48px; max-width: 1400px; }
+}
+
+/* 사이드바 내부 스타일 */
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar-tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  transition: all 0.15s;
+  width: 100%;
+}
+.sidebar-tab:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.sidebar-tab.active { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #fff; box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
+.sidebar-tab .tab-icon { font-size: 18px; width: 24px; text-align: center; }
+.sidebar-bottom {
+  padding: 16px 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sidebar-count {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-left: auto;
 }
 .alert { background:#fef2f2; border:1px solid #fca5a5; border-radius:10px; padding:11px 16px; margin-bottom:12px; display:flex; align-items:center; gap:8px; font-size:13px; color:#dc2626; font-weight:600; }
 
@@ -857,12 +917,51 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
 
 <div id="toast"></div>
 
-<!-- TABS -->
+<!-- TABS (모바일용 유지) -->
 <div class="tabs">
   <button class="tab active" id="tab-input" onclick="switchTab('input')">➕ 입력</button>
   <button class="tab"        id="tab-list"  onclick="switchTab('list')">📋 목록 (<span id="listCount">0</span>)</button>
   <button class="tab"        id="tab-stats"    onclick="switchTab('stats')">📊 통계</button>
   <button class="tab"        id="tab-students" onclick="switchTab('students')">👥 학생</button>
+</div>
+
+<!-- PC 사이드바 -->
+<div id="sidebar" style="display:none">
+  <!-- 로고 -->
+  <div class="sidebar-logo">
+    <img class="logo-img" id="sidebarLogo" src="" alt="EduNote" style="width:44px;height:44px;flex-shrink:0">
+    <div style="min-width:0">
+      <div style="font-size:15px;font-weight:900;color:#fff;font-family:Georgia,serif">EduNote</div>
+      <div id="sidebarSchool" style="font-size:11px;color:rgba(255,255,255,0.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+    </div>
+  </div>
+
+  <!-- 네비게이션 -->
+  <nav class="sidebar-nav">
+    <button class="sidebar-tab active" id="stab-input" onclick="switchTab('input')">
+      <span class="tab-icon">➕</span> 입력
+    </button>
+    <button class="sidebar-tab" id="stab-list" onclick="switchTab('list')">
+      <span class="tab-icon">📋</span> 목록
+      <span class="sidebar-count" id="sidebarListCount">0</span>
+    </button>
+    <button class="sidebar-tab" id="stab-stats" onclick="switchTab('stats')">
+      <span class="tab-icon">📊</span> 통계
+    </button>
+    <button class="sidebar-tab" id="stab-students" onclick="switchTab('students')">
+      <span class="tab-icon">👥</span> 학생
+    </button>
+  </nav>
+
+  <!-- 하단 사용자/버튼 -->
+  <div class="sidebar-bottom">
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 4px">
+      <span id="sidebarBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:8px;background:#f59e0b;color:#1e293b"></span>
+      <span id="sidebarUser" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    </div>
+    <button onclick="showMyPage()" style="width:100%;padding:9px;background:rgba(99,102,241,0.3);border:1px solid rgba(99,102,241,0.5);color:#a5b4fc;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">👤 마이페이지</button>
+    <button onclick="doLogout()" style="width:100%;padding:9px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">🚪 로그아웃</button>
+  </div>
 </div>
 
 <div class="content" id="mainContent">
@@ -1999,6 +2098,9 @@ function switchTab(tab) {
   ['input','list','stats','students'].forEach(t => {
     document.getElementById('panel-'+t).classList.toggle('active', t===tab);
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    // 사이드바 탭도 동기화
+    var stab = document.getElementById('stab-'+t);
+    if (stab) stab.classList.toggle('active', t===tab);
   });
   if (tab==='list')     { updateStudentFilter(); renderList(); }
   if (tab==='stats')    renderStats();
@@ -2896,8 +2998,8 @@ function finishLogin(fbUser, profile) {
   }).catch(function(){});
 
   initWithFirebase(fbUser.uid);
-  // 실시간 상태 감지 시작
   watchUserStatus(fbUser.uid);
+  initSidebar(profile);
 }
 
 function loadOwnerData(ownerUid) {
@@ -4314,6 +4416,49 @@ function saveMyPage() {
 function closeMyPage() {
   document.getElementById('myPageModal').style.display = 'none';
   myLogoBase64 = null;
+}
+
+function initSidebar(profile) {
+  // PC 사이드바 표시 여부 (768px 이상)
+  var sidebar = document.getElementById('sidebar');
+  var isPC = window.innerWidth >= 768;
+  if (sidebar) sidebar.style.display = isPC ? 'flex' : 'none';
+
+  // 반응형 처리
+  window.addEventListener('resize', function() {
+    var isPC2 = window.innerWidth >= 768;
+    if (sidebar) sidebar.style.display = isPC2 ? 'flex' : 'none';
+  });
+
+  // 사이드바 정보 채우기
+  var logoEl = document.getElementById('sidebarLogo');
+  if (logoEl) logoEl.src = currentSchoolProfile.logo || document.querySelector('.header-logo')?.src || '';
+
+  var schoolEl = document.getElementById('sidebarSchool');
+  if (schoolEl) schoolEl.textContent = profile.schoolName || '';
+
+  var userEl = document.getElementById('sidebarUser');
+  if (userEl) userEl.textContent = profile.name || currentUser || '';
+
+  var badgeEl = document.getElementById('sidebarBadge');
+  if (badgeEl) {
+    var badge = getRoleBadge();
+    badgeEl.textContent = badge;
+    badgeEl.style.display = badge ? 'inline' : 'none';
+    var color = getRoleBadgeColor();
+    badgeEl.style.background = color.bg;
+    badgeEl.style.color = color.color;
+  }
+
+  // 목록 카운트 동기화
+  updateSidebarCount();
+}
+
+function updateSidebarCount() {
+  var cnt = document.getElementById('sidebarListCount');
+  var listCnt = document.getElementById('listCount');
+  if (cnt && listCnt) cnt.textContent = listCnt.textContent;
+  setTimeout(updateSidebarCount, 2000);
 }
 
 function initLoginSelect() {
