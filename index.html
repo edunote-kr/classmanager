@@ -257,7 +257,7 @@ textarea { resize:vertical; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, addDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, addDoc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAgSVfgqsbYwjLQI_yMv6-iA7DEfXjLaBE",
@@ -290,6 +290,7 @@ window.fbWhere = where;
 window.fbAddDoc = addDoc;
 window.fbDeleteDoc = deleteDoc;
 window.fbUpdateDoc = updateDoc;
+window.fbOnSnapshot = onSnapshot;
 window.fbGoogleProvider = googleProvider;
 window.fbSignInWithPopup = signInWithPopup;
 window.fbRecaptchaVerifier = RecaptchaVerifier;
@@ -619,6 +620,17 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
       <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:16px">📋 학원 목록</div>
       <div id="schoolList" style="display:flex;flex-direction:column;gap:10px">
         <div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">로딩 중...</div>
+      </div>
+    </div>
+
+    <!-- 전체 사용자 관리 -->
+    <div style="background:#fff;border-radius:12px;padding:20px;border:1px solid #e2e8f0;margin-top:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:800;color:#1e293b">👤 전체 사용자 관리</div>
+        <button onclick="loadAllUsers()" style="padding:6px 14px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">새로고침</button>
+      </div>
+      <div id="allUsersList" style="display:flex;flex-direction:column;gap:8px">
+        <div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">새로고침 버튼을 눌러주세요</div>
       </div>
     </div>
 
@@ -2405,10 +2417,25 @@ function doFirebaseSignup() {
         email: email,
         phone: phoneVerifiedNumber,
         role: 'teacher',
+        status: 'inactive',
         createdAt: new Date().toISOString()
       });
     })
-    .then(function() { return loadUserProfile(window.fbAuth.currentUser); })
+    .then(function() {
+      showLoading(false);
+      // 가입 완료 후 승인 대기 안내
+      showAuthError('');
+      document.getElementById('signupForm').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('tabLogin').style.display = 'none';
+      document.getElementById('tabSignup').style.display = 'none';
+      document.getElementById('authError').style.display = 'block';
+      document.getElementById('authError').style.color = '#16a34a';
+      document.getElementById('authError').innerHTML = '✅ 회원가입이 완료됐습니다!<br><br>'
+        + '관리자 승인 후 로그인 가능합니다.<br>'
+        + '<span style="font-size:11px;color:#94a3b8">문의: 관리자에게 연락해주세요</span>';
+      window.fbSignOut(window.fbAuth);
+    })
     .catch(function(err) {
       showLoading(false);
       if (err.code === 'auth/email-already-in-use') {
@@ -2438,6 +2465,7 @@ function doGoogleLogin() {
               schoolName: school,
               email: user.email,
               role: 'teacher',
+              status: 'inactive',
               createdAt: new Date().toISOString()
             }).then(function() { return loadUserProfile(user); });
           } else {
@@ -2473,11 +2501,10 @@ function loadUserProfile(fbUser) {
         return;
       }
 
-      // 사용자 status 체크 (직접 비활성화)
-      if (profile.status === 'inactive') {
+      if (profile.status === 'inactive' || !profile.status) {
         showLoading(false);
         window.fbSignOut(window.fbAuth);
-        showAuthError('❌ 비활성화된 계정입니다. 관리자에게 문의해주세요.');
+        showAuthError('⏳ 관리자 승인 대기 중입니다. 승인 후 로그인 가능합니다.');
         document.getElementById('loginScreen').style.display = 'flex';
         return;
       }
@@ -2499,6 +2526,27 @@ function loadUserProfile(fbUser) {
 
       finishLogin(fbUser, profile);
     });
+}
+
+var statusUnsubscribe = null; // 실시간 감지 해제 함수
+
+function watchUserStatus(uid) {
+  // 기존 감지 해제
+  if (statusUnsubscribe) { statusUnsubscribe(); statusUnsubscribe = null; }
+
+  // 사용자 문서 실시간 감지
+  statusUnsubscribe = window.fbOnSnapshot(
+    window.fbDoc(window.fbDb, 'users', uid),
+    function(snap) {
+      if (!snap.exists()) return;
+      var data = snap.data();
+      // 비활성화 감지 시 즉시 로그아웃
+      if (data.status === 'inactive' && currentUser) {
+        showToast('❌ 계정이 비활성화됐습니다.', 'error');
+        setTimeout(function() { doLogout(); }, 1500);
+      }
+    }
+  );
 }
 
 function finishLogin(fbUser, profile) {
@@ -2539,6 +2587,8 @@ function finishLogin(fbUser, profile) {
   localStorage.setItem('kms_cache_school', currentSchool);
 
   initWithFirebase(fbUser.uid);
+  // 실시간 상태 감지 시작
+  watchUserStatus(fbUser.uid);
 }
 
 function loadOwnerData(ownerUid) {
@@ -2630,6 +2680,8 @@ function initWithFirebase(uid) {
 
 function doLogout() {
   if (window._importing) { showToast('저장 중입니다.', 'error'); return; }
+  // 실시간 감지 해제
+  if (statusUnsubscribe) { statusUnsubscribe(); statusUnsubscribe = null; }
   currentUser = null; currentSchool = null; currentRole = null; GAS_URL = '';
   localStorage.removeItem('kms_cache_user');
   localStorage.removeItem('kms_cache_school');
@@ -2811,6 +2863,62 @@ function copyCode(code) {
   });
 }
 
+function loadAllUsers() {
+  var el = document.getElementById('allUsersList');
+  el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">로딩 중...</div>';
+
+  window.fbGetDocs(window.fbCollection(window.fbDb, 'users')).then(function(snap) {
+    var users = [];
+    snap.forEach(function(d) {
+      if (d.data().role !== 'superadmin') users.push(Object.assign({uid: d.id}, d.data()));
+    });
+
+    if (users.length === 0) {
+      el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">사용자 없음</div>';
+      return;
+    }
+
+    // 상태별 정렬 (비활성 먼저)
+    users.sort(function(a,b) {
+      if (a.status === 'inactive' && b.status !== 'inactive') return -1;
+      if (a.status !== 'inactive' && b.status === 'inactive') return 1;
+      return 0;
+    });
+
+    el.innerHTML = users.map(function(u) {
+      var isActive = u.status === 'active';
+      var statusColor = isActive ? '#16a34a' : '#ef4444';
+      var statusBg = isActive ? '#dcfce7' : '#fee2e2';
+      var statusText = isActive ? '활성' : '대기/비활성';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc">'
+        + '<div>'
+        + '<div style="font-size:13px;font-weight:700;color:#1e293b">👤 ' + (u.name||u.userId||'이름없음') + '</div>'
+        + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'
+        + (u.role||'teacher') + ' · ' + (u.schoolName||'학원없음') + ' · ' + (u.userId||'')
+        + '</div>'
+        + '</div>'
+        + '<div style="display:flex;gap:6px;align-items:center">'
+        + '<span style="background:' + statusBg + ';color:' + statusColor + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">' + statusText + '</span>'
+        + '<button onclick="toggleUserStatusDirect(\'' + u.uid + '\',\'' + (u.status||'inactive') + '\')" '
+        + 'style="font-size:11px;background:' + (isActive ? '#fee2e2' : '#dcfce7') + ';color:' + (isActive ? '#dc2626' : '#16a34a') + ';border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-family:inherit">'
+        + (isActive ? '비활성화' : '활성화') + '</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  });
+}
+
+function toggleUserStatusDirect(uid, currentStatus) {
+  var newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), { status: newStatus })
+    .then(function() {
+      showAdminToast('✅ ' + (newStatus === 'active' ? '활성화' : '비활성화') + ' 완료!');
+      loadAllUsers();
+      loadSchools(); // 통계 갱신
+    })
+    .catch(function(err) { showAdminToast('오류: ' + err.message, 'error'); });
+}
+
 function showSchoolUsers(schoolId, schoolName) {
   // 모달 생성
   var modal = document.getElementById('userModal') || document.createElement('div');
@@ -2901,6 +3009,7 @@ function showAdminToast(msg, type) {
 function initAdminDashboard() {
   document.getElementById('adminDashboard').style.display = 'block';
   loadSchools();
+  loadAllUsers();
 }
 
 // 원장 또는 관리자 여부 체크
