@@ -2473,7 +2473,16 @@ function loadUserProfile(fbUser) {
         return;
       }
 
-      // 학원 상태 체크 (schoolId 있는 경우)
+      // 사용자 status 체크 (직접 비활성화)
+      if (profile.status === 'inactive') {
+        showLoading(false);
+        window.fbSignOut(window.fbAuth);
+        showAuthError('❌ 비활성화된 계정입니다. 관리자에게 문의해주세요.');
+        document.getElementById('loginScreen').style.display = 'flex';
+        return;
+      }
+
+      // schoolId로 학원 상태 체크
       if (currentSchoolId) {
         return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId))
           .then(function(schoolSnap) {
@@ -2488,27 +2497,7 @@ function loadUserProfile(fbUser) {
           });
       }
 
-      // schoolId 없어도 schools 컬렉션에서 해당 사용자 코드로 학원 찾아서 체크
-      var schoolsRef = window.fbCollection(window.fbDb, 'schools');
-      return window.fbGetDocs(schoolsRef).then(function(snap) {
-        var inactive = false;
-        snap.forEach(function(d) {
-          var data = d.data();
-          // ownerCode나 teacherCode로 가입한 경우 체크
-          if (data.status === 'inactive' && profile.schoolCode &&
-             (data.ownerCode === profile.schoolCode || data.teacherCode === profile.schoolCode)) {
-            inactive = true;
-          }
-        });
-        if (inactive) {
-          showLoading(false);
-          window.fbSignOut(window.fbAuth);
-          showAuthError('❌ 서비스가 비활성화된 계정입니다. 관리자에게 문의해주세요.');
-          document.getElementById('loginScreen').style.display = 'flex';
-          return;
-        }
-        finishLogin(fbUser, profile);
-      });
+      finishLogin(fbUser, profile);
     });
 }
 
@@ -2806,6 +2795,7 @@ function loadSchools() {
         + '<button onclick="copyCode(\'' + s.ownerCode + '\')" style="font-size:11px;background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">원장코드 복사</button>'
         + '<button onclick="copyCode(\'' + s.teacherCode + '\')" style="font-size:11px;background:#dbeafe;color:#1d4ed8;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">선생님코드 복사</button>'
         + '<button onclick="toggleSchoolStatus(\'' + s.id + '\',\'' + s.status + '\')" style="font-size:11px;background:' + (s.status==='active' ? '#fee2e2' : '#dcfce7') + ';color:' + (s.status==='active' ? '#dc2626' : '#16a34a') + ';border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">' + (s.status==='active' ? '비활성화' : '활성화') + '</button>'
+        + '<button onclick="showSchoolUsers(\'' + s.id + '\',\'' + s.name + '\')" style="font-size:11px;background:#f1f5f9;color:#475569;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">👥 사용자</button>'
         + '<button onclick="deleteSchool(\'' + s.id + '\',\'' + s.name + '\')" style="font-size:11px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">🗑️ 삭제</button>'
         + '</div>'
         + '</div>';
@@ -2819,6 +2809,56 @@ function copyCode(code) {
   }).catch(function() {
     showAdminToast(code, 'info');
   });
+}
+
+function showSchoolUsers(schoolId, schoolName) {
+  // 모달 생성
+  var modal = document.getElementById('userModal') || document.createElement('div');
+  modal.id = 'userModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;box-sizing:border-box';
+  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
+    + '<div style="font-size:15px;font-weight:800;color:#1e293b">👥 ' + schoolName + ' 사용자</div>'
+    + '<button onclick="document.getElementById(\'userModal\').style.display=\'none\'" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer">×</button>'
+    + '</div>'
+    + '<div id="userModalList">로딩 중...</div>'
+    + '</div>';
+  document.body.appendChild(modal);
+
+  // 사용자 조회 (schoolId로)
+  var q = window.fbQuery(window.fbCollection(window.fbDb, 'users'), window.fbWhere('schoolId', '==', schoolId));
+  window.fbGetDocs(q).then(function(snap) {
+    var users = [];
+    snap.forEach(function(d) { users.push(Object.assign({uid: d.id}, d.data())); });
+
+    if (users.length === 0) {
+      document.getElementById('userModalList').innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px">등록된 사용자가 없습니다</div>';
+      return;
+    }
+
+    document.getElementById('userModalList').innerHTML = users.map(function(u) {
+      var isInactive = u.status === 'inactive';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px">'
+        + '<div>'
+        + '<div style="font-size:13px;font-weight:700;color:#1e293b">👤 ' + (u.name||u.userId||'이름없음') + '</div>'
+        + '<div style="font-size:11px;color:#94a3b8">' + (u.role||'teacher') + ' · ' + (u.userId||'') + '</div>'
+        + '</div>'
+        + '<button onclick="toggleUserStatus(\'' + u.uid + '\',\'' + (u.status||'active') + '\',\'' + schoolId + '\',\'' + schoolName + '\')" '
+        + 'style="font-size:11px;background:' + (isInactive ? '#dcfce7' : '#fee2e2') + ';color:' + (isInactive ? '#16a34a' : '#dc2626') + ';border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-family:inherit;white-space:nowrap">'
+        + (isInactive ? '활성화' : '비활성화') + '</button>'
+        + '</div>';
+    }).join('');
+  });
+}
+
+function toggleUserStatus(uid, currentStatus, schoolId, schoolName) {
+  var newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), { status: newStatus })
+    .then(function() {
+      showAdminToast('✅ 사용자 ' + (newStatus === 'inactive' ? '비활성화' : '활성화') + ' 완료!');
+      showSchoolUsers(schoolId, schoolName); // 모달 새로고침
+    })
+    .catch(function(err) { showAdminToast('오류: ' + err.message, 'error'); });
 }
 
 function deleteSchool(id, name) {
@@ -2836,7 +2876,21 @@ function deleteSchool(id, name) {
 function toggleSchoolStatus(id, currentStatus) {
   var newStatus = currentStatus === 'active' ? 'inactive' : 'active';
   window.fbUpdateDoc(window.fbDoc(window.fbDb, 'schools', id), { status: newStatus })
-    .then(function() { loadSchools(); })
+    .then(function() {
+      // 소속 사용자 전체 status도 변경
+      var q = window.fbQuery(window.fbCollection(window.fbDb, 'users'), window.fbWhere('schoolId', '==', id));
+      return window.fbGetDocs(q).then(function(snap) {
+        var updates = [];
+        snap.forEach(function(d) {
+          updates.push(window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', d.id), { status: newStatus }));
+        });
+        return Promise.all(updates);
+      });
+    })
+    .then(function() {
+      showAdminToast('✅ 학원 및 소속 사용자 ' + (newStatus === 'inactive' ? '비활성화' : '활성화') + ' 완료!');
+      loadSchools();
+    })
     .catch(function(err) { showAdminToast('오류: ' + err.message, 'error'); });
 }
 
