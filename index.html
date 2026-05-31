@@ -3281,6 +3281,11 @@ function saveMyPage() {
   var updateData = { schoolName: schoolName, phone: phone };
   if (myLogoBase64) updateData.logo = myLogoBase64;
 
+  // 메모리 즉시 업데이트 (이미지 저장에 바로 반영)
+  currentSchoolProfile.name = schoolName;
+  currentSchoolProfile.phone = phone;
+  if (myLogoBase64) currentSchoolProfile.logo = myLogoBase64;
+
   // users 문서 업데이트
   window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), updateData)
     .then(function() {
