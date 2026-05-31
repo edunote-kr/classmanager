@@ -2841,14 +2841,19 @@ function finishLogin(fbUser, profile) {
   var titleEl = document.querySelector('.header-title');
   if (titleEl) titleEl.textContent = 'EduNote';
 
-  // 사용자 배지
-  var userBadge = document.createElement('div');
-  userBadge.id = 'userBadgeEl';
-  userBadge.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.7);text-align:right;line-height:1.4';
-  userBadge.innerHTML = '👤 ' + currentUser + ' ' + getRoleBadge()
-    + '<br><span style="font-size:10px;color:rgba(255,255,255,0.5)">' + (profile.schoolName||'') + '</span>';
-  var hdr = document.querySelector('.logo-wrap');
-  if (hdr && !document.getElementById('userBadgeEl')) hdr.appendChild(userBadge);
+  // 사용자 역할 배지 (버튼 옆에 작게 표시)
+  var existBadge = document.getElementById('userBadgeEl');
+  if (existBadge) existBadge.remove();
+  var badgeText = getRoleBadge();
+  if (badgeText) {
+    var badgeColor = getRoleBadgeColor();
+    var userBadge = document.createElement('span');
+    userBadge.id = 'userBadgeEl';
+    userBadge.style.cssText = 'font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;background:' + badgeColor.bg + ';color:' + badgeColor.color + ';white-space:nowrap;flex-shrink:0';
+    userBadge.textContent = badgeText;
+    var btnArea = document.getElementById('myPageBtn') && document.getElementById('myPageBtn').parentNode;
+    if (btnArea) btnArea.insertBefore(userBadge, btnArea.firstChild);
+  }
 
   var mainApp = document.getElementById('mainApp');
   if (mainApp) mainApp.style.display = 'block';
@@ -3948,18 +3953,19 @@ function initAdminDashboard() {
 }
 
 function checkExpiryAlerts() {
-  // 만료 체크
   window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snap) {
-    var expired = [], soon = [];
+    var expired = [], soon = [], normal = [];
     var now = new Date();
     var in30 = new Date(); in30.setDate(in30.getDate() + 30);
 
     snap.forEach(function(d) {
       var s = d.data();
-      if (!s.expiresAt) return;
+      if (!s.expiresAt || !s.name) return;
       var exp = new Date(s.expiresAt);
-      if (now > exp) expired.push(s.name);
-      else if (exp <= in30) soon.push({ name: s.name, date: s.expiresAt.slice(0,10) });
+      var diff = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+      if (now > exp)      expired.push({ name: s.name, date: s.expiresAt.slice(0,10), diff: diff });
+      else if (exp <= in30) soon.push({ name: s.name, date: s.expiresAt.slice(0,10), diff: diff });
+      else                  normal.push({ name: s.name, date: s.expiresAt.slice(0,10), diff: diff });
     });
 
     // 갱신 문의 미확인 건
@@ -3970,33 +3976,57 @@ function checkExpiryAlerts() {
     ).then(function(iSnap) {
       var renewalCount = iSnap.size;
 
-      if (expired.length === 0 && soon.length === 0 && renewalCount === 0) return;
-
       var container = document.getElementById('adminDashboard').querySelector('[style*="max-width"]');
       if (!container) return;
-      var alertEl = document.getElementById('expiryAlert') || document.createElement('div');
-      alertEl.id = 'expiryAlert';
-      alertEl.style.cssText = 'background:#fff;border:2px solid #f59e0b;border-radius:12px;padding:16px;margin-bottom:20px';
 
-      var inner = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div style="flex:1">';
-      inner += '<div style="font-size:14px;font-weight:800;color:#92400e;margin-bottom:8px">🔔 확인 필요</div>';
+      var alertEl = document.getElementById('expiryAlert');
+      if (!alertEl) {
+        alertEl = document.createElement('div');
+        alertEl.id = 'expiryAlert';
+        container.insertAdjacentElement('afterbegin', alertEl);
+      }
+      alertEl.style.cssText = 'background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:20px';
 
-      if (expired.length > 0)
-        inner += '<div style="margin-bottom:6px"><span style="font-size:11px;color:#64748b">만료:</span> ' + expired.map(function(n){ return '<span style="background:#fee2e2;color:#dc2626;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;margin:2px;display:inline-block">' + n + '</span>'; }).join('') + '</div>';
+      var inner = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:10px">📅 학원 이용 현황</div>';
 
-      if (soon.length > 0)
-        inner += '<div style="margin-bottom:6px"><span style="font-size:11px;color:#64748b">만료 임박:</span> ' + soon.map(function(s){ return '<span style="background:#fef9c3;color:#92400e;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;margin:2px;display:inline-block">' + s.name + ' ~' + s.date + '</span>'; }).join('') + '</div>';
+      // 만료
+      if (expired.length > 0) {
+        inner += '<div style="margin-bottom:8px"><div style="font-size:11px;color:#dc2626;font-weight:700;margin-bottom:4px">❌ 만료 (' + expired.length + ')</div><div style="display:flex;flex-wrap:wrap;gap:4px">';
+        expired.forEach(function(s) {
+          inner += '<span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + s.name + ' · ' + s.date + '</span>';
+        });
+        inner += '</div></div>';
+      }
 
-      if (renewalCount > 0)
-        inner += '<div><span style="background:#ede9fe;color:#6d28d9;font-size:12px;font-weight:700;padding:3px 12px;border-radius:6px;cursor:pointer" onclick="switchAdminTab(\'users\')">📩 갱신 문의 ' + renewalCount + '건 미확인</span></div>';
+      // 30일 이내 만료 임박
+      if (soon.length > 0) {
+        inner += '<div style="margin-bottom:8px"><div style="font-size:11px;color:#92400e;font-weight:700;margin-bottom:4px">⚠️ 만료 임박 (' + soon.length + ')</div><div style="display:flex;flex-wrap:wrap;gap:4px">';
+        soon.forEach(function(s) {
+          inner += '<span style="background:#fef9c3;color:#92400e;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + s.name + ' · D-' + s.diff + ' · ' + s.date + '</span>';
+        });
+        inner += '</div></div>';
+      }
 
-      inner += '</div><button onclick="document.getElementById(\'expiryAlert\').style.display=\'none\'" style="background:none;border:none;font-size:18px;color:#94a3b8;cursor:pointer;flex-shrink:0">×</button></div>';
+      // 정상
+      if (normal.length > 0) {
+        inner += '<div style="margin-bottom:8px"><div style="font-size:11px;color:#16a34a;font-weight:700;margin-bottom:4px">✅ 정상 이용 중 (' + normal.length + ')</div><div style="display:flex;flex-wrap:wrap;gap:4px">';
+        normal.forEach(function(s) {
+          inner += '<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + s.name + ' · D-' + s.diff + ' · ' + s.date + '</span>';
+        });
+        inner += '</div></div>';
+      }
+
+      // 갱신 문의
+      if (renewalCount > 0) {
+        inner += '<div><span style="background:#ede9fe;color:#6d28d9;font-size:12px;font-weight:700;padding:3px 12px;border-radius:6px;cursor:pointer" onclick="switchAdminTab(\'apply\')">📩 갱신 문의 ' + renewalCount + '건 미확인</span></div>';
+      }
+
+      inner += '</div></div>';
       alertEl.innerHTML = inner;
 
-      if (!document.getElementById('expiryAlert')) container.insertAdjacentElement('afterbegin', alertEl);
-    }).catch(function() {
-      // inquiries 권한 없어도 만료 알림은 표시
-    });
+    }).catch(function() {});
   });
 }
 
@@ -4034,13 +4064,16 @@ function isOwnerOrAdmin() {
 }
 
 function getRoleBadge() {
-  if (currentRole === 'superadmin' || isOwnerOrAdmin()) {
-    return '<span style="background:#f59e0b;color:#1e293b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800">관리자</span>';
-  }
-  if (currentRole === 'owner') {
-    return '<span style="background:#6366f1;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800">원장</span>';
-  }
+  if (currentRole === 'superadmin') return '관리자';
+  if (currentRole === 'owner') return '원장';
+  if (currentRole === 'teacher') return '선생님';
   return '';
+}
+
+function getRoleBadgeColor() {
+  if (currentRole === 'superadmin') return { bg: '#f59e0b', color: '#1e293b' };
+  if (currentRole === 'owner')      return { bg: '#6366f1', color: '#fff' };
+  return { bg: '#e2e8f0', color: '#475569' };
 }
 
 // ── 마이페이지 ─────────────────────────────────────────────
@@ -4133,16 +4166,14 @@ function showMyExpiry(expiresAt) {
   if (isExpired) {
     ddayEl.textContent = '⚠️ 서비스가 만료됐습니다';
     ddayEl.style.color = '#dc2626';
-    renewBtn.style.display = 'block';
   } else if (diff <= 30) {
     ddayEl.textContent = 'D-' + diff + ' · 갱신이 필요합니다';
     ddayEl.style.color = '#92400e';
-    renewBtn.style.display = 'block';
   } else {
     ddayEl.textContent = 'D-' + diff + ' · 정상 이용 중';
     ddayEl.style.color = '#16a34a';
-    renewBtn.style.display = 'none';
   }
+  renewBtn.style.display = 'block'; // 항상 표시
 }
 
 function requestRenewal() {
