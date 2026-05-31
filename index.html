@@ -656,7 +656,7 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
   </div>
   <div style="display:flex;gap:8px;align-items:center">
     <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">👤 마이페이지</button>
-    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#ef4444;border:none;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">🚪 로그아웃</button>
+    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">🚪 로그아웃</button>
   </div>
 </header>
 
@@ -3370,10 +3370,15 @@ function closeMyPage() {
 function initLoginSelect() {
   if (window.fbOnAuthStateChanged && window.fbAuth) {
     window.fbOnAuthStateChanged(window.fbAuth, function(user) {
-      var landing = document.getElementById('landingPage');
-      var isLandingVisible = landing && landing.style.display !== 'none';
-      if (user && isLandingVisible && !currentUser) {
-        loadUserProfile(user);
+      if (user && !currentUser) {
+        // 로그인 상태이면 항상 프로필 로드 (새로고침 포함)
+        var mainApp = document.getElementById('mainApp');
+        var adminDash = document.getElementById('adminDashboard');
+        var isAppVisible = (mainApp && mainApp.style.display !== 'none')
+                        || (adminDash && adminDash.style.display !== 'none');
+        if (!isAppVisible) {
+          loadUserProfile(user);
+        }
       }
     });
   }
