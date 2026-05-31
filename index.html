@@ -3234,7 +3234,6 @@ function previewLogo(input) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
 
-  // 파일 크기 안내 (10MB 초과 시 차단)
   if (file.size > 10 * 1024 * 1024) {
     showToast('❌ 10MB 이하 이미지를 사용해주세요.', 'error');
     return;
@@ -3244,27 +3243,34 @@ function previewLogo(input) {
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
-      // 캔버스로 리사이즈 (최대 200x200, 비율 유지)
-      var MAX = 200;
-      var w = img.width, h = img.height;
-      if (w > h) { if (w > MAX) { h = h * MAX / w; w = MAX; } }
-      else        { if (h > MAX) { w = w * MAX / h; h = MAX; } }
+      var SIZE = 240; // 저장 크기 (정사각형)
+
+      // 정사각형 크롭 (중앙 기준)
+      var sw = img.width, sh = img.height;
+      var cropSize = Math.min(sw, sh);
+      var sx = (sw - cropSize) / 2;
+      var sy = (sh - cropSize) / 2;
 
       var canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
+      canvas.width = SIZE;
+      canvas.height = SIZE;
       var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
 
-      // JPEG로 압축 (품질 0.7 → 약 30~80KB)
-      myLogoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      // 흰 배경 채우기 (투명 PNG 대응)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, SIZE, SIZE);
+
+      // 정사각형 크롭 후 리사이즈
+      ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, SIZE, SIZE);
+
+      // JPEG 압축 (품질 0.75)
+      myLogoBase64 = canvas.toDataURL('image/jpeg', 0.75);
 
       var preview = document.getElementById('myLogoPreview');
       preview.innerHTML = '<img src="' + myLogoBase64 + '" style="width:100%;height:100%;object-fit:cover">';
 
-      // 용량 표시
       var kb = Math.round(myLogoBase64.length * 0.75 / 1024);
-      showToast('✅ 로고 로드 완료 (' + kb + 'KB)');
+      showToast('✅ 로고 적용 완료 (' + kb + 'KB)');
     };
     img.src = e.target.result;
   };
@@ -3780,11 +3786,29 @@ function captureStuStat(gid, done) {
     var logo = document.createElement('div');
     logo.style.cssText = 'background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:12px 12px 0 0;padding:14px 16px;';
     var monStr = todayStr().slice(5,7).replace(/^0/,'')+'월';
-    logo.innerHTML = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'
-      +'<img src="'+ getImgLogoSrc() +'" style="width:40px;height:40px;border-radius:50%;border:2px solid #6366f1;object-fit:contain;background:#fff;flex-shrink:0">'
-      +'<div style="font-size:10px;font-weight:900;letter-spacing:2px;color:#94a3b8;font-family:Georgia,serif">'+(currentSchoolProfile.name||'')+'</div>'
-      +'</div>'
-      +'<div style="font-size:16px;font-weight:900;color:#fff;text-align:center">'+esc(stuName)+' 학생 '+monStr+' 수업 요약</div>';
+
+    // 로고 이미지 createElement로 생성 (html2canvas 호환)
+    var logoRow = document.createElement('div');
+    logoRow.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:10px';
+
+    var logoImg = document.createElement('img');
+    logoImg.src = getImgLogoSrc();
+    logoImg.style.cssText = 'width:40px;height:40px;border-radius:50%;border:2px solid #6366f1;object-fit:cover;background:#fff;flex-shrink:0';
+    logoImg.crossOrigin = 'anonymous';
+    logoRow.appendChild(logoImg);
+
+    var logoText = document.createElement('div');
+    logoText.style.cssText = 'font-size:10px;font-weight:900;letter-spacing:2px;color:#94a3b8;font-family:Georgia,serif';
+    logoText.textContent = currentSchoolProfile.name || '';
+    logoRow.appendChild(logoText);
+
+    logo.appendChild(logoRow);
+
+    var titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'font-size:16px;font-weight:900;color:#fff;text-align:center';
+    titleDiv.textContent = esc(stuName) + ' 학생 ' + monStr + ' 수업 요약';
+    logo.appendChild(titleDiv);
+
     wrapper.appendChild(logo);
 
     // 내용 복사
@@ -4224,9 +4248,25 @@ function saveListCard(id) {
     // 헤더 (로고 + 학원명 + 전화번호)
     const hdr = document.createElement('div');
     hdr.style.cssText = 'display:flex;align-items:center;gap:10px;border-bottom:2px solid #6366f1;padding-bottom:10px;margin-bottom:12px;';
-    hdr.innerHTML = '<img src="'+ getImgLogoSrc() +'" style="width:38px;height:38px;border-radius:50%;border:2px solid #6366f1;object-fit:contain;background:#fff">'
-      + '<div><div style="font-size:15px;font-weight:900;letter-spacing:1px;font-family:Georgia,serif;color:#1e293b">'+(currentSchoolProfile.name||'')+'</div>'
-      + '<div style="font-size:11px;color:#64748b;margin-top:2px"><strong>상담:</strong> '+(currentSchoolProfile.phone||'')+'</div></div>';
+
+    // 로고 이미지 createElement로 생성 (html2canvas 호환)
+    var hdrImg = document.createElement('img');
+    hdrImg.src = getImgLogoSrc();
+    hdrImg.style.cssText = 'width:48px;height:48px;border-radius:10px;border:2px solid #6366f1;object-fit:cover;background:#fff;flex-shrink:0';
+    hdrImg.crossOrigin = 'anonymous';
+    hdr.appendChild(hdrImg);
+
+    var hdrInfo = document.createElement('div');
+    var hdrName = document.createElement('div');
+    hdrName.style.cssText = 'font-size:15px;font-weight:900;letter-spacing:1px;font-family:Georgia,serif;color:#1e293b';
+    hdrName.textContent = currentSchoolProfile.name || '';
+    var hdrPhone = document.createElement('div');
+    hdrPhone.style.cssText = 'font-size:11px;color:#64748b;margin-top:2px';
+    hdrPhone.innerHTML = '<strong>상담:</strong> ' + (currentSchoolProfile.phone || '');
+    hdrInfo.appendChild(hdrName);
+    hdrInfo.appendChild(hdrPhone);
+    hdr.appendChild(hdrInfo);
+
     wrapper.appendChild(hdr);
 
     // 제목
