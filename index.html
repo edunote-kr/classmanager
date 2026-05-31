@@ -110,7 +110,50 @@ textarea { resize:vertical; }
 .dist-label { font-size:10px; color:#64748b; }
 .dist-pct   { font-size:10px; color:#94a3b8; }
 
-/* ── Alert ── */
+/* ── 반응형 (PC/태블릿) ── */
+@media (min-width: 768px) {
+  header {
+    padding: 16px 40px;
+  }
+  .logo-img { width: 52px; height: 52px; }
+  .logo-title { font-size: 20px; }
+  .logo-date { font-size: 13px; }
+
+  .tabs { padding: 16px 40px 0; gap: 8px; }
+  .tab { padding: 11px 28px; font-size: 14px; }
+
+  .content { padding: 28px 40px; max-width: 1000px; }
+
+  .card { padding: 24px; border-radius: 16px; }
+  .card-title { font-size: 13px; }
+
+  .btn { padding: 11px 22px; font-size: 13px; }
+  .btn-full { padding: 15px; font-size: 16px; }
+
+  input[type=text], input[type=date], select, textarea {
+    font-size: 15px; padding: 12px 16px;
+  }
+
+  .rec-card { padding: 20px; }
+  .rec-date { font-size: 13px; }
+  .rec-student { font-size: 13px; }
+  .rec-row { font-size: 14px; }
+  .rec-memo { font-size: 14px; }
+
+  .stat-grid { grid-template-columns: repeat(4, 1fr); }
+  .stat-val { font-size: 26px; }
+  .stat-label { font-size: 12px; }
+
+  .grid2 { gap: 20px; }
+
+  #toast { top: 80px; right: 30px; font-size: 14px; padding: 12px 20px; }
+}
+
+@media (min-width: 1200px) {
+  .content { max-width: 1100px; padding: 32px 60px; }
+  header { padding: 18px 60px; }
+  .tabs { padding: 18px 60px 0; }
+}
 .alert { background:#fef2f2; border:1px solid #fca5a5; border-radius:10px; padding:11px 16px; margin-bottom:12px; display:flex; align-items:center; gap:8px; font-size:13px; color:#dc2626; font-weight:600; }
 
 /* ── Misc ── */
@@ -1253,7 +1296,9 @@ var SCHOOLS = {
 };
 var ADMIN_NAME = '관리자';
 var currentUser = null;
+var currentRole = null; // 'superadmin', 'owner', 'teacher'
 var currentSchool = null;
+var currentSchoolId = null; // 소속 학원 ID
 var ACCOUNTS = {};
 
 var GAS_URL='';
@@ -1357,7 +1402,7 @@ let editId    = null;
 let activeTab = 'input';
 
 function exportData() {
-  var myRecs = records.filter(function(r){ return currentUser === ADMIN_NAME || r.teacher === currentUser; });
+  var myRecs = records.filter(function(r){ return isOwnerOrAdmin() || r.teacher === currentUser; });
   if (myRecs.length === 0) { showToast('저장할 기록이 없습니다.', 'error'); return; }
   const json = JSON.stringify(myRecs, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -1551,7 +1596,7 @@ function renderStudents() {
 
   let html = '';
 
-  if (currentUser === ADMIN_NAME) {
+  if (isOwnerOrAdmin()) {
     // 관리자: 선생님별 → 반별 그룹핑
     const teacherGroups = {};
     students.forEach(s => {
@@ -1691,7 +1736,7 @@ async function init(){
     var rR=res[0],sR=res[1];
     if(rR&&rR.ok){
       var allRecs = (rR.data||[]).map(normalizeRec);
-      var myRecs = currentUser === ADMIN_NAME
+      var myRecs = isOwnerOrAdmin()
         ? allRecs
         : allRecs.filter(function(r){ return r.teacher === currentUser; });
       // GAS에 데이터가 있을 때만 캐시 갱신 (빈 응답으로 덮어쓰기 방지)
@@ -1702,7 +1747,7 @@ async function init(){
     }
     if(sR&&sR.ok){
       var allStu = sR.data||[];
-      var myStu = currentUser === ADMIN_NAME
+      var myStu = isOwnerOrAdmin()
         ? allStu
         : allStu.filter(function(s){ return s.teacher === currentUser; });
       if (myStu.length > 0 || students.length === 0) {
@@ -2105,8 +2150,9 @@ function deleteRecord(id) {
 }
 
 function renderAll() {
-  var _cnt = records.filter(function(r){ return currentUser===ADMIN_NAME||r.teacher===currentUser; }).length;
+  var _cnt = records.filter(function(r){ return isOwnerOrAdmin()||r.teacher===currentUser; }).length;
   document.getElementById('listCount').textContent = _cnt;
+  if (isOwnerOrAdmin()) updateTeacherFilter();
   if (activeTab==='list')  { updateStudentFilter(); renderList(); }
   if (activeTab==='stats') renderStats();
   updateLoadSelect();
@@ -2412,8 +2458,10 @@ function loadUserProfile(fbUser) {
     .then(function(snap) {
       var profile = snap.exists() ? snap.data() : {};
       currentUser   = profile.name || fbUser.email;
+      currentRole   = profile.role || 'teacher';
       currentSchool = fbUser.uid;
-      GAS_URL       = '';
+      currentSchoolId = profile.schoolId || null;
+      GAS_URL = '';
 
       // 헤더 학원명 업데이트
       var titleEl = document.querySelector('.header-title');
@@ -2451,13 +2499,62 @@ function loadUserProfile(fbUser) {
     });
 }
 
+function loadOwnerData(ownerUid) {
+  showLoading(true);
+  // 같은 schoolId를 가진 모든 사용자 조회
+  var usersRef = window.fbCollection(window.fbDb, 'users');
+  var q = window.fbQuery(usersRef, window.fbWhere('schoolId', '==', currentSchoolId));
+
+  window.fbGetDocs(q).then(function(snap) {
+    var memberUids = [ownerUid]; // 원장 본인 포함
+    snap.forEach(function(d) {
+      if (d.id !== ownerUid) memberUids.push(d.id);
+    });
+
+    // 모든 멤버 데이터 병렬 로드
+    var recPromises = memberUids.map(function(uid) {
+      return window.fbGetDocs(window.fbCollection(window.fbDb, 'users', uid, 'records'));
+    });
+    var stuPromises = memberUids.map(function(uid) {
+      return window.fbGetDocs(window.fbCollection(window.fbDb, 'users', uid, 'students'));
+    });
+
+    return Promise.all([Promise.all(recPromises), Promise.all(stuPromises)]);
+  }).then(function(results) {
+    var allRecs = [];
+    var allStus = [];
+    results[0].forEach(function(snap) {
+      snap.forEach(function(d) { allRecs.push(Object.assign({id: d.id}, d.data())); });
+    });
+    results[1].forEach(function(snap) {
+      snap.forEach(function(d) { allStus.push(Object.assign({id: d.id}, d.data())); });
+    });
+
+    records = allRecs.map(normalizeRec);
+    students = allStus;
+    persist();
+    localStorage.setItem(stuKey(), JSON.stringify(students));
+    setupAdminFilter(); // 원장도 선생님 필터 사용
+    renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
+    showToast('☁️ 학원 전체 데이터 불러오기 완료!');
+  }).catch(function() {
+    showToast('오프라인 모드', 'info');
+  }).finally(function() { showLoading(false); });
+}
+
 function initWithFirebase(uid) {
   showLoading(true);
   records  = (JSON.parse(localStorage.getItem(recKey())||'[]')).map(normalizeRec);
   students = JSON.parse(localStorage.getItem(stuKey())||'[]');
   renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
 
-  // Firestore에서 데이터 불러오기
+  // 원장이면 소속 학원 전체 데이터 불러오기
+  if (currentRole === 'owner' && currentSchoolId) {
+    loadOwnerData(uid);
+    return;
+  }
+
+  // 일반 선생님: 본인 데이터만
   var recRef = window.fbCollection(window.fbDb, 'users', uid, 'records');
   var stuRef = window.fbCollection(window.fbDb, 'users', uid, 'students');
 
@@ -2632,6 +2729,7 @@ function loadSchools() {
         + '<button onclick="copyCode(\'' + s.ownerCode + '\')" style="font-size:11px;background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">원장코드 복사</button>'
         + '<button onclick="copyCode(\'' + s.teacherCode + '\')" style="font-size:11px;background:#dbeafe;color:#1d4ed8;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">선생님코드 복사</button>'
         + '<button onclick="toggleSchoolStatus(\'' + s.id + '\',\'' + s.status + '\')" style="font-size:11px;background:' + (s.status==='active' ? '#fee2e2' : '#dcfce7') + ';color:' + (s.status==='active' ? '#dc2626' : '#16a34a') + ';border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">' + (s.status==='active' ? '비활성화' : '활성화') + '</button>'
+        + '<button onclick="deleteSchool(\'' + s.id + '\',\'' + s.name + '\')" style="font-size:11px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit">🗑️ 삭제</button>'
         + '</div>'
         + '</div>';
     }).join('');
@@ -2644,6 +2742,18 @@ function copyCode(code) {
   }).catch(function() {
     showAdminToast(code, 'info');
   });
+}
+
+function deleteSchool(id, name) {
+  if (!confirm(name + ' 학원을 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.')) return;
+  window.fbDeleteDoc(window.fbDoc(window.fbDb, 'schools', id))
+    .then(function() {
+      showAdminToast('✅ ' + name + ' 삭제 완료!');
+      loadSchools();
+    })
+    .catch(function(err) {
+      showAdminToast('오류: ' + err.message, 'error');
+    });
 }
 
 function toggleSchoolStatus(id, currentStatus) {
@@ -2662,6 +2772,21 @@ function initAdminDashboard() {
   loadSchools();
 }
 
+// 원장 또는 관리자 여부 체크
+function isOwnerOrAdmin() {
+  return currentRole === 'owner' || currentRole === 'superadmin' || isOwnerOrAdmin();
+}
+
+function getRoleBadge() {
+  if (currentRole === 'superadmin' || isOwnerOrAdmin()) {
+    return '<span style="background:#f59e0b;color:#1e293b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800">관리자</span>';
+  }
+  if (currentRole === 'owner') {
+    return '<span style="background:#6366f1;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800">원장</span>';
+  }
+  return '';
+}
+
 function initLoginSelect() {
   // Firebase 자동 로그인 체크
   if (window.fbOnAuthStateChanged && window.fbAuth) {
@@ -2673,123 +2798,33 @@ function initLoginSelect() {
   }
 }
 
-function selectSchool(schoolKey) {
-  var school = SCHOOLS[schoolKey];
-  if (!school) return;
-  currentSchool = schoolKey;
-  ACCOUNTS = school.accounts;
-  GAS_URL = school.gasUrl;
-
-  // 이름 입력란 초기화
-  var nameEl = document.getElementById('loginName');
-  if (nameEl) nameEl.value = '';
-
-  // 학원명 표시
-  document.getElementById('schoolLabel').textContent = school.name;
-
-  // 학원 선택 → 로그인 단계로
-  document.getElementById('schoolStep').style.display = 'none';
-  document.getElementById('loginStep').style.display = 'block';
-}
-
-function backToSchool() {
-  document.getElementById('schoolStep').style.display = 'block';
-  document.getElementById('loginStep').style.display = 'none';
-  document.getElementById('loginPw').value = '';
-  document.getElementById('loginError').style.display = 'none';
-}
-
-function doLogin() {
-  var name = document.getElementById('loginName').value.trim();
-  var pw   = document.getElementById('loginPw').value;
-  var errEl = document.getElementById('loginError');
-  if (!name || !pw) { errEl.style.display='block'; return; }
-
-  // 모든 학원에서 계정 자동 검색
-  var foundSchoolKey = null;
-  Object.keys(SCHOOLS).forEach(function(key) {
-    if (SCHOOLS[key].accounts[name] && SCHOOLS[key].accounts[name] === pw) {
-      foundSchoolKey = key;
-    }
-  });
-
-  if (!foundSchoolKey) {
-    errEl.style.display = 'block';
-    document.getElementById('loginPw').value = '';
-    return;
-  }
-
-  var school = SCHOOLS[foundSchoolKey];
-  currentUser   = name;
-  currentSchool = foundSchoolKey;
-  ACCOUNTS      = school.accounts;
-  GAS_URL       = school.gasUrl;
-
-  document.getElementById('loginScreen').style.display = 'none';
-
-  // 헤더 업데이트
-  var titleEl = document.querySelector('.header-title');
-  if (titleEl) titleEl.textContent = school.name;
-  var phoneEl = document.querySelector('.header-phone');
-  if (phoneEl) phoneEl.textContent = '상담: ' + school.phone;
-  var logoEl = document.querySelector('.header-logo');
-  if (logoEl && school.logo) logoEl.src = school.logo;
-
-  // 사용자 배지 (학원명 표시)
-  var userBadge = document.createElement('div');
-  userBadge.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.7);text-align:right;line-height:1.4';
-  userBadge.innerHTML = '👤 '+name+(name===ADMIN_NAME?' <span style="background:#f59e0b;color:#1e293b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800">관리자</span>':'')
-    +'<br><span style="font-size:10px;color:rgba(255,255,255,0.5)">'+school.name+'</span>';
-  var hdr = document.querySelector('.header-inner') || document.querySelector('.app > div');
-  if (hdr) hdr.appendChild(userBadge);
-
-  if (name === ADMIN_NAME) setupAdminFilter();
-  var lb = document.getElementById('logoutBtn');
-  if (lb) lb.style.display = 'inline-block';
-
-  var cachedUser   = localStorage.getItem('kms_cache_user');
-  var cachedSchool = localStorage.getItem('kms_cache_school');
-  if (cachedUser !== name || cachedSchool !== currentSchool) {
-    localStorage.removeItem(recKey());
-    localStorage.removeItem(stuKey());
-  }
-  localStorage.setItem('kms_cache_user', name);
-  localStorage.setItem('kms_cache_school', currentSchool);
-  init();
-}
-
-function doLogout() {
-  if (window._importing) {
-    showToast('저장 중입니다. 잠시 후 다시 시도해주세요.', 'error');
-    return;
-  }
-  if (currentUser) {
-    localStorage.setItem('kms_cache_user', currentUser);
-    localStorage.setItem('kms_cache_school', currentSchool);
-  }
-  currentUser = null;
-  currentSchool = null;
-  ACCOUNTS = {};
-  GAS_URL = '';
-  location.reload();
-}
 
 function setupAdminFilter() {
-  // 목록 탭 필터에 선생님 필터 추가
   var filterWrap = document.querySelector('#panel-list > div:first-child');
   if (!filterWrap) return;
+  if (document.getElementById('filterTeacher')) return; // 이미 있으면 스킵
+
   var sel = document.createElement('select');
   sel.id = 'filterTeacher';
   sel.style.cssText = 'flex:1;min-width:120px;padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;background:#fff';
   sel.innerHTML = '<option value="">👩‍🏫 전체 선생님</option>';
-  Object.keys(ACCOUNTS).forEach(function(name) {
-    if (name === ADMIN_NAME) return;
+  sel.onchange = function() { renderList(); renderStats(); };
+  filterWrap.insertBefore(sel, filterWrap.firstChild);
+}
+
+function updateTeacherFilter() {
+  var sel = document.getElementById('filterTeacher');
+  if (!sel) return;
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">👩‍🏫 전체 선생님</option>';
+  var teachers = {};
+  records.forEach(function(r) { if (r.teacher) teachers[r.teacher] = true; });
+  Object.keys(teachers).sort().forEach(function(t) {
     var opt = document.createElement('option');
-    opt.value = name; opt.textContent = name;
+    opt.value = t; opt.textContent = t + ' 선생님';
     sel.appendChild(opt);
   });
-  sel.onchange = function() { renderList(); };
-  filterWrap.insertBefore(sel, filterWrap.firstChild);
+  sel.value = cur;
 }
 
 function levelOf(v){return LEVELS.find(function(l){return l.value===v;})||LEVELS[0];}
@@ -2925,13 +2960,13 @@ function renderList() {
   if (records.length===0) { container.innerHTML='<div class="empty">📭 기록이 없습니다</div>'; return; }
   const filterVal = (document.getElementById('filterStudent')||{}).value || '';
   var teacherFilter = '';
-  if (currentUser === ADMIN_NAME) {
+  if (isOwnerOrAdmin()) {
     var tSel = document.getElementById('filterTeacher');
     teacherFilter = tSel ? tSel.value : '';
   }
   var filtered = records.filter(function(r) {
     if (currentUser !== ADMIN_NAME && r.teacher !== currentUser) return false;
-    if (currentUser === ADMIN_NAME && teacherFilter && r.teacher !== teacherFilter) return false;
+    if (isOwnerOrAdmin() && teacherFilter && r.teacher !== teacherFilter) return false;
     if (filterVal && r.student !== filterVal) return false;
     return true;
   });
@@ -2975,7 +3010,7 @@ function renderStats() {
     if (currentUser !== ADMIN_NAME && r.teacher !== currentUser) return false;
     return true;
   });
-  if (currentUser === ADMIN_NAME) {
+  if (isOwnerOrAdmin()) {
     var tSel = document.getElementById('filterTeacher');
     var tf = tSel ? tSel.value : '';
     if (tf) records = records.filter(function(r){ return r.teacher === tf; });
@@ -3815,7 +3850,7 @@ function copyRecord(id) {
 function updateLoadSelect() {
   // 본인 기록만 표시
   var myRecords = records.filter(function(r){
-    return currentUser === ADMIN_NAME || r.teacher === currentUser;
+    return isOwnerOrAdmin() || r.teacher === currentUser;
   });
 
   const stuSel = document.getElementById('loadStudentFilter');
