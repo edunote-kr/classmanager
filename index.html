@@ -2463,40 +2463,77 @@ function loadUserProfile(fbUser) {
       currentSchoolId = profile.schoolId || null;
       GAS_URL = '';
 
-      // 헤더 학원명 업데이트
-      var titleEl = document.querySelector('.header-title');
-      if (titleEl) titleEl.textContent = 'EduNote - 과제 관리 솔루션';
-
-      document.getElementById('loginScreen').style.display = 'none';
-      var landing = document.getElementById('landingPage');
-      if (landing) landing.style.display = 'none';
-
-      // 슈퍼관리자면 대시보드로
+      // 슈퍼관리자는 항상 통과
       if (fbUser.uid === SUPER_ADMIN_UID || profile.role === 'superadmin') {
+        document.getElementById('loginScreen').style.display = 'none';
+        var landing = document.getElementById('landingPage');
+        if (landing) landing.style.display = 'none';
         initAdminDashboard();
         showLoading(false);
         return;
       }
 
-      var mainApp = document.getElementById('mainApp');
-      if (mainApp) mainApp.style.display = 'block';
-      showLoading(false);
-
-      // 로그아웃 버튼 표시
-      var lb = document.getElementById('logoutBtn');
-      if (lb) lb.style.display = 'inline-block';
-
-      // 캐시 확인 후 init
-      var cachedUser = localStorage.getItem('kms_cache_user');
-      if (cachedUser !== currentUser) {
-        localStorage.removeItem(recKey());
-        localStorage.removeItem(stuKey());
+      // 학원 코드가 있으면 학원 상태 체크
+      if (currentSchoolId) {
+        return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId))
+          .then(function(schoolSnap) {
+            if (schoolSnap.exists()) {
+              var schoolData = schoolSnap.data();
+              if (schoolData.status === 'inactive') {
+                // 비활성화된 학원
+                showLoading(false);
+                window.fbSignOut(window.fbAuth);
+                showAuthError('❌ 서비스가 비활성화된 계정입니다. 관리자에게 문의해주세요.');
+                document.getElementById('loginScreen').style.display = 'flex';
+                return;
+              }
+            }
+            finishLogin(fbUser, profile);
+          });
       }
-      localStorage.setItem('kms_cache_user', currentUser);
-      localStorage.setItem('kms_cache_school', currentSchool);
 
-      initWithFirebase(fbUser.uid);
+      finishLogin(fbUser, profile);
     });
+}
+
+function finishLogin(fbUser, profile) {
+  document.getElementById('loginScreen').style.display = 'none';
+  var landing = document.getElementById('landingPage');
+  if (landing) landing.style.display = 'none';
+
+  // 헤더 학원명 업데이트
+  var titleEl = document.querySelector('.header-title');
+  if (titleEl) titleEl.textContent = 'EduNote - 과제 관리 솔루션';
+
+  // 사용자 배지
+  var userBadge = document.createElement('div');
+  userBadge.id = 'userBadgeEl';
+  userBadge.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.7);text-align:right;line-height:1.4';
+  userBadge.innerHTML = '👤 ' + currentUser + ' ' + getRoleBadge()
+    + '<br><span style="font-size:10px;color:rgba(255,255,255,0.5)">' + (profile.schoolName||'') + '</span>';
+  var hdr = document.querySelector('.logo-wrap');
+  if (hdr && !document.getElementById('userBadgeEl')) hdr.appendChild(userBadge);
+
+  var mainApp = document.getElementById('mainApp');
+  if (mainApp) mainApp.style.display = 'block';
+  showLoading(false);
+
+  // 로그아웃 버튼 표시
+  var lb = document.getElementById('logoutBtn');
+  if (lb) lb.style.display = 'inline-block';
+
+  if (currentRole === 'owner' || currentRole === 'superadmin') setupAdminFilter();
+
+  // 캐시 확인 후 init
+  var cachedUser = localStorage.getItem('kms_cache_user');
+  if (cachedUser !== currentUser) {
+    localStorage.removeItem(recKey());
+    localStorage.removeItem(stuKey());
+  }
+  localStorage.setItem('kms_cache_user', currentUser);
+  localStorage.setItem('kms_cache_school', currentSchool);
+
+  initWithFirebase(fbUser.uid);
 }
 
 function loadOwnerData(ownerUid) {
@@ -2601,6 +2638,12 @@ function doLogout() {
 }
 
 function showLoginModal() {
+  // 입력값 초기화
+  document.getElementById('loginId').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('authError').style.display = 'none';
+  // 로그인 탭으로 초기화
+  switchAuthTab('login');
   document.getElementById('loginScreen').style.display = 'flex';
 }
 
