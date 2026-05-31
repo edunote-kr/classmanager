@@ -3144,8 +3144,30 @@ function initAdminDashboard() {
 // 원장 또는 관리자 여부 체크
 function getImgLogoSrc() {
   if (currentSchoolProfile && currentSchoolProfile.logo) return currentSchoolProfile.logo;
-  // 기본 에듀노트 로고
   return document.querySelector('.header-logo') ? document.querySelector('.header-logo').src : '';
+}
+
+// 로고를 canvas로 그려서 반환 (html2canvas 호환 보장)
+function drawLogoToCanvas(size, callback) {
+  var src = getImgLogoSrc();
+  var c = document.createElement('canvas');
+  c.width = size; c.height = size;
+  var ctx = c.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+
+  if (!src) { callback(c); return; }
+
+  var img = new Image();
+  img.onload = function() {
+    // 정사각형 크롭 (중앙)
+    var sw = img.width, sh = img.height;
+    var crop = Math.min(sw, sh);
+    ctx.drawImage(img, (sw-crop)/2, (sh-crop)/2, crop, crop, 0, 0, size, size);
+    callback(c);
+  };
+  img.onerror = function() { callback(c); };
+  img.src = src;
 }
 
 function isOwnerOrAdmin() {
@@ -3791,24 +3813,15 @@ function captureStuStat(gid, done) {
     var logoRow = document.createElement('div');
     logoRow.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:10px';
 
-    var logoImg = document.createElement('img');
-    logoImg.src = getImgLogoSrc();
-    logoImg.style.cssText = 'width:40px;height:40px;border-radius:50%;border:2px solid #6366f1;object-fit:cover;background:#fff;flex-shrink:0';
-    logoImg.crossOrigin = 'anonymous';
-    logoRow.appendChild(logoImg);
-
     var logoText = document.createElement('div');
     logoText.style.cssText = 'font-size:10px;font-weight:900;letter-spacing:2px;color:#94a3b8;font-family:Georgia,serif';
     logoText.textContent = currentSchoolProfile.name || '';
-    logoRow.appendChild(logoText);
-
-    logo.appendChild(logoRow);
 
     var titleDiv = document.createElement('div');
     titleDiv.style.cssText = 'font-size:16px;font-weight:900;color:#fff;text-align:center';
     titleDiv.textContent = esc(stuName) + ' 학생 ' + monStr + ' 수업 요약';
-    logo.appendChild(titleDiv);
 
+    logo.appendChild(titleDiv);
     wrapper.appendChild(logo);
 
     // 내용 복사
@@ -3817,28 +3830,36 @@ function captureStuStat(gid, done) {
     wrapper.appendChild(innerClone);
     document.body.appendChild(wrapper);
 
-    // 캔버스를 실제 너비에 맞게 새로 그리기
-    var cloneCanvas = innerClone.querySelector('canvas');
-    var chartW = W - 24 - 32; // wrapper padding(12*2) + inner padding(16*2)
-    if (cloneCanvas) {
-      drawWordChartOnCanvas(cloneCanvas, stuName, chartW);
-    }
+    // 로고 캔버스로 그린 후 헤더에 삽입 후 캡처
+    drawLogoToCanvas(40, function(logoCanvas) {
+      logoCanvas.style.cssText = 'width:40px;height:40px;border-radius:50%;border:2px solid #6366f1;flex-shrink:0';
+      logoRow.appendChild(logoCanvas);
+      logoRow.appendChild(logoText);
+      logo.insertBefore(logoRow, titleDiv);
 
-    html2canvas(wrapper, { scale:2, useCORS:true, backgroundColor:'#f1f5f9', width:W, windowWidth:W, scrollX:0, scrollY:0 })
-      .then(function(canvas){
-        document.body.removeChild(wrapper);
-        if (wasCollapsed && body) { body.classList.add('collapsed'); body.style.maxHeight='0'; }
-        var a = document.createElement('a');
-        a.download = fname;
-        a.href = canvas.toDataURL('image/png');
-        a.click();
-        if (done) setTimeout(done, 800);
-      }).catch(function(){
-        if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
-        if (wasCollapsed && body) { body.classList.add('collapsed'); body.style.maxHeight='0'; }
-        if (done) done();
-      });
-  }, wasCollapsed ? 400 : 100);
+      // 캔버스를 실제 너비에 맞게 새로 그리기
+      var cloneCanvas = innerClone.querySelector('canvas');
+      var chartW = W - 24 - 32;
+      if (cloneCanvas) {
+        drawWordChartOnCanvas(cloneCanvas, stuName, chartW);
+      }
+
+      html2canvas(wrapper, { scale:2, useCORS:true, backgroundColor:'#f1f5f9', width:W, windowWidth:W, scrollX:0, scrollY:0 })
+        .then(function(canvas){
+          document.body.removeChild(wrapper);
+          if (wasCollapsed && body) { body.classList.add('collapsed'); body.style.maxHeight='0'; }
+          var a = document.createElement('a');
+          a.download = fname;
+          a.href = canvas.toDataURL('image/png');
+          a.click();
+          if (done) setTimeout(done, 800);
+        }).catch(function(){
+          if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+          if (wasCollapsed && body) { body.classList.add('collapsed'); body.style.maxHeight='0'; }
+          if (done) done();
+        });
+    }); // drawLogoToCanvas 끝
+  }, wasCollapsed ? 400 : 100); // setTimeout 끝
 }
 
 function saveStuStat(gid) {
@@ -4249,13 +4270,6 @@ function saveListCard(id) {
     const hdr = document.createElement('div');
     hdr.style.cssText = 'display:flex;align-items:center;gap:10px;border-bottom:2px solid #6366f1;padding-bottom:10px;margin-bottom:12px;';
 
-    // 로고 이미지 createElement로 생성 (html2canvas 호환)
-    var hdrImg = document.createElement('img');
-    hdrImg.src = getImgLogoSrc();
-    hdrImg.style.cssText = 'width:48px;height:48px;border-radius:10px;border:2px solid #6366f1;object-fit:cover;background:#fff;flex-shrink:0';
-    hdrImg.crossOrigin = 'anonymous';
-    hdr.appendChild(hdrImg);
-
     var hdrInfo = document.createElement('div');
     var hdrName = document.createElement('div');
     hdrName.style.cssText = 'font-size:15px;font-weight:900;letter-spacing:1px;font-family:Georgia,serif;color:#1e293b';
@@ -4265,7 +4279,7 @@ function saveListCard(id) {
     hdrPhone.innerHTML = '<strong>상담:</strong> ' + (currentSchoolProfile.phone || '');
     hdrInfo.appendChild(hdrName);
     hdrInfo.appendChild(hdrPhone);
-    hdr.appendChild(hdrInfo);
+    hdr.appendChild(hdrInfo); // 먼저 info 추가 (로고는 나중에 prepend)
 
     wrapper.appendChild(hdr);
 
@@ -4358,6 +4372,11 @@ function saveListCard(id) {
     wrapper.appendChild(clone);
     document.body.appendChild(wrapper);
 
+    // 로고 캔버스로 그린 후 헤더에 삽입 후 캡처
+    drawLogoToCanvas(48, function(logoCanvas) {
+      logoCanvas.style.cssText = 'width:48px;height:48px;border-radius:10px;border:2px solid #6366f1;flex-shrink:0';
+      hdr.insertBefore(logoCanvas, hdr.firstChild);
+
     html2canvas(wrapper, {
       scale: 2, useCORS: true, backgroundColor: '#ffffff',
       width: 560, windowWidth: 560,
@@ -4392,6 +4411,7 @@ function saveListCard(id) {
       if (btns) btns.style.display = '';
       showToast('저장 실패.', 'error');
     });
+    }); // drawLogoToCanvas 끝
   }
 
   if (window.html2canvas) { capture(); return; }
