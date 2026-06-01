@@ -2865,16 +2865,17 @@ function doGoogleLogin() {
 }
 
 function loadUserProfile(fbUser) {
+  showLoading(true);
   return window.fbGetDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid))
     .then(function(snap) {
       var profile = snap.exists() ? snap.data() : {};
-      currentUser   = profile.name || fbUser.email;
-      currentRole   = profile.role || 'teacher';
-      currentSchool = fbUser.uid;
+      currentUser     = profile.name || fbUser.email || fbUser.uid;
+      currentRole     = profile.role || 'teacher';
+      currentSchool   = fbUser.uid;
       currentSchoolId = profile.schoolId || null;
       GAS_URL = '';
 
-      // 슈퍼관리자는 항상 통과
+      // ① 슈퍼관리자 → 관리자 대시보드
       if (fbUser.uid === SUPER_ADMIN_UID || profile.role === 'superadmin') {
         document.getElementById('loginScreen').style.display = 'none';
         var landing = document.getElementById('landingPage');
@@ -2884,33 +2885,65 @@ function loadUserProfile(fbUser) {
         return;
       }
 
-      // status 체크 제거 (가입 자체는 자유, 이용권한은 schoolId로만 판단)
-
-      // schoolId로 학원 상태 체크
-      if (currentSchoolId) {
-        return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId))
-          .then(function(schoolSnap) {
-            if (schoolSnap.exists()) {
-              var sd = schoolSnap.data();
-              if (sd.status === 'inactive') {
-                showLoading(false);
-                showSubscribeScreen(fbUser, profile, 'inactive');
-                return;
-              }
-              if (sd.expiresAt && new Date() > new Date(sd.expiresAt)) {
-                showLoading(false);
-                showSubscribeScreen(fbUser, profile, 'expired', sd.expiresAt.slice(0,10));
-                return;
-              }
-            }
-            finishLogin(fbUser, profile);
-          });
+      // ② schoolId 없음 → 구독 화면
+      if (!currentSchoolId) {
+        showLoading(false);
+        document.getElementById('loginScreen').style.display = 'none';
+        showSubscribeScreen(fbUser, profile, 'none');
+        return;
       }
 
-      // schoolId 없으면 → 요금제/신청 화면
+      // ③ schoolId 있음 → schools 컬렉션 직접 조회
+      return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId))
+        .then(function(schoolSnap) {
+          // schoolId가 문서 ID와 다른 경우(코드값 등) → 전체 검색
+          if (!schoolSnap.exists()) {
+            return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools'))
+              .then(function(allSnap) {
+                var found = null;
+                allSnap.forEach(function(d) {
+                  var sd = d.data();
+                  if (sd.ownerCode === currentSchoolId ||
+                      sd.teacherCode === currentSchoolId ||
+                      (sd.name && profile.schoolName && sd.name.trim() === profile.schoolName.trim())) {
+                    found = Object.assign({ _id: d.id }, sd);
+                  }
+                });
+                if (found) {
+                  // schoolId를 실제 문서 ID로 업데이트
+                  window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid), { schoolId: found._id }).catch(function(){});
+                  currentSchoolId = found._id;
+                  return checkSchoolAndLogin(fbUser, profile, found);
+                }
+                // 매칭 학원 없음 → 구독 화면
+                showLoading(false);
+                showSubscribeScreen(fbUser, profile, 'none');
+              });
+          }
+          return checkSchoolAndLogin(fbUser, profile, Object.assign({ _id: schoolSnap.id }, schoolSnap.data()));
+        });
+    })
+    .catch(function(err) {
+      // 에러 시 로그인 화면으로 (조용히 실패하지 않음)
       showLoading(false);
-      showSubscribeScreen(fbUser, profile, 'none');
+      console.error('loadUserProfile error:', err);
+      document.getElementById('loginScreen').style.display = 'flex';
+      showAuthError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
     });
+}
+
+function checkSchoolAndLogin(fbUser, profile, schoolData) {
+  if (schoolData.status === 'inactive') {
+    showLoading(false);
+    showSubscribeScreen(fbUser, profile, 'inactive');
+    return;
+  }
+  if (schoolData.expiresAt && new Date() > new Date(schoolData.expiresAt)) {
+    showLoading(false);
+    showSubscribeScreen(fbUser, profile, 'expired', schoolData.expiresAt.slice(0,10));
+    return;
+  }
+  finishLogin(fbUser, profile);
 }
 
 var statusUnsubscribe = null; // 실시간 감지 해제 함수
