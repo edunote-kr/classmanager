@@ -1067,15 +1067,21 @@ onAuthStateChanged(auth, function(user) {
 <!-- PC 사이드바 -->
 <div id="sidebar" style="display:none">
   <!-- 로고 -->
+  <!-- 로고 영역 -->
   <div class="sidebar-logo" style="cursor:pointer" onclick="location.reload()">
-    <img class="logo-img" id="sidebarLogo" src="" alt="EduNote" style="width:44px;height:44px;flex-shrink:0">
+    <img class="logo-img header-logo" id="sidebarLogo" style="width:44px;height:44px;flex-shrink:0;border-radius:10px;border:2px solid #6366f1;object-fit:contain;background:#fff">
     <div style="min-width:0">
       <div style="font-size:15px;font-weight:900;color:#fff;font-family:Georgia,serif">EduNote</div>
-      <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
-        <span id="sidebarBadge" style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;background:#f59e0b;color:#1e293b;flex-shrink:0"></span>
-        <span id="sidebarUser" style="font-size:11px;color:rgba(255,255,255,0.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-      </div>
       <div id="sidebarSchool" style="font-size:10px;color:rgba(255,255,255,0.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px"></div>
+    </div>
+  </div>
+
+  <!-- 사용자 정보 -->
+  <div style="padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.08)">
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <span id="sidebarBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;background:#f59e0b;color:#1e293b;flex-shrink:0"></span>
+      <span id="sidebarUser" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.9);white-space:nowrap"></span>
+      <span id="sidebarUserId" style="font-size:11px;color:rgba(255,255,255,0.4);white-space:nowrap"></span>
     </div>
   </div>
 
@@ -4819,15 +4825,19 @@ function initSidebar(profile) {
   applyLayout();
   window.addEventListener('resize', applyLayout);
 
-  // 사이드바 정보 채우기
+  // 사이드바 로고 - header-logo와 동일한 이미지 사용
+  var headerLogo = document.querySelector('.header-logo');
   var logoEl = document.getElementById('sidebarLogo');
-  if (logoEl) logoEl.src = currentSchoolProfile.logo || document.querySelector('.header-logo')?.src || '';
+  if (logoEl && headerLogo) logoEl.src = headerLogo.src;
 
   var schoolEl = document.getElementById('sidebarSchool');
   if (schoolEl) schoolEl.textContent = profile.schoolName || '';
 
   var userEl = document.getElementById('sidebarUser');
-  if (userEl) userEl.textContent = profile.name || currentUser || '';
+  if (userEl) userEl.textContent = profile.name || '';
+
+  var userIdEl = document.getElementById('sidebarUserId');
+  if (userIdEl) userIdEl.textContent = profile.userId ? '(' + profile.userId + ')' : '';
 
   var badgeEl = document.getElementById('sidebarBadge');
   if (badgeEl) {
