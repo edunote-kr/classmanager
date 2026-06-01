@@ -865,121 +865,90 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
 </div>
 
 <!-- 활성화 화면 -->
-<div id="activateScreen" style="display:none;position:fixed;inset:0;background:#f1f5f9;z-index:8500;overflow-y:auto;font-family:'Noto Sans KR',sans-serif">
-  <div style="max-width:500px;margin:0 auto;padding:30px 20px 60px">
-
-    <!-- 상단 안내 -->
-    <div style="text-align:center;margin-bottom:28px">
-      <div style="font-size:40px;margin-bottom:12px">🔒</div>
-      <div style="font-size:18px;font-weight:900;color:#1e293b;margin-bottom:6px">활성화되지 않은 계정입니다</div>
-      <div style="font-size:13px;color:#64748b;line-height:1.6">
-        에듀노트 서비스를 이용하려면<br>학원 코드 입력 또는 요금제 신청이 필요합니다
-      </div>
-      <button onclick="doLogout()" style="margin-top:12px;background:none;border:none;font-size:12px;color:#94a3b8;cursor:pointer;font-family:inherit;text-decoration:underline">다른 계정으로 로그인</button>
+<!-- 비활성화 계정 팝업 모달 -->
+<div id="activateScreen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9500;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif">
+  <div style="background:#fff;border-radius:20px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto">
+    <div style="background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:20px 20px 0 0;padding:24px;text-align:center">
+      <div style="font-size:36px;margin-bottom:10px">🔒</div>
+      <div style="font-size:17px;font-weight:900;color:#fff;margin-bottom:6px">비활성화된 계정입니다</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.6)">학원 코드 입력 또는 요금제 신청이 필요합니다</div>
     </div>
-
-    <!-- 학원 코드 입력 -->
-    <div style="background:#fff;border-radius:16px;padding:22px;border:1.5px solid #e2e8f0;margin-bottom:16px">
-      <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:4px">🏫 학원 코드가 있으신가요?</div>
-      <div style="font-size:12px;color:#64748b;margin-bottom:14px">원장/선생님 코드를 입력하면 즉시 활성화됩니다</div>
-      <div style="display:flex;gap:8px">
-        <input type="text" id="activateCodeInput" placeholder="6자리 코드 입력" maxlength="10"
-          style="flex:1;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;box-sizing:border-box;text-transform:uppercase;letter-spacing:3px;font-weight:700;text-align:center"
-          oninput="this.value=this.value.toUpperCase()">
-        <button onclick="submitActivateCode()" style="padding:11px 18px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap">확인</button>
-      </div>
-      <div id="activateCodeResult" style="display:none;margin-top:10px;font-size:12px;font-weight:700;text-align:center;padding:8px;border-radius:8px"></div>
-    </div>
-
-    <!-- 구분선 -->
-    <div style="display:flex;align-items:center;gap:12px;margin:20px 0">
-      <div style="flex:1;height:1px;background:#e2e8f0"></div>
-      <div style="font-size:13px;font-weight:700;color:#94a3b8">처음이시라면?</div>
-      <div style="flex:1;height:1px;background:#e2e8f0"></div>
-    </div>
-
-    <!-- 요금제 안내 -->
-    <div style="margin-bottom:16px">
-      <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:14px;text-align:center">💳 요금제 안내</div>
-
-      <!-- 추천 배지 -->
-      <div style="background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:14px;padding:18px;margin-bottom:10px;position:relative;overflow:hidden">
-        <div style="position:absolute;top:10px;right:12px;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:10px">⭐ 추천</div>
-        <div style="display:flex;align-items:center;gap:14px">
-          <div style="font-size:32px">🆓</div>
-          <div style="flex:1">
-            <div style="font-size:15px;font-weight:900;color:#fff">무료 체험</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px">14일 · 처음 이용자 한정 · 카드 불필요</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:22px;font-weight:900;color:#fff">0원</div>
-          </div>
+    <div style="padding:20px 24px 28px">
+      <div style="margin-bottom:20px">
+        <div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:4px">🏫 학원 코드가 있으신가요?</div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:10px">원장/선생님 코드 입력 시 즉시 활성화됩니다</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="activateCodeInput" placeholder="코드 입력" maxlength="10"
+            style="flex:1;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:16px;font-family:inherit;box-sizing:border-box;text-transform:uppercase;letter-spacing:3px;font-weight:700;text-align:center"
+            oninput="this.value=this.value.toUpperCase()">
+          <button onclick="submitActivateCode()" style="padding:11px 16px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap">확인</button>
         </div>
+        <div id="activateCodeResult" style="display:none;margin-top:8px;font-size:12px;font-weight:700;text-align:center;padding:8px;border-radius:8px"></div>
       </div>
-
-      <!-- 나머지 플랜 -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="flex:1;height:1px;background:#e2e8f0"></div>
+        <div style="font-size:12px;font-weight:700;color:#94a3b8">처음이시라면?</div>
+        <div style="flex:1;height:1px;background:#e2e8f0"></div>
+      </div>
+      <div style="background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;position:relative">
+        <div style="position:absolute;top:-8px;right:12px;background:#fbbf24;color:#1e293b;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px">⭐ 추천</div>
+        <div style="font-size:28px">🆓</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:900;color:#fff">무료 체험</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.7)">14일 · 카드 불필요</div>
+        </div>
+        <div style="font-size:20px;font-weight:900;color:#fff">0원</div>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-
-        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px;text-align:center">
-          <div style="font-size:20px;margin-bottom:6px">☀️</div>
-          <div style="font-size:13px;font-weight:800;color:#1e293b">단기</div>
-          <div style="font-size:11px;color:#94a3b8;margin:3px 0">30일</div>
-          <div style="font-size:16px;font-weight:900;color:#6366f1">10원</div>
+        <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:18px">☀️</div>
+          <div style="font-size:12px;font-weight:800;color:#1e293b">단기</div>
+          <div style="font-size:10px;color:#94a3b8">30일</div>
+          <div style="font-size:14px;font-weight:900;color:#6366f1">10원</div>
         </div>
-
-        <div style="background:#fff;border:2px solid #f59e0b;border-radius:12px;padding:14px;text-align:center;position:relative">
-          <div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#f59e0b;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;white-space:nowrap">인기</div>
-          <div style="font-size:20px;margin-bottom:6px">📅</div>
-          <div style="font-size:13px;font-weight:800;color:#1e293b">표준</div>
-          <div style="font-size:11px;color:#94a3b8;margin:3px 0">90일</div>
-          <div style="font-size:16px;font-weight:900;color:#6366f1">10원</div>
+        <div style="background:#f8fafc;border:2px solid #f59e0b;border-radius:10px;padding:12px;text-align:center;position:relative">
+          <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:#f59e0b;color:#fff;font-size:9px;font-weight:800;padding:1px 7px;border-radius:6px;white-space:nowrap">인기</div>
+          <div style="font-size:18px">📅</div>
+          <div style="font-size:12px;font-weight:800;color:#1e293b">표준</div>
+          <div style="font-size:10px;color:#94a3b8">90일</div>
+          <div style="font-size:14px;font-weight:900;color:#6366f1">10원</div>
         </div>
-
-        <div style="background:#1e293b;border-radius:12px;padding:14px;text-align:center;position:relative">
-          <div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;white-space:nowrap">최대할인</div>
-          <div style="font-size:20px;margin-bottom:6px">🏆</div>
-          <div style="font-size:13px;font-weight:800;color:#fff">연간</div>
-          <div style="font-size:11px;color:#94a3b8;margin:3px 0">365일</div>
-          <div style="font-size:16px;font-weight:900;color:#a5b4fc">10원</div>
+        <div style="background:#1e293b;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:18px">🏆</div>
+          <div style="font-size:12px;font-weight:800;color:#fff">연간</div>
+          <div style="font-size:10px;color:#94a3b8">365일</div>
+          <div style="font-size:14px;font-weight:900;color:#a5b4fc">10원</div>
         </div>
       </div>
-
-      <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:16px">※ 선생님 3명 기본 포함 · 추가 인원 별도 문의</div>
-
-      <!-- 신청 버튼 -->
-      <button onclick="showActivatePlanSelect()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">서비스 신청하기 →</button>
-      <div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:8px">신청 후 담당자 확인 시 활성화됩니다</div>
+      <button onclick="showActivatePlanSelect()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:4px">서비스 신청하기 →</button>
+      <div style="font-size:10px;color:#94a3b8;text-align:center;margin-bottom:14px">신청 후 담당자 확인 시 활성화됩니다</div>
+      <div id="activatePlanSection" style="display:none;border-top:1px solid #e2e8f0;padding-top:14px">
+        <div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:10px">플랜 선택</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+          <div onclick="selectActivatePlan('free')" id="aplan-free" style="border:2px solid #6366f1;border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;background:#faf9ff">
+            <div style="font-size:11px;font-weight:800;color:#6366f1">🆓</div><div style="font-size:9px;color:#94a3b8">14일</div>
+          </div>
+          <div onclick="selectActivatePlan('30')" id="aplan-30" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer">
+            <div style="font-size:11px;font-weight:800;color:#1e293b">☀️</div><div style="font-size:9px;color:#94a3b8">30일</div>
+          </div>
+          <div onclick="selectActivatePlan('90')" id="aplan-90" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer">
+            <div style="font-size:11px;font-weight:800;color:#1e293b">📅</div><div style="font-size:9px;color:#94a3b8">90일</div>
+          </div>
+          <div onclick="selectActivatePlan('365')" id="aplan-365" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer">
+            <div style="font-size:11px;font-weight:800;color:#1e293b">🏆</div><div style="font-size:9px;color:#94a3b8">365일</div>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">선생님 인원수 (본인 제외)</label>
+          <input type="number" id="activateTeachers" min="0" max="99" value="2" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+        </div>
+        <button onclick="submitActivateApply()" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">신청 완료</button>
+        <div id="activateApplyResult" style="display:none;text-align:center;margin-top:10px;font-size:13px;font-weight:700"></div>
+      </div>
+      <div style="text-align:center;margin-top:14px">
+        <button onclick="doLogout()" style="background:none;border:none;font-size:12px;color:#94a3b8;cursor:pointer;font-family:inherit;text-decoration:underline">다른 계정으로 로그인</button>
+      </div>
     </div>
-
-    <!-- 플랜 선택 (신청 클릭 시 표시) -->
-    <div id="activatePlanSection" style="display:none;background:#fff;border-radius:16px;padding:20px;border:1.5px solid #e2e8f0">
-      <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:14px">플랜 선택</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-        <div onclick="selectActivatePlan('free')" id="aplan-free" style="border:2px solid #6366f1;border-radius:10px;padding:12px;text-align:center;cursor:pointer;background:#faf9ff">
-          <div style="font-size:13px;font-weight:900;color:#6366f1">🆓 무료체험</div>
-          <div style="font-size:11px;color:#94a3b8">14일 · 0원</div>
-        </div>
-        <div onclick="selectActivatePlan('30')" id="aplan-30" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center;cursor:pointer">
-          <div style="font-size:13px;font-weight:900;color:#1e293b">☀️ 단기</div>
-          <div style="font-size:11px;color:#94a3b8">30일 · 10원</div>
-        </div>
-        <div onclick="selectActivatePlan('90')" id="aplan-90" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center;cursor:pointer">
-          <div style="font-size:13px;font-weight:900;color:#1e293b">📅 표준</div>
-          <div style="font-size:11px;color:#94a3b8">90일 · 10원</div>
-        </div>
-        <div onclick="selectActivatePlan('365')" id="aplan-365" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center;cursor:pointer">
-          <div style="font-size:13px;font-weight:900;color:#1e293b">🏆 연간</div>
-          <div style="font-size:11px;color:#94a3b8">365일 · 10원</div>
-        </div>
-      </div>
-      <div style="margin-bottom:10px">
-        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">선생님 인원수 (본인 제외)</label>
-        <input type="number" id="activateTeachers" min="0" max="99" value="2" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
-      </div>
-      <button onclick="submitActivateApply()" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">신청 완료</button>
-      <div id="activateApplyResult" style="display:none;text-align:center;margin-top:10px;font-size:13px;font-weight:700"></div>
-    </div>
-
   </div>
 </div>
 
@@ -3084,18 +3053,20 @@ var statusUnsubscribe = null; // 실시간 감지 해제 함수
 function watchUserStatus(uid) {
   if (statusUnsubscribe) { statusUnsubscribe(); statusUnsubscribe = null; }
 
-  var firstFire = true;
+  var prevStatus = null; // 이전 상태 추적
 
   statusUnsubscribe = window.fbOnSnapshot(
     window.fbDoc(window.fbDb, 'users', uid),
     function(snap) {
-      if (firstFire) { firstFire = false; return; } // 첫 호출(현재값)은 무시
       if (!snap.exists() || !currentUser) return;
-      var data = snap.data();
-      if (data.status === 'inactive') {
+      var newStatus = snap.data().status;
+
+      // active → inactive 로 변경됐을 때만 로그아웃
+      if (prevStatus === 'active' && newStatus === 'inactive') {
         showToast('❌ 계정이 비활성화됐습니다.', 'error');
         setTimeout(function() { doLogout(); }, 1500);
       }
+      prevStatus = newStatus;
     }
   );
 }
@@ -3303,7 +3274,7 @@ var selectedActivatePlan = 'free';
 
 function showActivateScreen(fbUser, profile) {
   activateUser = { fbUser: fbUser, profile: profile };
-  document.getElementById('activateScreen').style.display = 'block';
+  document.getElementById('activateScreen').style.display = 'flex';
   document.getElementById('activateCodeInput').value = '';
   document.getElementById('activateCodeResult').style.display = 'none';
   document.getElementById('activatePlanSection').style.display = 'none';
