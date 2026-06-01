@@ -1071,7 +1071,11 @@ onAuthStateChanged(auth, function(user) {
     <img class="logo-img" id="sidebarLogo" src="" alt="EduNote" style="width:44px;height:44px;flex-shrink:0">
     <div style="min-width:0">
       <div style="font-size:15px;font-weight:900;color:#fff;font-family:Georgia,serif">EduNote</div>
-      <div id="sidebarSchool" style="font-size:11px;color:rgba(255,255,255,0.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
+        <span id="sidebarBadge" style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;background:#f59e0b;color:#1e293b;flex-shrink:0"></span>
+        <span id="sidebarUser" style="font-size:11px;color:rgba(255,255,255,0.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      </div>
+      <div id="sidebarSchool" style="font-size:10px;color:rgba(255,255,255,0.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px"></div>
     </div>
   </div>
 
@@ -1091,16 +1095,6 @@ onAuthStateChanged(auth, function(user) {
       <span class="tab-icon">👥</span> 학생
     </button>
   </nav>
-
-  <!-- 하단 사용자/버튼 -->
-  <div class="sidebar-bottom">
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 4px">
-      <span id="sidebarBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:8px;background:#f59e0b;color:#1e293b"></span>
-      <span id="sidebarUser" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-    </div>
-    <button onclick="showMyPage()" style="width:100%;padding:9px;background:rgba(99,102,241,0.3);border:1px solid rgba(99,102,241,0.5);color:#a5b4fc;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">마이페이지</button>
-    <button onclick="doLogout()" style="width:100%;padding:9px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">로그아웃</button>
-  </div>
 </div>
 
 <div class="content" id="mainContent">
