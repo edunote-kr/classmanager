@@ -112,34 +112,52 @@ textarea { resize:vertical; }
 .dist-pct   { font-size:10px; color:#94a3b8; }
 
 @media (min-width: 768px) {
-  /* ── PC 사이드바 레이아웃 ── */
-  #mainApp.sidebar-active { display: flex; flex-direction: row; min-height: 100vh; }
+  /* ── PC Grid 레이아웃: 사이드바(좌) + 헤더(우상) + 콘텐츠(우하) ── */
+  #mainApp.sidebar-active {
+    display: grid !important;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+  }
 
-  /* 사이드바 */
+  /* 사이드바: 좌측 전체 높이 */
   #sidebar {
     display: flex !important;
     flex-direction: column;
-    width: 220px;
-    min-width: 220px;
+    grid-column: 1;
+    grid-row: 1 / -1;
     background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
     position: sticky;
     top: 0;
     height: 100vh;
     overflow-y: auto;
     z-index: 100;
-    padding: 0;
   }
 
-  /* 모바일 헤더/탭 숨김 */
-  #mainApp > header { display: none !important; }
-  #mainApp > .tabs  { display: none !important; }
+  /* 헤더: 우측 상단 */
+  #mainApp.sidebar-active > header {
+    display: flex !important;
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 12px 32px;
+    background: #fff;
+    border-bottom: 1.5px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
 
-  /* 콘텐츠 영역 */
+  /* 탭: PC에서 숨김 */
+  #mainApp.sidebar-active > .tabs { display: none !important; }
+
+  /* 콘텐츠: 우측 하단 */
   #mainContent {
-    flex: 1;
+    grid-column: 2;
+    grid-row: 2;
+    background: #f1f5f9;
     min-width: 0;
     overflow-y: auto;
-    background: #f1f5f9;
   }
 
   .content { padding: 28px 32px; max-width: 1200px; }
@@ -160,7 +178,7 @@ textarea { resize:vertical; }
 }
 
 @media (min-width: 1024px) {
-  #sidebar { width: 240px; min-width: 240px; }
+  #mainApp.sidebar-active { grid-template-columns: 240px 1fr; }
   .content { padding: 32px 40px; }
   #recordList { grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); }
 }
@@ -791,8 +809,8 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
     </div>
   </div>
   <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
-    <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">👤 마이페이지</button>
-    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">🚪 로그아웃</button>
+    <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">마이페이지</button>
+    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">로그아웃</button>
   </div>
 </header>
 
@@ -800,7 +818,7 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
 <div id="myPageModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
   <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <div style="font-size:16px;font-weight:800;color:#1e293b">👤 마이페이지</div>
+      <div style="font-size:16px;font-weight:800;color:#1e293b">마이페이지</div>
       <button onclick="closeMyPage()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer">×</button>
     </div>
 
@@ -1056,8 +1074,8 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
       <span id="sidebarBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:8px;background:#f59e0b;color:#1e293b"></span>
       <span id="sidebarUser" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
     </div>
-    <button onclick="showMyPage()" style="width:100%;padding:9px;background:rgba(99,102,241,0.3);border:1px solid rgba(99,102,241,0.5);color:#a5b4fc;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">👤 마이페이지</button>
-    <button onclick="doLogout()" style="width:100%;padding:9px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">🚪 로그아웃</button>
+    <button onclick="showMyPage()" style="width:100%;padding:9px;background:rgba(99,102,241,0.3);border:1px solid rgba(99,102,241,0.5);color:#a5b4fc;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">마이페이지</button>
+    <button onclick="doLogout()" style="width:100%;padding:9px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left">로그아웃</button>
   </div>
 </div>
 
@@ -3098,7 +3116,7 @@ function finishLogin(fbUser, profile) {
   if (mainApp) {
     if (window.innerWidth >= 768) {
       mainApp.classList.add('sidebar-active');
-      mainApp.style.display = 'flex';
+      mainApp.style.display = 'grid';
     } else {
       mainApp.style.display = 'block';
     }
@@ -4776,7 +4794,7 @@ function initSidebar(profile) {
     var isPC = window.innerWidth >= 768;
     if (sidebar) sidebar.style.display = isPC ? 'flex' : 'none';
     if (mainApp && mainApp.style.display !== 'none') {
-      if (isPC) { mainApp.classList.add('sidebar-active'); mainApp.style.display = 'flex'; }
+      if (isPC) { mainApp.classList.add('sidebar-active'); mainApp.style.display = 'grid'; }
       else      { mainApp.classList.remove('sidebar-active'); mainApp.style.display = 'block'; }
     }
   }
