@@ -860,6 +860,125 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
   </div>
 </div>
 
+<!-- 활성화 화면 -->
+<div id="activateScreen" style="display:none;position:fixed;inset:0;background:#f1f5f9;z-index:8500;overflow-y:auto;font-family:'Noto Sans KR',sans-serif">
+  <div style="max-width:500px;margin:0 auto;padding:30px 20px 60px">
+
+    <!-- 상단 안내 -->
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:40px;margin-bottom:12px">🔒</div>
+      <div style="font-size:18px;font-weight:900;color:#1e293b;margin-bottom:6px">활성화되지 않은 계정입니다</div>
+      <div style="font-size:13px;color:#64748b;line-height:1.6">
+        에듀노트 서비스를 이용하려면<br>학원 코드 입력 또는 요금제 신청이 필요합니다
+      </div>
+      <button onclick="doLogout()" style="margin-top:12px;background:none;border:none;font-size:12px;color:#94a3b8;cursor:pointer;font-family:inherit;text-decoration:underline">다른 계정으로 로그인</button>
+    </div>
+
+    <!-- 학원 코드 입력 -->
+    <div style="background:#fff;border-radius:16px;padding:22px;border:1.5px solid #e2e8f0;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:4px">🏫 학원 코드가 있으신가요?</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px">원장/선생님 코드를 입력하면 즉시 활성화됩니다</div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="activateCodeInput" placeholder="6자리 코드 입력" maxlength="10"
+          style="flex:1;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;box-sizing:border-box;text-transform:uppercase;letter-spacing:3px;font-weight:700;text-align:center"
+          oninput="this.value=this.value.toUpperCase()">
+        <button onclick="submitActivateCode()" style="padding:11px 18px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap">확인</button>
+      </div>
+      <div id="activateCodeResult" style="display:none;margin-top:10px;font-size:12px;font-weight:700;text-align:center;padding:8px;border-radius:8px"></div>
+    </div>
+
+    <!-- 구분선 -->
+    <div style="display:flex;align-items:center;gap:12px;margin:20px 0">
+      <div style="flex:1;height:1px;background:#e2e8f0"></div>
+      <div style="font-size:13px;font-weight:700;color:#94a3b8">처음이시라면?</div>
+      <div style="flex:1;height:1px;background:#e2e8f0"></div>
+    </div>
+
+    <!-- 요금제 안내 -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:14px;text-align:center">💳 요금제 안내</div>
+
+      <!-- 추천 배지 -->
+      <div style="background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:14px;padding:18px;margin-bottom:10px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:10px;right:12px;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:10px">⭐ 추천</div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="font-size:32px">🆓</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:900;color:#fff">무료 체험</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px">14일 · 처음 이용자 한정 · 카드 불필요</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:22px;font-weight:900;color:#fff">0원</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 나머지 플랜 -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+
+        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:20px;margin-bottom:6px">☀️</div>
+          <div style="font-size:13px;font-weight:800;color:#1e293b">단기</div>
+          <div style="font-size:11px;color:#94a3b8;margin:3px 0">30일</div>
+          <div style="font-size:16px;font-weight:900;color:#6366f1">10원</div>
+        </div>
+
+        <div style="background:#fff;border:2px solid #f59e0b;border-radius:12px;padding:14px;text-align:center;position:relative">
+          <div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#f59e0b;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;white-space:nowrap">인기</div>
+          <div style="font-size:20px;margin-bottom:6px">📅</div>
+          <div style="font-size:13px;font-weight:800;color:#1e293b">표준</div>
+          <div style="font-size:11px;color:#94a3b8;margin:3px 0">90일</div>
+          <div style="font-size:16px;font-weight:900;color:#6366f1">10원</div>
+        </div>
+
+        <div style="background:#1e293b;border-radius:12px;padding:14px;text-align:center;position:relative">
+          <div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;white-space:nowrap">최대할인</div>
+          <div style="font-size:20px;margin-bottom:6px">🏆</div>
+          <div style="font-size:13px;font-weight:800;color:#fff">연간</div>
+          <div style="font-size:11px;color:#94a3b8;margin:3px 0">365일</div>
+          <div style="font-size:16px;font-weight:900;color:#a5b4fc">10원</div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:16px">※ 선생님 3명 기본 포함 · 추가 인원 별도 문의</div>
+
+      <!-- 신청 버튼 -->
+      <button onclick="showActivatePlanSelect()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">서비스 신청하기 →</button>
+      <div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:8px">신청 후 담당자 확인 시 활성화됩니다</div>
+    </div>
+
+    <!-- 플랜 선택 (신청 클릭 시 표시) -->
+    <div id="activatePlanSection" style="display:none;background:#fff;border-radius:16px;padding:20px;border:1.5px solid #e2e8f0">
+      <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:14px">플랜 선택</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div onclick="selectActivatePlan('free')" id="aplan-free" style="border:2px solid #6366f1;border-radius:10px;padding:12px;text-align:center;cursor:pointer;background:#faf9ff">
+          <div style="font-size:13px;font-weight:900;color:#6366f1">🆓 무료체험</div>
+          <div style="font-size:11px;color:#94a3b8">14일 · 0원</div>
+        </div>
+        <div onclick="selectActivatePlan('30')" id="aplan-30" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center;cursor:pointer">
+          <div style="font-size:13px;font-weight:900;color:#1e293b">☀️ 단기</div>
+          <div style="font-size:11px;color:#94a3b8">30일 · 10원</div>
+        </div>
+        <div onclick="selectActivatePlan('90')" id="aplan-90" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center;cursor:pointer">
+          <div style="font-size:13px;font-weight:900;color:#1e293b">📅 표준</div>
+          <div style="font-size:11px;color:#94a3b8">90일 · 10원</div>
+        </div>
+        <div onclick="selectActivatePlan('365')" id="aplan-365" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center;cursor:pointer">
+          <div style="font-size:13px;font-weight:900;color:#1e293b">🏆 연간</div>
+          <div style="font-size:11px;color:#94a3b8">365일 · 10원</div>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">선생님 인원수 (본인 제외)</label>
+        <input type="number" id="activateTeachers" min="0" max="99" value="2" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      </div>
+      <button onclick="submitActivateApply()" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">신청 완료</button>
+      <div id="activateApplyResult" style="display:none;text-align:center;margin-top:10px;font-size:13px;font-weight:700"></div>
+    </div>
+
+  </div>
+</div>
+
 <div id="subscribeScreen" style="display:none;position:fixed;inset:0;background:#f1f5f9;z-index:8000;overflow-y:auto;font-family:'Noto Sans KR',sans-serif">
   <div style="max-width:500px;margin:0 auto;padding:30px 20px">
 
@@ -2813,7 +2932,7 @@ function doFirebaseSignup() {
         email:     email,
         phone:     phoneVerifiedNumber,
         role:      'teacher',
-        status:    'active', // 가입 자체는 자유 - 이용 권한은 schoolId로 판단
+        status:    'inactive', // 관리자 승인 후 active로 변경
         createdAt: new Date().toISOString()
       });
     })
@@ -2880,7 +2999,7 @@ function loadUserProfile(fbUser) {
       currentSchoolId = profile.schoolId || null;
       GAS_URL = '';
 
-      // ① 슈퍼관리자 → 관리자 대시보드
+      // ① 슈퍼관리자 → 항상 통과
       if (fbUser.uid === SUPER_ADMIN_UID || profile.role === 'superadmin') {
         document.getElementById('loginScreen').style.display = 'none';
         var landing = document.getElementById('landingPage');
@@ -2891,19 +3010,30 @@ function loadUserProfile(fbUser) {
         return;
       }
 
-      // ② schoolId 없음 → 구독 화면
+      // ② status 체크 - inactive면 활성화 화면으로
+      if (!profile.status || profile.status === 'inactive') {
+        hideInitLoader();
+        showLoading(false);
+        document.getElementById('loginScreen').style.display = 'none';
+        showActivateScreen(fbUser, profile);
+        return;
+      }
+
+      // ③ status === 'active' → schoolId 체크
       if (!currentSchoolId) {
+        // schoolId 없음 → 구독 화면
+        hideInitLoader();
         showLoading(false);
         document.getElementById('loginScreen').style.display = 'none';
         showSubscribeScreen(fbUser, profile, 'none');
         return;
       }
 
-      // ③ schoolId 있음 → schools 컬렉션 직접 조회
+      // ④ schoolId 있음 → 학원 만료 체크
       return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId))
         .then(function(schoolSnap) {
-          // schoolId가 문서 ID와 다른 경우(코드값 등) → 전체 검색
           if (!schoolSnap.exists()) {
+            // schoolId가 코드값인 경우 전체 검색 후 실제 ID 업데이트
             return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools'))
               .then(function(allSnap) {
                 var found = null;
@@ -2916,14 +3046,11 @@ function loadUserProfile(fbUser) {
                   }
                 });
                 if (found) {
-                  // schoolId를 실제 문서 ID로 업데이트
                   window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid), { schoolId: found._id }).catch(function(){});
                   currentSchoolId = found._id;
                   return checkSchoolAndLogin(fbUser, profile, found);
                 }
-                // 매칭 학원 없음 → 구독 화면
-                showLoading(false);
-                showSubscribeScreen(fbUser, profile, 'none');
+                finishLogin(fbUser, profile);
               });
           }
           return checkSchoolAndLogin(fbUser, profile, Object.assign({ _id: schoolSnap.id }, schoolSnap.data()));
@@ -2939,12 +3066,8 @@ function loadUserProfile(fbUser) {
 }
 
 function checkSchoolAndLogin(fbUser, profile, schoolData) {
-  if (schoolData.status === 'inactive') {
-    showLoading(false);
-    showSubscribeScreen(fbUser, profile, 'inactive');
-    return;
-  }
   if (schoolData.expiresAt && new Date() > new Date(schoolData.expiresAt)) {
+    hideInitLoader();
     showLoading(false);
     showSubscribeScreen(fbUser, profile, 'expired', schoolData.expiresAt.slice(0,10));
     return;
@@ -2955,17 +3078,17 @@ function checkSchoolAndLogin(fbUser, profile, schoolData) {
 var statusUnsubscribe = null; // 실시간 감지 해제 함수
 
 function watchUserStatus(uid) {
-  // 기존 감지 해제
   if (statusUnsubscribe) { statusUnsubscribe(); statusUnsubscribe = null; }
 
-  // 사용자 문서 실시간 감지
+  var firstFire = true;
+
   statusUnsubscribe = window.fbOnSnapshot(
     window.fbDoc(window.fbDb, 'users', uid),
     function(snap) {
-      if (!snap.exists()) return;
+      if (firstFire) { firstFire = false; return; } // 첫 호출(현재값)은 무시
+      if (!snap.exists() || !currentUser) return;
       var data = snap.data();
-      // 비활성화 감지 시 즉시 로그아웃
-      if (data.status === 'inactive' && currentUser) {
+      if (data.status === 'inactive') {
         showToast('❌ 계정이 비활성화됐습니다.', 'error');
         setTimeout(function() { doLogout(); }, 1500);
       }
@@ -3162,8 +3285,150 @@ function doLogout() {
     document.getElementById('mainApp').style.display = 'none';
     document.getElementById('mainApp').classList.remove('sidebar-active');
     document.getElementById('adminDashboard').style.display = 'none';
+    var act = document.getElementById('activateScreen');
+    if (act) act.style.display = 'none';
+    var sub = document.getElementById('subscribeScreen');
+    if (sub) sub.style.display = 'none';
     document.getElementById('landingPage').style.display = 'block';
   }
+}
+
+// ── 활성화 화면 ────────────────────────────────────────────
+var activateUser = null;
+var selectedActivatePlan = 'free';
+
+function showActivateScreen(fbUser, profile) {
+  activateUser = { fbUser: fbUser, profile: profile };
+  document.getElementById('activateScreen').style.display = 'block';
+  document.getElementById('activateCodeInput').value = '';
+  document.getElementById('activateCodeResult').style.display = 'none';
+  document.getElementById('activatePlanSection').style.display = 'none';
+  selectActivatePlan('free');
+}
+
+function submitActivateCode() {
+  var code = document.getElementById('activateCodeInput').value.trim().toUpperCase();
+  var resultEl = document.getElementById('activateCodeResult');
+  if (!code || code.length < 4) {
+    resultEl.style.display = 'block';
+    resultEl.style.background = '#fee2e2';
+    resultEl.style.color = '#dc2626';
+    resultEl.textContent = '코드를 입력해주세요.';
+    return;
+  }
+
+  resultEl.style.display = 'block';
+  resultEl.style.background = '#f8fafc';
+  resultEl.style.color = '#94a3b8';
+  resultEl.textContent = '확인 중...';
+
+  window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snap) {
+    var found = null; var foundRole = null;
+    snap.forEach(function(d) {
+      var s = d.data();
+      if (s.ownerCode && s.ownerCode.toUpperCase() === code)   { found = Object.assign({_id: d.id}, s); foundRole = 'owner'; }
+      if (s.teacherCode && s.teacherCode.toUpperCase() === code) { found = Object.assign({_id: d.id}, s); foundRole = 'teacher'; }
+    });
+
+    if (!found) {
+      resultEl.style.background = '#fee2e2'; resultEl.style.color = '#dc2626';
+      resultEl.textContent = '❌ 유효하지 않은 코드입니다.'; return;
+    }
+    if (found.status === 'inactive') {
+      resultEl.style.background = '#fee2e2'; resultEl.style.color = '#dc2626';
+      resultEl.textContent = '❌ 비활성화된 학원입니다.'; return;
+    }
+    if (found.expiresAt && new Date() > new Date(found.expiresAt)) {
+      resultEl.style.background = '#fee2e2'; resultEl.style.color = '#dc2626';
+      resultEl.textContent = '❌ 만료된 코드입니다. (' + found.expiresAt.slice(0,10) + ')'; return;
+    }
+
+    // 인원 제한 체크 (선생님)
+    if (foundRole === 'teacher') {
+      var maxT = found.teacherCount !== undefined ? found.teacherCount : (found.maxTeachers ? found.maxTeachers - 1 : 99);
+      window.fbGetDocs(window.fbCollection(window.fbDb, 'users')).then(function(uSnap) {
+        var cnt = 0;
+        uSnap.forEach(function(d) {
+          var u = d.data();
+          if (u.role === 'teacher' && u.status === 'active' &&
+              (u.schoolId === found._id || u.schoolName === found.name)) cnt++;
+        });
+        if (cnt >= maxT) {
+          resultEl.style.background = '#fee2e2'; resultEl.style.color = '#dc2626';
+          resultEl.textContent = '❌ 정원이 가득 찼습니다. (' + cnt + '/' + maxT + '명)'; return;
+        }
+        activateWithCode(found, foundRole);
+      });
+    } else {
+      activateWithCode(found, foundRole);
+    }
+  });
+}
+
+function activateWithCode(schoolData, role) {
+  var resultEl = document.getElementById('activateCodeResult');
+  var uid = activateUser.fbUser.uid;
+  window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), {
+    schoolId:   schoolData._id,
+    schoolName: schoolData.name,
+    role:       role,
+    status:     'active'
+  }).then(function() {
+    resultEl.style.background = '#dcfce7'; resultEl.style.color = '#16a34a';
+    resultEl.textContent = '✅ ' + schoolData.name + ' (' + (role==='owner'?'원장':'선생님') + ') 활성화 완료!';
+    setTimeout(function() {
+      document.getElementById('activateScreen').style.display = 'none';
+      loadUserProfile(activateUser.fbUser);
+    }, 1200);
+  }).catch(function(err) {
+    resultEl.style.background = '#fee2e2'; resultEl.style.color = '#dc2626';
+    resultEl.textContent = '오류: ' + err.message;
+  });
+}
+
+function showActivatePlanSelect() {
+  document.getElementById('activatePlanSection').style.display = 'block';
+  document.getElementById('activatePlanSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+function selectActivatePlan(plan) {
+  selectedActivatePlan = plan;
+  ['free','30','90','365'].forEach(function(p) {
+    var el = document.getElementById('aplan-' + p);
+    if (!el) return;
+    el.style.border = p === plan ? '2px solid #6366f1' : '1.5px solid #e2e8f0';
+    el.style.background = p === plan ? '#faf9ff' : '#fff';
+  });
+}
+
+function submitActivateApply() {
+  if (!activateUser) return;
+  var profile  = activateUser.profile;
+  var teachers = parseInt(document.getElementById('activateTeachers').value) || 0;
+  var p        = PLANS[selectedActivatePlan];
+  var resultEl = document.getElementById('activateApplyResult');
+
+  window.fbAddDoc(window.fbCollection(window.fbDb, 'applications'), {
+    schoolName:   profile.schoolName || '',
+    name:         profile.name || '',
+    phone:        profile.phone || '',
+    uid:          activateUser.fbUser.uid,
+    teacherCount: teachers,
+    plan:         selectedActivatePlan,
+    planLabel:    p.label,
+    days:         p.days,
+    price:        p.price,
+    status:       'pending',
+    createdAt:    new Date().toISOString()
+  }).then(function() {
+    resultEl.style.display = 'block';
+    resultEl.style.color = '#16a34a';
+    resultEl.textContent = '✅ 신청 완료! 담당자 확인 후 활성화됩니다.';
+  }).catch(function(err) {
+    resultEl.style.display = 'block';
+    resultEl.style.color = '#ef4444';
+    resultEl.textContent = '오류: ' + err.message;
+  });
 }
 
 // ── 구독 화면 ──────────────────────────────────────────────
