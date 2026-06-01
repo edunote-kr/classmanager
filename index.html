@@ -833,6 +833,9 @@ onAuthStateChanged(auth, function(user) {
     <div class="logo-date" id="headerDate"></div>
   </div>
   <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;margin-left:auto">
+    <span id="sidebarBadge" style="display:none;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap"></span>
+    <span id="sidebarUser" style="font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap"></span>
+    <span id="sidebarUserId" style="font-size:11px;color:#94a3b8;white-space:nowrap"></span>
     <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">마이페이지</button>
     <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">로그아웃</button>
   </div>
@@ -1069,19 +1072,10 @@ onAuthStateChanged(auth, function(user) {
   <!-- 로고 -->
   <!-- 로고 영역 -->
   <div class="sidebar-logo" style="cursor:pointer" onclick="location.reload()">
-    <img class="logo-img header-logo" id="sidebarLogo" style="width:44px;height:44px;flex-shrink:0;border-radius:10px;border:2px solid #6366f1;object-fit:contain;background:#fff">
+    <img class="logo-img header-logo" id="sidebarLogo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AABVJ0lEQVR4nO3dd3Qc1dkG8Hdm+0pa9d6rZbnIHWxjbIrpNjbg0EOABEISEkiAJBC+JIQQAqRAAgESOoTeHKqpNriAcZEtS26SrN7rStt35/tDyF7JKtvmzuzO8ztHByTvzH13V9r7zJ07d7jY1DICWRKkLgAAIEQ4qQuA46mlLkDB0MEDgFJM9XmHgCABBAA20NkDAExsvM9IhAKRIQCIAx0+AEBwxn6OIhCEGAJAaKDDBwAQFwJBiCEABA6dPgCAdLw/gxEGAoAA4B90+gAA8oMwEAAEgKmh0wcACB8IAz5CAJgYOn4AgPA28jmOIDAOBIDR0OkDAEQejAqMAwFgGDp+AABlwKjAt5QeANDxAwAok+KDgFIDADp+AAAgUnAQUFoAQMcPAADjUVwQUEoAQMcPAAC+UEwQ4KUugAF0/gAA4K+I7zsieQQg4t88AAAQVUSPBkRiAEDHDwAAoRSRQSDSTgGg8wcAALFEVB8TKSMAEfWmAACAbEXMaEAkjACg8wcAANbCvu8J9wAQ9m8AAACErbDug8L1FEBYv+gAABAxwvaUQDiOAKDzBwAAuQm7vincAkDYvcAAAKAYYdVHhcspgLB6UQEAQLHC5pRAOIwAoPMHAIBwI/u+S+4BQPYvIAAAwARk3YfJOQDI+oUDAADwgWz7MrVMz1LI9gUDAADwk0AynBMgxxEAdP4AABBpZNe3qWUWSmT3AgEAAISIrEYC5DQCgM4fAAAinWz6OrkEANm8IAAAACKTRZ8nhwAgixcCAACAIcn7PrXEJyMkfwEAAAAkIumcAClHAND5AwCA0knWF0oVAND5AwAADJOkT5QiAKDzBwAAGI1538g6AKDzBwAAGB/TPpJlAEDnDwAAMDlmfSWrAIDOHwAAwDdM+kw5rAMAAAAAjLEIADj6BwAA8I/ofafYAQCdPwAAQGBE7UPFDADo/AEAAIIjWl+KOQAAAAAKJFYAwNE/AABAaIjSp4oRAND5AwAAhFbI+9ZQBwB0/gAAAOIIaR+LOQAAAAAKFMoAgKN/AAAAcYWsrw1VAEDnDwAAwEZI+lycAgAAAFCgUAQAHP0DAAAoO9PQFV4AAAAASUVORK5CYII=" alt="EduNote" style="width:44px;height:44px;flex-shrink:0;border-radius:10px;border:2px solid #6366f1;object-fit:contain;background:#fff">
     <div style="min-width:0">
       <div style="font-size:15px;font-weight:900;color:#fff;font-family:Georgia,serif">EduNote</div>
       <div id="sidebarSchool" style="font-size:10px;color:rgba(255,255,255,0.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px"></div>
-    </div>
-  </div>
-
-  <!-- 사용자 정보 -->
-  <div style="padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.08)">
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-      <span id="sidebarBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;background:#f59e0b;color:#1e293b;flex-shrink:0"></span>
-      <span id="sidebarUser" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.9);white-space:nowrap"></span>
-      <span id="sidebarUserId" style="font-size:11px;color:rgba(255,255,255,0.4);white-space:nowrap"></span>
     </div>
   </div>
 
@@ -3122,20 +3116,6 @@ function finishLogin(fbUser, profile) {
   var titleEl = document.getElementById('headerTitle') || document.querySelector('.header-title');
   if (titleEl) titleEl.textContent = 'EduNote';
 
-  // 사용자 역할 배지 (버튼 옆에 작게 표시)
-  var existBadge = document.getElementById('userBadgeEl');
-  if (existBadge) existBadge.remove();
-  var badgeText = getRoleBadge();
-  if (badgeText) {
-    var badgeColor = getRoleBadgeColor();
-    var userBadge = document.createElement('span');
-    userBadge.id = 'userBadgeEl';
-    userBadge.style.cssText = 'font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;background:' + badgeColor.bg + ';color:' + badgeColor.color + ';white-space:nowrap;flex-shrink:0';
-    userBadge.textContent = badgeText;
-    var btnArea = document.getElementById('myPageBtn') && document.getElementById('myPageBtn').parentNode;
-    if (btnArea) btnArea.insertBefore(userBadge, btnArea.firstChild);
-  }
-
   var mainApp = document.getElementById('mainApp');
   if (mainApp) {
     if (window.innerWidth >= 768) {
@@ -4847,8 +4827,7 @@ function initSidebar(profile) {
     var color = getRoleBadgeColor();
     badgeEl.style.background = color.bg;
     badgeEl.style.color = color.color;
-  }
-  updateSidebarCount();
+  }  updateSidebarCount();
 }
 
 function updateSidebarCount() {
