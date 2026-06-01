@@ -43,7 +43,7 @@ header {
   gap: 8px;
   box-sizing: border-box;
 }
-.logo-wrap  { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; flex: 1; }
+#headerSchoolName { display: none; }
 .logo-img   { width: 40px; height: 40px; border-radius: 50%; background: #f8fafc; padding: 3px; border: 2px solid #6366f1; object-fit: contain; flex-shrink: 0; }
 .logo-title { font-size: 14px; font-weight: 900; letter-spacing: 0px; color: #1e293b; font-family: Georgia, serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .logo-date  { font-size: 11px; color: #94a3b8; margin-top: 2px; white-space: nowrap; }
@@ -161,6 +161,7 @@ textarea { resize:vertical; }
 
   /* PC 헤더에서 로고/타이틀 숨김 (사이드바에 있으므로) */
   #mainApp.sidebar-active > header .logo-wrap { display: none !important; }
+  #headerSchoolName { display: block; }
 
   /* 콘텐츠: 우측 하단 */
   #mainContent {
@@ -827,10 +828,15 @@ onAuthStateChanged(auth, function(user) {
 <!-- 관리자 대시보드 -->
 <div id="mainApp" style="display:none">
 <header>
+  <!-- PC: 학원명 / 모바일: 로고+EduNote -->
   <div class="logo-wrap" style="cursor:pointer" onclick="location.reload()">
     <img class="logo-img header-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AABVJ0lEQVR4nO3dd3Qc1dkG8Hdm+0pa9d6rZbnIHWxjbIrpNjbg0EOABEISEkiAJBC+JIQQAqRAAgESOoTeHKqpNriAcZEtS26SrN7rStt35/tDyF7JKtvmzuzO8ztHByTvzH13V9r7zJ07d7jY1DICWRKkLgAAIEQ4qQuA46mlLkDB0MEDgFJM9XmHgCABBAA20NkDAExsvM9IhAKRIQCIAx0+AEBwxn6OIhCEGAJAaKDDBwAQFwJBiCEABA6dPgCAdLw/gxEGAoAA4B90+gAA8oMwEAAEgKmh0wcACB8IAz5CAJgYOn4AgPA28jmOIDAOBIDR0OkDAEQejAqMAwFgGDp+AABlwKjAt5QeANDxAwAok+KDgFIDADp+AAAgUnAQUFoAQMcPAADjUVwQUEoAQMcPAAC+UEwQ4KUugAF0/gAA4K+I7zsieQQg4t88AAAQVUSPBkRiAEDHDwAAoRSRQSDSTgGg8wcAALFEVB8TKSMAEfWmAACAbEXMaEAkjACg8wcAANbCvu8J9wAQ9m8AAACErbDug8L1FEBYv+gAABAxwvaUQDiOAKDzBwAAuQm7vincAkDYvcAAAKAYYdVHhcspgLB6UQEAQLHC5pRAOIwAoPMHAIBwI/u+S+4BQPYvIAAAwARk3YfJOQDI+oUDAADwgWz7MrVMz1LI9gUDAADwk0AynBMgxxEAdP4AABBpZNe3qWUWSmT3AgEAAISIrEYC5DQCgM4fAAAinWz6OrkEANm8IAAAACKTRZ8nhwAgixcCAACAIcn7PrXEJyMkfwEAAAAkIumcAClHAND5AwCA0knWF0oVAND5AwAADJOkT5QiAKDzBwAAGI1538g6AKDzBwAAGB/TPpJlAEDnDwAAMDlmfSWrAIDOHwAAwDdM+kw5rAMAAAAAjLEIADj6BwAA8I/ofafYAQCdPwAAQGBE7UPFDADo/AEAAIIjWl+KOQAAAAAKJFYAwNE/AABAaIjSp4oRAND5AwAAhFbI+9ZQBwB0/gAAAOIIaR+LOQAAAAAKFMoAgKN/AAAAcYWsrw1VAEDnDwAAwEZI+lycAgAAAFCgUAQAHP0DAAAoO9PQFV4AAAAASUVORK5CYII=" alt="EduNote" style="width:44px;height:44px;border-radius:10px">
     <div class="logo-title header-title" id="headerTitle">EduNote</div>
-    <div class="logo-date" id="headerDate"></div>
+  </div>
+  <!-- PC 전용: 학원 로고 + 학원명 -->
+  <div id="headerSchoolName" style="display:flex;align-items:center;gap:10px;min-width:0">
+    <img id="headerSchoolLogo" src="" alt="" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1.5px solid #e2e8f0;background:#f8fafc;display:none;flex-shrink:0">
+    <span id="headerSchoolNameText" style="font-size:16px;font-weight:800;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
   </div>
   <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;margin-left:auto">
     <span id="sidebarBadge" style="display:none;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap"></span>
@@ -4733,10 +4739,17 @@ function saveMyPage() {
   var updateData = { schoolName: schoolName, phone: phone };
   if (myLogoBase64) updateData.logo = myLogoBase64;
 
-  // 메모리 즉시 업데이트 (이미지 저장에 바로 반영)
+  // 메모리 즉시 업데이트
   currentSchoolProfile.name = schoolName;
   currentSchoolProfile.phone = phone;
-  if (myLogoBase64) currentSchoolProfile.logo = myLogoBase64;
+  if (myLogoBase64) {
+    currentSchoolProfile.logo = myLogoBase64;
+    // 헤더 로고 즉시 반영
+    var headerLogoEl = document.getElementById('headerSchoolLogo');
+    if (headerLogoEl) { headerLogoEl.src = myLogoBase64; headerLogoEl.style.display = 'block'; }
+  }
+  var headerNameEl = document.getElementById('headerSchoolNameText');
+  if (headerNameEl) headerNameEl.textContent = schoolName;
 
   // users 문서 업데이트
   window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), updateData)
@@ -4812,6 +4825,20 @@ function initSidebar(profile) {
 
   var schoolEl = document.getElementById('sidebarSchool');
   if (schoolEl) schoolEl.textContent = profile.schoolName || '';
+
+  // 헤더 학원 로고 + 학원명
+  var headerSchoolName = document.getElementById('headerSchoolNameText');
+  if (headerSchoolName) headerSchoolName.textContent = profile.schoolName || '';
+  var headerSchoolLogo = document.getElementById('headerSchoolLogo');
+  if (headerSchoolLogo) {
+    var logoSrc = currentSchoolProfile.logo || profile.logo || '';
+    if (logoSrc) {
+      headerSchoolLogo.src = logoSrc;
+      headerSchoolLogo.style.display = 'block';
+    } else {
+      headerSchoolLogo.style.display = 'none';
+    }
+  }
 
   var userEl = document.getElementById('sidebarUser');
   if (userEl) userEl.textContent = profile.name || '';
