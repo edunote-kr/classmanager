@@ -1067,10 +1067,10 @@ onAuthStateChanged(auth, function(user) {
 
 <!-- TABS (모바일용 유지) -->
 <div class="tabs">
-  <button class="tab active" id="tab-input" onclick="switchTab('input')">➕ 입력</button>
-  <button class="tab"        id="tab-list"  onclick="switchTab('list')">📋 목록 (<span id="listCount">0</span>)</button>
-  <button class="tab"        id="tab-stats"    onclick="switchTab('stats')">📊 통계</button>
-  <button class="tab"        id="tab-students" onclick="switchTab('students')">👥 학생</button>
+  <button class="tab active" id="tab-input" onclick="switchTab('input')">✏️ 수업내용 입력</button>
+  <button class="tab"        id="tab-list"  onclick="switchTab('list')">📋 과제 목록 (<span id="listCount">0</span>)</button>
+  <button class="tab"        id="tab-stats"    onclick="switchTab('stats')">📊 학생 통계</button>
+  <button class="tab"        id="tab-students" onclick="switchTab('students')">👥 재원생 목록</button>
 </div>
 
 <!-- PC 사이드바 -->
@@ -1078,7 +1078,7 @@ onAuthStateChanged(auth, function(user) {
   <!-- 로고 -->
   <!-- 로고 영역 -->
   <div class="sidebar-logo" style="cursor:pointer" onclick="location.reload()">
-    <img id="sidebarLogo" alt="EduNote" style="width:48px;height:48px;flex-shrink:0;border-radius:12px;border:2px solid rgba(99,102,241,0.6);object-fit:contain;background:#fff">
+    <img id="sidebarLogo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AABVJ0lEQVR4nO3dd3Qc1dkG8Hdm+0pa9d6rZbnIHWxjbIrpNjbg0EOABEISEkiAJBC+JIQQAqRAAgESOoTeHKqpNriAcZEtS26SrN7rStt35/tDyF7JKtvmzuzO8ztHByTvzH13V9r7zJ07d7jY1DICWRKkLgAAIEQ4qQuA46mlLkDB0MEDgFJM9XmHgCABBAA20NkDAExsvM9IhAKRIQCIAx0+AEBwxn6OIhCEGAJAaKDDBwAQFwJBiCEABA6dPgCAdLw/gxEGAoAA4B90+gAA8oMwEAAEgKmh0wcACB8IAz5CAJgYOn4AgPA28jmOIDAOBIDR0OkDAEQejAqMAwFgGDp+AABlwKjAt5QeANDxAwAok+KDgFIDADp+AAAgUnAQUFoAQMcPAADjUVwQUEoAQMcPAAC+UEwQ4KUugAF0/gAA4K+I7zsieQQg4t88AAAQVUSPBkRiAEDHDwAAoRSRQSDSTgGg8wcAALFEVB8TKSMAEfWmAACAbEXMaEAkjACg8wcAANbCvu8J9wAQ9m8AAACErbDug8L1FEBYv+gAABAxwvaUQDiOAKDzBwAAuQm7vincAkDYvcAAAKAYYdVHhcspgLB6UQEAQLHC5pRAOIwAoPMHAIBwI/u+S+4BQPYvIAAAwARk3YfJOQDI+oUDAADwgWz7MrVMz1LI9gUDAADwk0AynBMgxxEAdP4AABBpZNe3qWUWSmT3AgEAAISIrEYC5DQCgM4fAAAinWz6OrkEANm8IAAAACKTRZ8nhwAgixcCAACAIcn7PrXEJyMkfwEAAAAkIumcAClHAND5AwCA0knWF0oVAND5AwAADJOkT5QiAKDzBwAAGI1538g6AKDzBwAAGB/TPpJlAEDnDwAAMDlmfSWrAIDOHwAAwDdM+kw5rAMAAAAAjLEIADj6BwAA8I/ofafYAQCdPwAAQGBE7UPFDADo/AEAAIIjWl+KOQAAAAAKJFYAwNE/AABAaIjSp4oRAND5AwAAhFbI+9ZQBwB0/gAAAOIIaR+LOQAAAAAKFMoAgKN/AAAAcYWsrw1VAEDnDwAAwEZI+lycAgAAAFCgUAQAHP0DAAAoO9PQFV4AAAAASUVORK5CYII=" alt="EduNote" style="width:48px;height:48px;flex-shrink:0;border-radius:12px;border:2px solid rgba(99,102,241,0.6);object-fit:contain;background:#1e293b">
     <div>
       <div style="font-size:15px;font-weight:900;color:#fff;font-family:Georgia,serif;white-space:nowrap">EduNote</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.5);white-space:nowrap;margin-top:2px">과제 관리 솔루션</div>
@@ -1088,17 +1088,17 @@ onAuthStateChanged(auth, function(user) {
   <!-- 네비게이션 -->
   <nav class="sidebar-nav">
     <button class="sidebar-tab active" id="stab-input" onclick="switchTab('input')">
-      <span class="tab-icon">➕</span> 입력
+      <span class="tab-icon">✏️</span> 수업내용 입력
     </button>
     <button class="sidebar-tab" id="stab-list" onclick="switchTab('list')">
       <span class="tab-icon">📋</span> 목록
       <span class="sidebar-count" id="sidebarListCount">0</span>
     </button>
     <button class="sidebar-tab" id="stab-stats" onclick="switchTab('stats')">
-      <span class="tab-icon">📊</span> 통계
+      <span class="tab-icon">📊</span> 학생 통계
     </button>
     <button class="sidebar-tab" id="stab-students" onclick="switchTab('students')">
-      <span class="tab-icon">👥</span> 학생
+      <span class="tab-icon">👥</span> 재원생 목록
     </button>
   </nav>
 </div>
@@ -1692,12 +1692,22 @@ onAuthStateChanged(auth, function(user) {
           <button onclick="deleteAllStudents()" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fee2e2;color:#dc2626">🗑️ 전체삭제</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <input type="text" id="newStudentClass" placeholder="반 (예: A반)" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:80px;font-family:inherit">
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <input type="text" id="newStudentClass" placeholder="반 (예: 고1오전)" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:100px;font-family:inherit">
         <input type="text" id="newStudentName"  placeholder="학생 이름" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;flex:1;font-family:inherit">
-        <button onclick="addStudent()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">추가</button>
+        <input type="text" id="newStudentGrade" placeholder="학년 (예: 고등1)" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:110px;font-family:inherit">
       </div>
-      <div id="studentList"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <input type="tel" id="newStudentPhone"  placeholder="학생 번호" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;flex:1;font-family:inherit">
+        <input type="tel" id="newParentPhone"   placeholder="학부모 번호" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;flex:1;font-family:inherit">
+        <button onclick="addStudent()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:8px;padding:7px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">+ 학생 등록</button>
+      </div>
+      <div id="studentList">
+        <!-- 컬럼 헤더 -->
+        <div style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1.5fr 1.5fr 1.5fr auto;padding:6px 10px;gap:6px;font-size:11px;font-weight:700;color:#94a3b8;border-bottom:1.5px solid #e2e8f0;margin-bottom:6px">
+          <div>이름 / 학년</div><div>수강반</div><div>학생 번호</div><div>학부모 번호</div><div>출결 현황</div><div></div><div></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2019,15 +2029,20 @@ function deleteAllStudents() {
 }
 
 function addStudent() {
-  const cls  = document.getElementById('newStudentClass').value.trim();
-  const name = document.getElementById('newStudentName').value.trim();
+  const cls    = document.getElementById('newStudentClass').value.trim();
+  const name   = document.getElementById('newStudentName').value.trim();
+  const grade  = document.getElementById('newStudentGrade') ? document.getElementById('newStudentGrade').value.trim() : '';
+  const phone  = document.getElementById('newStudentPhone') ? document.getElementById('newStudentPhone').value.trim() : '';
+  const parent = document.getElementById('newParentPhone')  ? document.getElementById('newParentPhone').value.trim() : '';
   if (!name) { showToast('학생 이름을 입력해주세요.', 'error'); return; }
   if (students.find(s => s.name === name && s.className === cls)) {
     showToast('이미 등록된 학생입니다.', 'error'); return;
   }
-  students.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2,8), teacher: currentUser, className: cls, name });
+  students.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2,8), teacher: currentUser, className: cls, name, grade, phone, parent });
   persistStudents();
   document.getElementById('newStudentName').value  = '';
+  if (document.getElementById('newStudentPhone')) document.getElementById('newStudentPhone').value = '';
+  if (document.getElementById('newParentPhone'))  document.getElementById('newParentPhone').value  = '';
   renderStudents();
   updateStudentFilter();
   showToast(name + ' 학생이 등록됐습니다!');
@@ -2107,19 +2122,44 @@ function toggleStuGroup(tid) {
 }
 
 function makeStudentRow(s) {
-  return '<div id="student-row-' + s.id + '" style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#f8fafc;border-radius:8px;margin-bottom:4px;border:1px solid #e2e8f0">'
-    + '<span style="font-size:13px;font-weight:600;color:#1e293b">👤 ' + s.name + '</span>'
+  // 출결 현황: 해당 학생 records에서 지각 정도 집계
+  const stuRecs = records.filter(r => r.student === s.name);
+  const total   = stuRecs.length;
+  const late    = stuRecs.filter(r => r.attendance && r.attendance !== '정시도착' && r.attendance !== '결석').length;
+  const absent  = stuRecs.filter(r => r.attendance === '결석').length;
+  const ontime  = total - late - absent;
+
+  return '<div id="student-row-' + s.id + '" style="background:#f8fafc;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0;overflow:hidden">'
+    // 메인 행
+    + '<div style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1.5fr 1.5fr 1.5fr auto;align-items:center;padding:8px 10px;gap:6px">'
+    + '<div><span style="font-size:13px;font-weight:700;color:#1e293b">👤 ' + s.name + '</span>'
+    + (s.grade ? '<span style="font-size:10px;color:#6366f1;font-weight:700;margin-left:6px;background:#ede9fe;padding:1px 6px;border-radius:4px">' + s.grade + '</span>' : '') + '</div>'
+    + '<div style="font-size:12px;color:#64748b">' + (s.className || '-') + '</div>'
+    + '<div style="font-size:12px;color:#475569">' + (s.phone  || '-') + '</div>'
+    + '<div style="font-size:12px;color:#475569">' + (s.parent || '-') + '</div>'
+    // 출결 현황
+    + '<div style="display:flex;gap:4px;font-size:11px;font-weight:700">'
+    + '<span style="background:#dcfce7;color:#16a34a;padding:2px 6px;border-radius:4px">출 ' + ontime + '</span>'
+    + '<span style="background:#fef9c3;color:#92400e;padding:2px 6px;border-radius:4px">지 ' + late + '</span>'
+    + '<span style="background:#fee2e2;color:#dc2626;padding:2px 6px;border-radius:4px">결 ' + absent + '</span>'
+    + '</div>'
     + '<div style="display:flex;gap:5px">'
-    + '<button onclick="startEditStudent(\'' + s.id + '\')" style="background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✏️ 수정</button>'
+    + '<button onclick="startEditStudent(\'' + s.id + '\')" style="background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">수정</button>'
     + '<button onclick="deleteStudent(\'' + s.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">삭제</button>'
-    + '</div></div>'
-    + '<div id="student-edit-' + s.id + '" style="display:none;padding:8px 10px;background:#f0f9ff;border-radius:8px;margin-bottom:4px;border:1.5px solid #bae6fd">'
-    + '<div style="display:flex;gap:6px;margin-bottom:6px">'
-    + '<input id="edit-class-' + s.id + '" value="' + (s.className||'') + '" placeholder="반" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;width:70px;font-family:inherit">'
-    + '<input id="edit-name-' + s.id + '" value="' + (s.name||'') + '" placeholder="이름" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;flex:1;font-family:inherit">'
+    + '</div></div></div>'
+    // 수정 폼
+    + '<div id="student-edit-' + s.id + '" style="display:none;padding:10px;background:#f0f9ff;border-top:1.5px solid #bae6fd">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">'
+    + '<input id="edit-class-'  + s.id + '" value="' + (s.className||'') + '" placeholder="반" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit">'
+    + '<input id="edit-name-'   + s.id + '" value="' + (s.name||'') + '" placeholder="이름" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit">'
+    + '<input id="edit-grade-'  + s.id + '" value="' + (s.grade||'') + '" placeholder="학년" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit">'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'
+    + '<input id="edit-phone-'  + s.id + '" value="' + (s.phone||'') + '" placeholder="학생 번호" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit">'
+    + '<input id="edit-parent-' + s.id + '" value="' + (s.parent||'') + '" placeholder="학부모 번호" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit">'
     + '</div>'
     + '<div style="display:flex;gap:6px">'
-    + '<button onclick="saveEditStudent(\'' + s.id + '\')" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">저장</button>'
+    + '<button onclick="saveEditStudent(\'' + s.id + '\')" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">저장</button>'
     + '<button onclick="cancelEditStudent(\'' + s.id + '\')" style="background:#f1f5f9;color:#64748b;border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>'
     + '</div></div>';
 }
@@ -2135,16 +2175,21 @@ function cancelEditStudent(id) {
 }
 
 function saveEditStudent(id) {
-  const newClass = document.getElementById('edit-class-' + id).value.trim();
-  const newName  = document.getElementById('edit-name-'  + id).value.trim();
+  const newClass  = document.getElementById('edit-class-'  + id).value.trim();
+  const newName   = document.getElementById('edit-name-'   + id).value.trim();
+  const newGrade  = document.getElementById('edit-grade-'  + id) ? document.getElementById('edit-grade-'  + id).value.trim() : '';
+  const newPhone  = document.getElementById('edit-phone-'  + id) ? document.getElementById('edit-phone-'  + id).value.trim() : '';
+  const newParent = document.getElementById('edit-parent-' + id) ? document.getElementById('edit-parent-' + id).value.trim() : '';
   if (!newName) { showToast('이름을 입력해주세요.', 'error'); return; }
   const s = students.find(s => String(s.id) === String(id));
   if (!s) return;
   const oldName = s.name;
   s.className = newClass;
-  s.name = newName;
+  s.name      = newName;
+  s.grade     = newGrade;
+  s.phone     = newPhone;
+  s.parent    = newParent;
   persistStudents();
-  // 기존 기록의 학생 이름도 함께 업데이트
   if (oldName !== newName) {
     records = records.map(r => r.student === oldName ? {...r, student: newName} : r);
     persist();
@@ -2465,7 +2510,7 @@ function resetForm() {
   // setComp already handles lastCompletion reset above
   document.getElementById('saveBtn').textContent    = '💾 저장';
   document.getElementById('cancelBtn').style.display = 'none';
-  document.getElementById('tab-input').textContent   = '➕ 입력';
+  document.getElementById('tab-input').textContent   = '✏️ 수업내용 입력';
   updateRing();
 }
 
@@ -2566,7 +2611,7 @@ function editRecord(id) {
   document.getElementById('f-memo').value            = rec.memo           || '';
   document.getElementById('saveBtn').textContent     = '✅ 수정 완료';
   document.getElementById('cancelBtn').style.display = 'inline-block';
-  document.getElementById('tab-input').textContent   = '✏️ 수정';
+  document.getElementById('tab-input').textContent   = '✏️ 수업내용 입력 (수정 중)';
   updateRing();
   updateSubRing('reading');
   updateSubRing('grammar');
