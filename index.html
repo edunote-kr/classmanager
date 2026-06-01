@@ -113,7 +113,7 @@ textarea { resize:vertical; }
 
 @media (min-width: 768px) {
   /* ── PC 사이드바 레이아웃 ── */
-  #mainApp { display: flex !important; flex-direction: row; min-height: 100vh; }
+  #mainApp.sidebar-active { display: flex; flex-direction: row; min-height: 100vh; }
 
   /* 사이드바 */
   #sidebar {
@@ -2958,7 +2958,14 @@ function finishLogin(fbUser, profile) {
   }
 
   var mainApp = document.getElementById('mainApp');
-  if (mainApp) mainApp.style.display = 'block';
+  if (mainApp) {
+    if (window.innerWidth >= 768) {
+      mainApp.classList.add('sidebar-active');
+      mainApp.style.display = 'flex';
+    } else {
+      mainApp.style.display = 'block';
+    }
+  }
   showLoading(false);
 
   // 로그아웃 버튼 표시
@@ -3113,6 +3120,7 @@ function doLogout() {
     });
   } else {
     document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('mainApp').classList.remove('sidebar-active');
     document.getElementById('adminDashboard').style.display = 'none';
     document.getElementById('landingPage').style.display = 'block';
   }
@@ -4419,16 +4427,19 @@ function closeMyPage() {
 }
 
 function initSidebar(profile) {
-  // PC 사이드바 표시 여부 (768px 이상)
   var sidebar = document.getElementById('sidebar');
-  var isPC = window.innerWidth >= 768;
-  if (sidebar) sidebar.style.display = isPC ? 'flex' : 'none';
+  var mainApp = document.getElementById('mainApp');
 
-  // 반응형 처리
-  window.addEventListener('resize', function() {
-    var isPC2 = window.innerWidth >= 768;
-    if (sidebar) sidebar.style.display = isPC2 ? 'flex' : 'none';
-  });
+  function applyLayout() {
+    var isPC = window.innerWidth >= 768;
+    if (sidebar) sidebar.style.display = isPC ? 'flex' : 'none';
+    if (mainApp && mainApp.style.display !== 'none') {
+      if (isPC) { mainApp.classList.add('sidebar-active'); mainApp.style.display = 'flex'; }
+      else      { mainApp.classList.remove('sidebar-active'); mainApp.style.display = 'block'; }
+    }
+  }
+  applyLayout();
+  window.addEventListener('resize', applyLayout);
 
   // 사이드바 정보 채우기
   var logoEl = document.getElementById('sidebarLogo');
@@ -4449,8 +4460,6 @@ function initSidebar(profile) {
     badgeEl.style.background = color.bg;
     badgeEl.style.color = color.color;
   }
-
-  // 목록 카운트 동기화
   updateSidebarCount();
 }
 
@@ -4465,14 +4474,10 @@ function initLoginSelect() {
   if (window.fbOnAuthStateChanged && window.fbAuth) {
     window.fbOnAuthStateChanged(window.fbAuth, function(user) {
       if (user && !currentUser) {
-        // 로그인 상태이면 항상 프로필 로드 (새로고침 포함)
-        var mainApp = document.getElementById('mainApp');
-        var adminDash = document.getElementById('adminDashboard');
-        var isAppVisible = (mainApp && mainApp.style.display !== 'none')
-                        || (adminDash && adminDash.style.display !== 'none');
-        if (!isAppVisible) {
-          loadUserProfile(user);
-        }
+        loadUserProfile(user);
+      } else if (!user) {
+        // 로그아웃 상태이면 랜딩으로
+        if (currentUser) doLogout();
       }
     });
   }
