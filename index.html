@@ -159,8 +159,8 @@ textarea { resize:vertical; }
   /* 탭: PC에서 숨김 */
   #mainApp.sidebar-active > .tabs { display: none !important; }
 
-  /* PC 헤더에서 로고/타이틀 숨김 (사이드바에 있으므로) - img는 DOM에 유지 */
-  #mainApp.sidebar-active > header .logo-wrap { display: none !important; }
+  /* PC 헤더에서 로고/타이틀 숨김 - visibility로 DOM/src 유지 */
+  #mainApp.sidebar-active > header .logo-wrap { visibility: hidden; width: 0; overflow: hidden; padding: 0; margin: 0; }
   #headerSchoolName { display: block; }
 
   /* 콘텐츠: 우측 하단 */
