@@ -119,7 +119,9 @@ textarea { resize:vertical; }
     display: grid !important;
     grid-template-columns: 220px 1fr;
     grid-template-rows: auto 1fr;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
     align-items: stretch;
   }
 
@@ -174,7 +176,9 @@ textarea { resize:vertical; }
     grid-row: 2;
     background: #f1f5f9;
     min-width: 0;
+    min-height: 0;
     overflow-y: auto;
+    height: 100%;
   }
 
   .content { padding: 28px 32px; max-width: 1200px; }
@@ -206,8 +210,8 @@ textarea { resize:vertical; }
 
 /* 사이드바 내부 스타일 */
 .sidebar-logo {
-  padding: 0 20px;
-  height: 64px;
+  padding: 0 16px;
+  height: 60px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: center;
@@ -216,19 +220,22 @@ textarea { resize:vertical; }
 }
 .sidebar-nav {
   flex: 1;
-  padding: 16px 12px;
+  padding: 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
 }
 .sidebar-tab {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 14px;
+  padding: 10px 12px;
   border-radius: 10px;
   color: rgba(255,255,255,0.6);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   border: none;
@@ -237,6 +244,9 @@ textarea { resize:vertical; }
   text-align: left;
   transition: all 0.15s;
   width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sidebar-tab:hover { background: rgba(255,255,255,0.08); color: #fff; }
 .sidebar-tab.active { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #fff; box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
@@ -1225,157 +1235,35 @@ onAuthStateChanged(auth, function(user) {
 
     <div class="card">
       <div class="card-title" style="color:#d97706">지난 과제 이행도</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:12px;font-weight:800;color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 지난 과제</span>
-        <button type="button" onclick="toggleInputGroup('extra-lastHW')" id="btn-extra-lastHW" style="font-size:11px;color:#d97706;background:transparent;border:1.5px solid #d97706;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:inherit;font-weight:700">+ 더보기</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 1번</label>
-          <textarea id="f-lastHomework" rows="2" placeholder="지난 과제 1 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-lastCompletion" value="-1">
-            <div class="comp-btn-wrap" id="wrap-lastCompletion">
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion',0)"   style="--btn-color:#ef4444;--btn-bg:#fef2f2"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 미완료</button>
-              <button type="button" class="comp-btn"        onclick="setComp('lastCompletion',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn"        onclick="setComp('lastCompletion',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn"        onclick="setComp('lastCompletion',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn"        onclick="setComp('lastCompletion',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-
-          </div>
-        </div>
-      </div>
-            <div id="extra-lastHW" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 2번</label>
-          <textarea id="f-lastHomework2" rows="2" placeholder="지난 과제 2 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-lastCompletion2" value="-1">
-            <div class="comp-btn-wrap" id="wrap-lastCompletion2">
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion2',0)"   style="--btn-color:#ef4444;--btn-bg:#fef2f2"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 미완료</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion2',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion2',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion2',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion2',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 3번</label>
-          <textarea id="f-lastHomework3" rows="2" placeholder="지난 과제 3 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-lastCompletion3" value="-1">
-            <div class="comp-btn-wrap" id="wrap-lastCompletion3">
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion3',0)"   style="--btn-color:#ef4444;--btn-bg:#fef2f2"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 미완료</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion3',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion3',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion3',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion3',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 4번</label>
-          <textarea id="f-lastHomework4" rows="2" placeholder="지난 과제 4 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-lastCompletion4" value="-1">
-            <div class="comp-btn-wrap" id="wrap-lastCompletion4">
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion4',0)"   style="--btn-color:#ef4444;--btn-bg:#fef2f2"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 미완료</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion4',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion4',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion4',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion4',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 5번</label>
-          <textarea id="f-lastHomework5" rows="2" placeholder="지난 과제 5 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-lastCompletion5" value="-1">
-            <div class="comp-btn-wrap" id="wrap-lastCompletion5">
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion5',0)"   style="--btn-color:#ef4444;--btn-bg:#fef2f2"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 미완료</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion5',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion5',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion5',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('lastCompletion5',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-    <div class="card">
-      <div class="card-title" style="color:#4f46e5">오늘 수업내용 및 이행도</div>
-      <label class="field-label">전체 수업 요약</label>
-      <textarea id="f-todayContent" rows="2" placeholder="전체 수업 내용을 입력하세요..."></textarea>
-
-      <!-- 동적 수업 블록 컨테이너 -->
-      <div id="lessonBlocksWrap" style="margin-top:12px;display:flex;flex-direction:column;gap:10px"></div>
-
-      <!-- 버튼 영역 -->
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button type="button" onclick="addLessonContent()" style="flex:1;padding:8px 12px;background:#ede9fe;color:#6366f1;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 내용 추가</button>
-        <button type="button" onclick="addLessonBlock()" style="flex:1;padding:8px 12px;background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 수업내용 추가</button>
-      </div>
-
-      <!-- 숨겨진 기존 필드 (저장 호환용) -->
+      <!-- 동적 지난 과제 목록 -->
+      <div id="lastHomeworkWrap" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      
+      <!-- 숨겨진 호환용 필드 -->
       <div style="display:none">
-        <input type="hidden" id="f-reading1"><input type="hidden" id="f-reading1Comp" value="0">
-        <input type="hidden" id="f-reading2"><input type="hidden" id="f-reading2Comp" value="0">
-        <input type="hidden" id="f-reading3"><input type="hidden" id="f-reading3Comp" value="0">
-        <input type="hidden" id="f-reading4"><input type="hidden" id="f-reading4Comp" value="0">
-        <input type="hidden" id="f-reading5"><input type="hidden" id="f-reading5Comp" value="0">
-        <input type="hidden" id="f-grammar1"><input type="hidden" id="f-grammar1Comp" value="0">
-        <input type="hidden" id="f-grammar2"><input type="hidden" id="f-grammar2Comp" value="0">
-        <input type="hidden" id="f-grammar3"><input type="hidden" id="f-grammar3Comp" value="0">
-        <input type="hidden" id="f-grammar4"><input type="hidden" id="f-grammar4Comp" value="0">
-        <input type="hidden" id="f-grammar5"><input type="hidden" id="f-grammar5Comp" value="0">
-        <input type="hidden" id="f-exam1"><input type="hidden" id="f-exam1Comp" value="0">
-        <input type="hidden" id="f-exam2"><input type="hidden" id="f-exam2Comp" value="0">
-        <input type="hidden" id="f-exam3"><input type="hidden" id="f-exam3Comp" value="0">
-        <input type="hidden" id="f-exam4"><input type="hidden" id="f-exam4Comp" value="0">
-        <input type="hidden" id="f-exam5"><input type="hidden" id="f-exam5Comp" value="0">
-        <input type="hidden" id="f-etc1"><input type="hidden" id="f-etc1Comp" value="0">
-        <input type="hidden" id="f-etc2"><input type="hidden" id="f-etc2Comp" value="0">
-        <input type="hidden" id="f-etc3"><input type="hidden" id="f-etc3Comp" value="0">
-        <input type="hidden" id="f-etc4"><input type="hidden" id="f-etc4Comp" value="0">
-        <input type="hidden" id="f-etc5"><input type="hidden" id="f-etc5Comp" value="0">
+        <textarea id="f-lastHomework"></textarea>
+        <input type="hidden" id="f-lastCompletion" value="-1">
+        <textarea id="f-lastHomework2"></textarea>
+        <input type="hidden" id="f-lastCompletion2" value="-1">
+        <textarea id="f-lastHomework3"></textarea>
+        <input type="hidden" id="f-lastCompletion3" value="-1">
+        <textarea id="f-lastHomework4"></textarea>
+        <input type="hidden" id="f-lastCompletion4" value="-1">
+        <textarea id="f-lastHomework5"></textarea>
+        <input type="hidden" id="f-lastCompletion5" value="-1">
       </div>
     </div>
-
-
     <div class="card">
-      <div class="card-title" style="color:#7c3aed">오늘 과제</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <label class="field-label" style="margin:0">과제 내용</label>
-        <button type="button" onclick="toggleInputGroup('extra-hw')" id="btn-extra-hw" style="font-size:11px;color:#7c3aed;background:transparent;border:1.5px solid #7c3aed;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:inherit;font-weight:700">+ 더보기</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 1번</label>
-          <textarea id="f-homework" rows="2" placeholder="과제 1 내용..."></textarea>
-        </div>
-      </div>
-      <div id="extra-hw" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 2번</label>
-          <textarea id="f-homework2" rows="2" placeholder="과제 2 내용..."></textarea>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 3번</label>
-          <textarea id="f-homework3" rows="2" placeholder="과제 3 내용..."></textarea>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 4번</label>
-          <textarea id="f-homework4" rows="2" placeholder="과제 4 내용..."></textarea>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 5번</label>
-          <textarea id="f-homework5" rows="2" placeholder="과제 5 내용..."></textarea>
-        </div>
+      <div class="card-title" style="color:#7c3aed">오늘의 과제</div>
+      <!-- 동적 과제 목록 -->
+      <div id="homeworkWrap" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <button type="button" onclick="addHomework()" style="width:100%;padding:8px;background:#f3e8ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ 과제 추가</button>
+      <!-- 호환용 hidden 필드 -->
+      <div style="display:none">
+        <textarea id="f-homework"></textarea>
+        <textarea id="f-homework2"></textarea>
+        <textarea id="f-homework3"></textarea>
+        <textarea id="f-homework4"></textarea>
+        <textarea id="f-homework5"></textarea>
       </div>
     </div>
 
@@ -2336,6 +2224,8 @@ async function saveRecord() {
   try {
   // 동적 블록 → hidden 필드 동기화
   serializeLessonBlocks();
+  serializeHomeworks();
+  serializeLastHomeworks();
   const todayContent = document.getElementById('f-todayContent').value.trim();
   const homework     = document.getElementById('f-homework').value.trim();
   const reading      = (document.getElementById('f-reading')||{value:''}).value.trim();
@@ -2468,6 +2358,8 @@ function resetForm() {
   document.querySelectorAll('input[name=attendance],input[name=attitude]').forEach(r=>r.checked=false);
   updateAttendance(); updateAttitude();
   resetLessonBlocks(); // 동적 블록 초기화
+  resetHomeworks();    // 동적 과제 초기화
+  resetLastHomeworks(); // 동적 지난 과제 초기화
   // setComp already handles lastCompletion reset above
   document.getElementById('saveBtn').textContent    = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> 저장';
   document.getElementById('cancelBtn').style.display = 'none';
@@ -2506,6 +2398,8 @@ function editRecord(id) {
   document.querySelectorAll('input[name=attendance]').forEach(r=>{r.checked=(r.value===(rec.attendance||''));});
   document.querySelectorAll('input[name=attitude]').forEach(r=>{r.checked=(r.value===(rec.attitude||''));});
   updateAttendance(); updateAttitude();
+  // 동적 지난 과제 역직렬화
+  deserializeLastHomeworks(rec, false);
   document.getElementById('f-lastHomework').value    = rec.lastHomework   || '';
   var _lh2=document.getElementById('f-lastHomework2'); if(_lh2) _lh2.value=rec.lastHomework2||'';
   setComp('lastCompletion2', rec.lastCompletion2||0);
@@ -2571,6 +2465,8 @@ function editRecord(id) {
   var _hw3=document.getElementById('f-homework3'); if(_hw3) _hw3.value=rec.homework3||'';
   var _hw4=document.getElementById('f-homework4'); if(_hw4) _hw4.value=rec.homework4||'';
   var _hw5=document.getElementById('f-homework5'); if(_hw5) _hw5.value=rec.homework5||'';
+  // 동적 과제 역직렬화
+  deserializeHomeworks(rec.homework||'', rec.homework2||'', rec.homework3||'', rec.homework4||'', rec.homework5||'');
   document.getElementById('f-memo').value            = rec.memo           || '';
   document.getElementById('saveBtn').textContent     = '수정 완료';
   document.getElementById('cancelBtn').style.display = 'inline-block';
@@ -2678,6 +2574,212 @@ function updateStudentSelect() {
   stuSel.value = cur;
 }
 
+
+
+
+// ── 동적 지난 과제 이행도 시스템 ─────────────────────────────
+var _lastHomeworks = [{text:'', comp:-1}];
+
+function renderLastHomeworks() {
+  var wrap = document.getElementById('lastHomeworkWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  _lastHomeworks.forEach(function(item, i) {
+    var compBtns = [
+      {v:0,   label:'✗ 미완료', color:'#ef4444', bg:'#fef2f2'},
+      {v:25,  label:'△ 시작함', color:'#f97316', bg:'#fff7ed'},
+      {v:50,  label:'◑ 절반',   color:'#d97706', bg:'#fffbeb'},
+      {v:75,  label:'◕ 거의',   color:'#2563eb', bg:'#eff6ff'},
+      {v:100, label:'✓ 완료',   color:'#16a34a', bg:'#f0fdf4'},
+    ].map(function(b){
+      var active = item.comp === b.v;
+      return '<button type="button" onclick="setLastHWComp('+i+','+b.v+')" '
+        +'style="flex:1;padding:5px 2px;border:1.5px solid '+(active?b.color:'#e2e8f0')+';border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;background:'+(active?b.bg:'#fff')+';color:'+(active?b.color:'#94a3b8')+'">'
+        +b.label+'</button>';
+    }).join('');
+
+    var row = document.createElement('div');
+    row.style.cssText = 'border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;position:relative';
+    row.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+      + '<span style="font-size:11px;font-weight:800;color:#d97706">📋 '+(_lastHomeworks.length>1?(i+1)+'번 과제':'지난 과제')+'</span>'
+      + (_lastHomeworks.length > 1
+          ? '<button type="button" onclick="removeLastHW('+i+')" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0 4px">✕</button>'
+          : '')
+      + '</div>'
+      + '<textarea rows="2" placeholder="지난 과제 내용..." '
+      + 'oninput="updateLastHWText('+i+',this.value)" '
+      + 'style="width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;margin-bottom:6px">'+escHtml(item.text)+'</textarea>'
+      + '<div style="display:flex;gap:4px">'+compBtns+'</div>';
+    wrap.appendChild(row);
+  });
+  // + 추가 버튼
+  var addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.textContent = '＋ 지난 과제 추가';
+  addBtn.onclick = addLastHW;
+  addBtn.style.cssText = 'width:100%;padding:7px;background:#fff7ed;color:#d97706;border:1.5px solid #fed7aa;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px';
+  wrap.appendChild(addBtn);
+}
+
+function addLastHW() {
+  _lastHomeworks.push({text:'', comp:-1});
+  renderLastHomeworks();
+}
+
+function removeLastHW(i) {
+  if (_lastHomeworks.length <= 1) return;
+  _lastHomeworks.splice(i, 1);
+  renderLastHomeworks();
+}
+
+function updateLastHWText(i, val) {
+  if (_lastHomeworks[i]) _lastHomeworks[i].text = val;
+}
+
+function setLastHWComp(i, val) {
+  if (_lastHomeworks[i]) {
+    _lastHomeworks[i].comp = val;
+    renderLastHomeworks();
+  }
+}
+
+function serializeLastHomeworks() {
+  var fields = [
+    ['f-lastHomework','f-lastCompletion'],
+    ['f-lastHomework2','f-lastCompletion2'],
+    ['f-lastHomework3','f-lastCompletion3'],
+    ['f-lastHomework4','f-lastCompletion4'],
+    ['f-lastHomework5','f-lastCompletion5'],
+  ];
+  fields.forEach(function(pair, idx) {
+    var item = _lastHomeworks[idx];
+    var tEl = document.getElementById(pair[0]);
+    var cEl = document.getElementById(pair[1]);
+    if (tEl) tEl.value = item ? item.text : '';
+    if (cEl) cEl.value = item ? (item.comp >= 0 ? item.comp : -1) : -1;
+  });
+}
+
+function deserializeLastHomeworks(rec, isNewDay) {
+  _lastHomeworks = [];
+  var pairs = [
+    ['lastHomework','lastCompletion'],
+    ['lastHomework2','lastCompletion2'],
+    ['lastHomework3','lastCompletion3'],
+    ['lastHomework4','lastCompletion4'],
+    ['lastHomework5','lastCompletion5'],
+  ];
+  if (isNewDay) {
+    // 새 날: 이전 오늘 과제 → 지난 과제로 이동
+    var hwFields = ['homework','homework2','homework3','homework4','homework5'];
+    hwFields.forEach(function(f) {
+      var val = rec[f] || '';
+      if (val) _lastHomeworks.push({text:val, comp:-1});
+    });
+  } else {
+    pairs.forEach(function(p) {
+      var t = rec[p[0]] || '';
+      var c = rec[p[1]] !== undefined ? rec[p[1]] : -1;
+      if (t) _lastHomeworks.push({text:t, comp:c});
+    });
+  }
+  if (_lastHomeworks.length === 0) _lastHomeworks = [{text:'', comp:-1}];
+  renderLastHomeworks();
+}
+
+function resetLastHomeworks() {
+  _lastHomeworks = [{text:'', comp:-1}];
+  renderLastHomeworks();
+}
+
+// ── 동적 오늘의 과제 시스템 ──────────────────────────────────
+var _homeworks = ['']; // 과제 텍스트 배열
+
+function renderHomeworks() {
+  var wrap = document.getElementById('homeworkWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  _homeworks.forEach(function(text, i) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:6px;align-items:flex-start';
+    row.innerHTML = '<div style="flex:1">'
+      + '<div style="font-size:11px;font-weight:800;color:#7c3aed;margin-bottom:4px">'
+      + (_homeworks.length > 1 ? (i+1)+'번 과제' : '과제 내용') + '</div>'
+      + '<textarea rows="2" placeholder="과제 내용..." '
+      + 'oninput="updateHomework('+i+',this.value)" '
+      + 'style="width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical">'+escHtml(text)+'</textarea>'
+      + '</div>'
+      + (_homeworks.length > 1
+          ? '<button type="button" onclick="removeHomework('+i+')" style="margin-top:20px;padding:6px 10px;background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">✕</button>'
+          : '');
+    wrap.appendChild(row);
+  });
+}
+
+function addHomework() {
+  _homeworks.push('');
+  renderHomeworks();
+  // 새 항목 스크롤
+  setTimeout(function(){
+    var wrap = document.getElementById('homeworkWrap');
+    if (wrap && wrap.lastChild) wrap.lastChild.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }, 50);
+}
+
+function removeHomework(i) {
+  if (_homeworks.length <= 1) return;
+  _homeworks.splice(i, 1);
+  renderHomeworks();
+}
+
+function updateHomework(i, val) {
+  _homeworks[i] = val;
+}
+
+// hidden 필드로 직렬화 (저장 전)
+function serializeHomeworks() {
+  var fields = ['f-homework','f-homework2','f-homework3','f-homework4','f-homework5'];
+  fields.forEach(function(id, idx) {
+    var el = document.getElementById(id);
+    if (el) el.value = _homeworks[idx] || '';
+  });
+}
+
+// hidden 필드에서 역직렬화
+function deserializeHomeworks(hw1, hw2, hw3, hw4, hw5) {
+  _homeworks = [];
+  [hw1,hw2,hw3,hw4,hw5].forEach(function(v){
+    if (v) _homeworks.push(v);
+  });
+  if (_homeworks.length === 0) _homeworks = [''];
+  renderHomeworks();
+}
+
+function resetHomeworks() {
+  _homeworks = [''];
+  renderHomeworks();
+}
+
+// ── 지난 과제 이행도 동기화 (과제 개수에 맞게 표시) ──────────
+function syncLastHomework(count) {
+  // count: 이전 기록의 과제 개수
+  for (var n = 2; n <= 5; n++) {
+    var wrap = document.getElementById('extra-lastHW-'+n);
+    if (!wrap) {
+      // extra-lastHW div 내 n번째 항목을 직접 찾아 show/hide
+      var el = document.getElementById('f-lastHomework'+n);
+      if (el) {
+        var card = el.closest('[style*="border"]') || el.parentElement.parentElement;
+        if (card) card.style.display = (n <= count) ? '' : 'none';
+      }
+    } else {
+      wrap.style.display = (n <= count) ? '' : 'none';
+    }
+  }
+  // extra-lastHW 전체 div 표시 여부
+  var extraDiv = document.getElementById('extra-lastHW');
+  if (extraDiv) extraDiv.style.display = count >= 2 ? 'flex' : 'none';
+}
 
 // ── 동적 수업 블록 시스템 ─────────────────────────────────
 var _lessonBlocks = []; // [{type, items:[{text,comp}]}]
@@ -3367,7 +3469,7 @@ function finishLogin(fbUser, profile) {
   initSidebar(profile);
   startAutoLogoutTimer();
   // 동적 수업 블록 초기 렌더링
-  setTimeout(function(){ resetLessonBlocks(); }, 100);
+  setTimeout(function(){ resetLessonBlocks(); resetHomeworks(); resetLastHomeworks(); }, 100);
 }
 
 // ── 자동 로그아웃 (10시간 / localStorage 기반) ───────────────
@@ -6314,12 +6416,14 @@ function loadRecord() {
   // 날짜가 다를 때만 오늘 과제 → 지난 과제로 이동
   var isNewDay = rec.date !== todayStr();
   // 날짜가 다르면 오늘과제→지난과제1, todayContent1~5→lastHomework1~5 연동
-  document.getElementById('f-lastHomework').value = isNewDay ? (rec.homework || '') : (rec.lastHomework || '');
+  // 동적 지난 과제 역직렬화
+  deserializeLastHomeworks(rec, isNewDay);
+  // 호환용 hidden 필드 채우기
+  document.getElementById('f-lastHomework').value = isNewDay ? (rec.homework||'') : (rec.lastHomework||'');
   setComp('lastCompletion', isNewDay ? -1 : (rec.lastCompletion ?? -1));
-
   for (var lhi = 2; lhi <= 5; lhi++) {
     var lhEl = document.getElementById('f-lastHomework'+lhi);
-    if (lhEl) lhEl.value = isNewDay ? (rec['homework'+(lhi===1?'':lhi)] || '') : (rec['lastHomework'+lhi] || '');
+    if (lhEl) lhEl.value = isNewDay ? (rec['homework'+(lhi===1?'':lhi)]||'') : (rec['lastHomework'+lhi]||'');
     setComp('lastCompletion'+lhi, isNewDay ? -1 : (rec['lastCompletion'+lhi] ?? -1));
   }
 
@@ -6350,6 +6454,18 @@ function loadRecord() {
   var _lhw3=document.getElementById('f-homework3'); if(_lhw3) _lhw3.value=isNewDay?'':(rec.homework3||'');
   var _lhw4=document.getElementById('f-homework4'); if(_lhw4) _lhw4.value=isNewDay?'':(rec.homework4||'');
   var _lhw5=document.getElementById('f-homework5'); if(_lhw5) _lhw5.value=isNewDay?'':(rec.homework5||'');
+  // 동적 과제 역직렬화
+  if (isNewDay) {
+    resetHomeworks();
+  } else {
+    deserializeHomeworks(rec.homework||'', rec.homework2||'', rec.homework3||'', rec.homework4||'', rec.homework5||'');
+  }
+  // 지난 과제 이행도: 이전 기록의 과제 개수에 맞게 표시
+  if (isNewDay) {
+    var hwCount = [rec.homework, rec.homework2, rec.homework3, rec.homework4, rec.homework5]
+      .filter(function(h){ return h && h.trim(); }).length;
+    syncLastHomework(hwCount || 1);
+  }
   document.getElementById('f-memo').value     = rec.memo     || '';
 
   updateRing();
