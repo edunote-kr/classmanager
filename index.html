@@ -114,50 +114,45 @@ textarea { resize:vertical; }
 .dist-pct   { font-size:10px; color:#94a3b8; }
 
 @media (min-width: 768px) {
-  /* ── PC Grid 레이아웃: 사이드바(좌) + 헤더(우상) + 콘텐츠(우하) ── */
+  /* ── PC 레이아웃: 사이드바 고정 + 콘텐츠 마진 ── */
   #mainApp.sidebar-active {
-    display: grid !important;
-    grid-template-columns: 220px 1fr;
-    grid-template-rows: 64px 1fr;
-    height: 100vh;
-    overflow: hidden;
+    display: block !important;
+    min-height: 100vh;
   }
 
-  /* 사이드바: 좌측 전체 높이 - position:fixed 방식 */
+  /* 사이드바: 좌측 고정 */
   #sidebar {
     display: flex !important;
     flex-direction: column;
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 220px;
     height: 100vh;
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
     overflow: hidden;
     z-index: 100;
   }
 
-  /* 헤더: 우측 상단 */
+  /* 헤더: 사이드바 너비만큼 왼쪽 여백 */
   #mainApp.sidebar-active > header {
     display: flex !important;
-    grid-column: 2;
-    grid-row: 1;
-    z-index: 50;
+    position: fixed !important;
+    top: 0;
+    left: 220px;
+    right: 0;
     height: 64px;
     padding: 0 32px;
     background: #fff;
     border-bottom: 1.5px solid #e2e8f0;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     box-sizing: border-box;
-    min-width: 0;
-    overflow: hidden;
+    z-index: 50;
+    align-items: center;
   }
 
-
-  /* 탭: PC에서 숨김 - 그리드 공간도 차지하지 않게 */
-  #mainApp.sidebar-active > .tabs {
-    display: none !important;
-    grid-column: 2;
-    grid-row: 1;
-  }
+  /* 탭: PC에서 숨김 */
+  #mainApp.sidebar-active > .tabs { display: none !important; }
 
   /* PC 헤더에서 로고/타이틀 숨김 */
   #mainApp.sidebar-active > header .logo-wrap { visibility: hidden; width: 0; overflow: hidden; padding: 0; margin: 0; }
@@ -167,14 +162,13 @@ textarea { resize:vertical; }
   #mainApp.sidebar-active > header #myPageBtn { font-size: 11px !important; padding: 6px 10px !important; }
   #mainApp.sidebar-active > header #logoutBtn { font-size: 11px !important; padding: 6px 10px !important; }
 
-  /* 콘텐츠: 우측 하단 */
+  /* 콘텐츠: 사이드바+헤더 공간 확보 */
   #mainContent {
-    grid-column: 2;
-    grid-row: 2;
+    margin-left: 220px;
+    margin-top: 64px;
+    min-height: calc(100vh - 64px);
     background: #f1f5f9;
-    min-width: 0;
     overflow-y: auto;
-    height: calc(100vh - 64px);
   }
 
   .content { padding: 28px 32px; max-width: 1200px; }
@@ -2690,13 +2684,6 @@ function serializeLastHomeworks() {
 
 function deserializeLastHomeworks(rec, isNewDay) {
   _lastHomeworks = [];
-  var pairs = [
-    ['lastHomework','lastCompletion'],
-    ['lastHomework2','lastCompletion2'],
-    ['lastHomework3','lastCompletion3'],
-    ['lastHomework4','lastCompletion4'],
-    ['lastHomework5','lastCompletion5'],
-  ];
   if (isNewDay) {
     // 새 날: 이전 오늘 과제 → 지난 과제로 이동
     var hwFields = ['homework','homework2','homework3','homework4','homework5'];
@@ -2704,7 +2691,29 @@ function deserializeLastHomeworks(rec, isNewDay) {
       var val = rec[f] || '';
       if (val) _lastHomeworks.push({text:val, comp:-1});
     });
+    // homework가 없으면 기존 lastHomework도 확인
+    if (_lastHomeworks.length === 0) {
+      var lhFields = [
+        ['lastHomework','lastCompletion'],
+        ['lastHomework2','lastCompletion2'],
+        ['lastHomework3','lastCompletion3'],
+        ['lastHomework4','lastCompletion4'],
+        ['lastHomework5','lastCompletion5'],
+      ];
+      lhFields.forEach(function(p) {
+        var t = rec[p[0]] || '';
+        var c = rec[p[1]] !== undefined ? rec[p[1]] : -1;
+        if (t) _lastHomeworks.push({text:t, comp:c});
+      });
+    }
   } else {
+    var pairs = [
+      ['lastHomework','lastCompletion'],
+      ['lastHomework2','lastCompletion2'],
+      ['lastHomework3','lastCompletion3'],
+      ['lastHomework4','lastCompletion4'],
+      ['lastHomework5','lastCompletion5'],
+    ];
     pairs.forEach(function(p) {
       var t = rec[p[0]] || '';
       var c = rec[p[1]] !== undefined ? rec[p[1]] : -1;
@@ -3442,11 +3451,9 @@ function finishLogin(fbUser, profile) {
 
   var mainApp = document.getElementById('mainApp');
   if (mainApp) {
-    mainApp.style.display = '';  // 인라인 style 제거 → CSS 클래스가 제어
+    mainApp.style.display = 'block';
     if (window.innerWidth >= 768) {
-      mainApp.classList.add('sidebar-active');  // CSS: display:grid !important
-    } else {
-      mainApp.style.display = 'block';
+      mainApp.classList.add('sidebar-active');
     }
   }
   hideInitLoader();
@@ -5191,8 +5198,9 @@ function initSidebar(profile) {
     var isPC = window.innerWidth >= 768;
     if (sidebar) sidebar.style.display = isPC ? 'flex' : 'none';
     if (mainApp && mainApp.style.display !== 'none') {
-      if (isPC) { mainApp.classList.add('sidebar-active'); mainApp.style.display = ''; }
-      else      { mainApp.classList.remove('sidebar-active'); mainApp.style.display = 'block'; }
+      mainApp.style.display = 'block';
+      if (isPC) { mainApp.classList.add('sidebar-active'); }
+      else      { mainApp.classList.remove('sidebar-active'); }
     }
   }
   applyLayout();
