@@ -114,10 +114,9 @@ textarea { resize:vertical; }
 .dist-pct   { font-size:10px; color:#94a3b8; }
 
 @media (min-width: 768px) {
-  /* ── PC 레이아웃: 사이드바 고정 + 콘텐츠 마진 ── */
+  /* ── PC 레이아웃: 사이드바+헤더 고정, 콘텐츠 마진 ── */
   #mainApp.sidebar-active {
     display: block !important;
-    min-height: 100vh;
   }
 
   /* 사이드바: 좌측 고정 */
@@ -134,7 +133,7 @@ textarea { resize:vertical; }
     z-index: 100;
   }
 
-  /* 헤더: 사이드바 너비만큼 왼쪽 여백 */
+  /* 헤더: 상단 고정 */
   #mainApp.sidebar-active > header {
     display: flex !important;
     position: fixed !important;
@@ -162,16 +161,12 @@ textarea { resize:vertical; }
   #mainApp.sidebar-active > header #myPageBtn { font-size: 11px !important; padding: 6px 10px !important; }
   #mainApp.sidebar-active > header #logoutBtn { font-size: 11px !important; padding: 6px 10px !important; }
 
-  /* 콘텐츠: 사이드바+헤더 공간 확보 */
+  /* 콘텐츠: 사이드바+헤더 여백 확보, 내부 스크롤 */
   #mainContent {
-    position: fixed !important;
-    top: 64px;
-    left: 220px;
-    right: 0;
-    bottom: 0;
+    margin-left: 220px;
+    padding-top: 64px;
+    min-height: 100vh;
     background: #f1f5f9;
-    overflow-y: auto;
-    overflow-x: hidden;
   }
 
   .content { padding: 28px 32px; max-width: 1200px; }
