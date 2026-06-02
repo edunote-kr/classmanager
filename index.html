@@ -1101,7 +1101,7 @@ onAuthStateChanged(auth, function(user) {
   <button class="tab active" id="tab-input" onclick="switchTab('input')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 수업내용 입력</button>
   <button class="tab"        id="tab-list"  onclick="switchTab('list')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg> 과제 목록 (<span id="listCount">0</span>)</button>
   <button class="tab"        id="tab-stats"    onclick="switchTab('stats')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg> 학생 통계</button>
-  <button class="tab"        id="tab-students" onclick="switchTab('students')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 재원생 목록</button>
+  <button class="tab"        id="tab-students" onclick="switchTab('students')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 원생 목록</button>
 </div>
 
 <!-- PC 사이드바 -->
@@ -1129,7 +1129,7 @@ onAuthStateChanged(auth, function(user) {
       <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg></span> 학생 통계
     </button>
     <button class="sidebar-tab" id="stab-students" onclick="switchTab('students')">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> 재원생 목록
+      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> 원생 목록
     </button>
   </nav>
 </div>
@@ -1176,16 +1176,14 @@ onAuthStateChanged(auth, function(user) {
     </div>
 
     <div class="card">
-      <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>단어 시험</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <label class="field-label">시험 범위 / 내용</label>
-          <input type="text" id="f-wordTest" placeholder="예: Unit 4 단어 20개">
-        </div>
-        <div>
-          <label class="field-label">점수</label>
-          <input type="text" id="f-wordScore" placeholder="예: 95점 / 100점">
-        </div>
+      <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>TEST</div>
+      <!-- 동적 TEST 목록 -->
+      <div id="testWrap" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
+      <button type="button" onclick="addTest()" style="width:100%;padding:8px;background:#e0f2fe;color:#0891b2;border:1.5px solid #7dd3fc;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ TEST 추가</button>
+      <!-- 호환용 hidden 필드 -->
+      <div style="display:none">
+        <input type="text" id="f-wordTest">
+        <input type="text" id="f-wordScore">
       </div>
     </div>
 
@@ -1215,10 +1213,6 @@ onAuthStateChanged(auth, function(user) {
       <div class="card-title" style="color:#16a34a"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>학습 태도</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
-          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-best" value="최상" onchange="updateAttitude()">
-          최상
-        </label>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
           <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-good" value="상" onchange="updateAttitude()">
           상
         </label>
@@ -1229,10 +1223,6 @@ onAuthStateChanged(auth, function(user) {
         <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
           <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-low" value="하" onchange="updateAttitude()">
           하
-        </label>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
-          <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-absent" value="결석" onchange="updateAttitude()">
-          결석
         </label>
       </div>
     </div>
@@ -2197,7 +2187,7 @@ function switchTab(tab) {
   });
   if (tab==='list')     { updateStudentFilter(); renderList(); }
   if (tab==='stats')    renderStats();
-  if (tab==='input')    { updateLoadSelect(); renderHomeworks(); renderLastHomeworks(); renderLessonBlocks(); }
+  if (tab==='input')    { updateLoadSelect(); renderHomeworks(); renderLastHomeworks(); renderLessonBlocks(); renderTests(); }
   if (tab==='students') renderStudents();
 }
 
@@ -2267,6 +2257,7 @@ async function saveRecord() {
   serializeLessonBlocks();
   serializeHomeworks();
   serializeLastHomeworks();
+  serializeTests();
   const todayContent = document.getElementById('f-todayContent').value.trim();
   const homework     = document.getElementById('f-homework').value.trim();
   const reading      = (document.getElementById('f-reading')||{value:''}).value.trim();
@@ -2401,6 +2392,7 @@ function resetForm() {
   resetLessonBlocks(); // 동적 블록 초기화
   resetHomeworks();    // 동적 과제 초기화
   resetLastHomeworks(); // 동적 지난 과제 초기화
+  resetTests();        // 동적 TEST 초기화
   // setComp already handles lastCompletion reset above
   document.getElementById('saveBtn').textContent    = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> 저장';
   document.getElementById('cancelBtn').style.display = 'none';
@@ -2453,6 +2445,7 @@ function editRecord(id) {
   setComp('lastCompletion', rec.lastCompletion ?? 0);
   document.getElementById('f-wordTest').value        = rec.wordTest       || '';
   document.getElementById('f-wordScore').value       = rec.wordScore      || '';
+  deserializeTests(rec.wordTest||'', rec.wordScore||'');
   document.getElementById('f-todayContent').value = rec.todayContent || '';
   var _fr=document.getElementById('f-reading'); if(_fr) _fr.value=rec.reading||'';
   setComp('readingComp', rec.readingComp ?? 0);
@@ -2828,6 +2821,69 @@ function syncLastHomework(count) {
   // extra-lastHW 전체 div 표시 여부
   var extraDiv = document.getElementById('extra-lastHW');
   if (extraDiv) extraDiv.style.display = count >= 2 ? 'flex' : 'none';
+}
+
+
+// ── 동적 TEST 시스템 ─────────────────────────────────────────
+var _tests = [{range:'', score:''}];
+
+function renderTests() {
+  var wrap = document.getElementById('testWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  _tests.forEach(function(t, i) {
+    var row = document.createElement('div');
+    row.style.cssText = 'border:1.5px solid #e2e8f0;border-radius:10px;padding:10px';
+    row.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+      + '<span style="font-size:11px;font-weight:800;color:#0891b2">TEST' + (_tests.length > 1 ? ' ' + (i+1) : '') + '</span>'
+      + (_tests.length > 1 ? '<button type="button" onclick="removeTest('+i+')" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0 4px">✕</button>' : '')
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+      + '<div><label class="field-label">시험 범위 / 내용</label>'
+      + '<input type="text" placeholder="예: Unit 4 단어 20개" value="'+escHtml(t.range)+'" '
+      + 'oninput="updateTest('+i+',\'range\',this.value)" style="width:100%;box-sizing:border-box"></div>'
+      + '<div><label class="field-label">점수</label>'
+      + '<input type="text" placeholder="예: 95점 / 100점" value="'+escHtml(t.score)+'" '
+      + 'oninput="updateTest('+i+',\'score\',this.value)" style="width:100%;box-sizing:border-box"></div>'
+      + '</div>';
+    wrap.appendChild(row);
+  });
+}
+
+function addTest() {
+  _tests.push({range:'', score:''});
+  renderTests();
+  setTimeout(function(){
+    var wrap = document.getElementById('testWrap');
+    if (wrap && wrap.lastChild) wrap.lastChild.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }, 50);
+}
+
+function removeTest(i) {
+  if (_tests.length <= 1) return;
+  _tests.splice(i, 1);
+  renderTests();
+}
+
+function updateTest(i, field, val) {
+  if (_tests[i]) _tests[i][field] = val;
+}
+
+function serializeTests() {
+  var r = document.getElementById('f-wordTest');
+  var s = document.getElementById('f-wordScore');
+  if (r) r.value = _tests[0] ? _tests[0].range : '';
+  if (s) s.value = _tests[0] ? _tests[0].score : '';
+}
+
+function deserializeTests(wordTest, wordScore) {
+  _tests = [{range: wordTest||'', score: wordScore||''}];
+  renderTests();
+}
+
+function resetTests() {
+  _tests = [{range:'', score:''}];
+  renderTests();
 }
 
 // ── 동적 수업 블록 시스템 ─────────────────────────────────
@@ -3516,7 +3572,7 @@ function finishLogin(fbUser, profile) {
   initSidebar(profile);
   startAutoLogoutTimer();
   // 동적 수업 블록 초기 렌더링
-  setTimeout(function(){ resetLessonBlocks(); resetHomeworks(); resetLastHomeworks(); }, 300);
+  setTimeout(function(){ resetLessonBlocks(); resetHomeworks(); resetLastHomeworks(); resetTests(); }, 300);
 }
 
 // ── 자동 로그아웃 (10시간 / localStorage 기반) ───────────────
@@ -6460,6 +6516,7 @@ function loadRecord() {
   // 단어 시험
   document.getElementById('f-wordTest').value  = rec.wordTest  || '';
   document.getElementById('f-wordScore').value = rec.wordScore || '';
+  deserializeTests(rec.wordTest||'', rec.wordScore||'');
 
   // 불러오기: 항상 날짜를 오늘로 → 기존 과제를 지난 과제로 이동
   // isNewDay 개념 제거 - 불러오기는 항상 homework → lastHomework
