@@ -44,7 +44,7 @@ header {
   box-sizing: border-box;
 }
 #headerSchoolName { display: none; }
-.logo-img   { width: 40px; height: 40px; border-radius: 50%; background: #f8fafc; padding: 3px; border: 2px solid #6366f1; object-fit: contain; flex-shrink: 0; }
+.logo-img   { width: 40px; height: 40px; border-radius: 10px; background: #1e293b; padding: 0; border: 2px solid #6366f1; object-fit: cover; flex-shrink: 0; }
 .logo-title { font-size: 14px; font-weight: 900; letter-spacing: 0px; color: #1e293b; font-family: Georgia, serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .logo-date  { font-size: 11px; color: #94a3b8; margin-top: 2px; white-space: nowrap; }
 
@@ -162,6 +162,11 @@ textarea { resize:vertical; }
   /* PC 헤더에서 로고/타이틀 숨김 - visibility로 DOM/src 유지 */
   #mainApp.sidebar-active > header .logo-wrap { visibility: hidden; width: 0; overflow: hidden; padding: 0; margin: 0; }
   #headerSchoolName { display: block; }
+  /* PC에서 아이디 표시 복원 */
+  #mainApp.sidebar-active > header #sidebarUserId { display: inline !important; }
+  #mainApp.sidebar-active > header #sidebarUser { max-width: none !important; }
+  #mainApp.sidebar-active > header #myPageBtn { font-size: 11px !important; padding: 6px 10px !important; }
+  #mainApp.sidebar-active > header #logoutBtn { font-size: 11px !important; padding: 6px 10px !important; }
 
   /* 콘텐츠: 우측 하단 */
   #mainContent {
@@ -830,7 +835,7 @@ onAuthStateChanged(auth, function(user) {
 <header>
   <!-- PC: 학원명 / 모바일: 로고+EduNote -->
   <div class="logo-wrap" style="cursor:pointer" onclick="location.reload()">
-    <img class="logo-img header-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AABVJ0lEQVR4nO3dd3Qc1dkG8Hdm+0pa9d6rZbnIHWxjbIrpNjbg0EOABEISEkiAJBC+JIQQAqRAAgESOoTeHKqpNriAcZEtS26SrN7rStt35/tDyF7JKtvmzuzO8ztHByTvzH13V9r7zJ07d7jY1DICWRKkLgAAIEQ4qQuA46mlLkDB0MEDgFJM9XmHgCABBAA20NkDAExsvM9IhAKRIQCIAx0+AEBwxn6OIhCEGAJAaKDDBwAQFwJBiCEABA6dPgCAdLw/gxEGAoAA4B90+gAA8oMwEAAEgKmh0wcACB8IAz5CAJgYOn4AgPA28jmOIDAOBIDR0OkDAEQejAqMAwFgGDp+AABlwKjAt5QeANDxAwAok+KDgFIDADp+AAAgUnAQUFoAQMcPAADjUVwQUEoAQMcPAAC+UEwQ4KUugAF0/gAA4K+I7zsieQQg4t88AAAQVUSPBkRiAEDHDwAAoRSRQSDSTgGg8wcAALFEVB8TKSMAEfWmAACAbEXMaEAkjACg8wcAANbCvu8J9wAQ9m8AAACErbDug8L1FEBYv+gAABAxwvaUQDiOAKDzBwAAuQm7vincAkDYvcAAAKAYYdVHhcspgLB6UQEAQLHC5pRAOIwAoPMHAIBwI/u+S+4BQPYvIAAAwARk3YfJOQDI+oUDAADwgWz7MrVMz1LI9gUDAADwk0AynBMgxxEAdP4AABBpZNe3qWUWSmT3AgEAAISIrEYC5DQCgM4fAAAinWz6OrkEANm8IAAAACKTRZ8nhwAgixcCAACAIcn7PrXEJyMkfwEAAAAkIumcAClHAND5AwCA0knWF0oVAND5AwAADJOkT5QiAKDzBwAAGI1538g6AKDzBwAAGB/TPpJlAEDnDwAAMDlmfSWrAIDOHwAAwDdM+kw5rAMAAAAAjLEIADj6BwAA8I/ofafYAQCdPwAAQGBE7UPFDADo/AEAAIIjWl+KOQAAAAAKJFYAwNE/AABAaIjSp4oRAND5AwAAhFbI+9ZQBwB0/gAAAOIIaR+LOQAAAAAKFMoAgKN/AAAAcYWsrw1VAEDnDwAAwEZI+lycAgAAAFCgUAQAHP0DAAAoO9PQFV4AAAAASUVORK5CYII=" alt="EduNote" style="width:44px;height:44px;border-radius:10px">
+    <img class="logo-img header-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AABVJ0lEQVR4nO3dd3Qc1dkG8Hdm+0pa9d6rZbnIHWxjbIrpNjbg0EOABEISEkiAJBC+JIQQAqRAAgESOoTeHKqpNriAcZEtS26SrN7rStt35/tDyF7JKtvmzuzO8ztHByTvzH13V9r7zJ07d7jY1DICWRKkLgAAIEQ4qQuA46mlLkDB0MEDgFJM9XmHgCABBAA20NkDAExsvM9IhAKRIQCIAx0+AEBwxn6OIhCEGAJAaKDDBwAQFwJBiCEABA6dPgCAdLw/gxEGAoAA4B90+gAA8oMwEAAEgKmh0wcACB8IAz5CAJgYOn4AgPA28jmOIDAOBIDR0OkDAEQejAqMAwFgGDp+AABlwKjAt5QeANDxAwAok+KDgFIDADp+AAAgUnAQUFoAQMcPAADjUVwQUEoAQMcPAAC+UEwQ4KUugAF0/gAA4K+I7zsieQQg4t88AAAQVUSPBkRiAEDHDwAAoRSRQSDSTgGg8wcAALFEVB8TKSMAEfWmAACAbEXMaEAkjACg8wcAANbCvu8J9wAQ9m8AAACErbDug8L1FEBYv+gAABAxwvaUQDiOAKDzBwAAuQm7vincAkDYvcAAAKAYYdVHhcspgLB6UQEAQLHC5pRAOIwAoPMHAIBwI/u+S+4BQPYvIAAAwARk3YfJOQDI+oUDAADwgWz7MrVMz1LI9gUDAADwk0AynBMgxxEAdP4AABBpZNe3qWUWSmT3AgEAAISIrEYC5DQCgM4fAAAinWz6OrkEANm8IAAAACKTRZ8nhwAgixcCAACAIcn7PrXEJyMkfwEAAAAkIumcAClHAND5AwCA0knWF0oVAND5AwAADJOkT5QiAKDzBwAAGI1538g6AKDzBwAAGB/TPpJlAEDnDwAAMDlmfSWrAIDOHwAAwDdM+kw5rAMAAAAAjLEIADj6BwAA8I/ofafYAQCdPwAAQGBE7UPFDADo/AEAAIIjWl+KOQAAAAAKJFYAwNE/AABAaIjSp4oRAND5AwAAhFbI+9ZQBwB0/gAAAOIIaR+LOQAAAAAKFMoAgKN/AAAAcYWsrw1VAEDnDwAAwEZI+lycAgAAAFCgUAQAHP0DAAAoO9PQFV4AAAAASUVORK5CYII=" alt="EduNote">
     <div class="logo-title header-title" id="headerTitle">EduNote</div>
   </div>
   <!-- PC 전용: 학원 로고 + 학원명 -->
@@ -838,12 +843,12 @@ onAuthStateChanged(auth, function(user) {
     <img id="headerSchoolLogo" src="" alt="" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1.5px solid #e2e8f0;background:#f8fafc;display:none;flex-shrink:0">
     <span id="headerSchoolNameText" style="font-size:16px;font-weight:800;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
   </div>
-  <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;margin-left:auto">
-    <span id="sidebarBadge" style="display:none;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap"></span>
-    <span id="sidebarUser" style="font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap"></span>
-    <span id="sidebarUserId" style="font-size:11px;color:#94a3b8;white-space:nowrap"></span>
-    <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">마이페이지</button>
-    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:11px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap">로그아웃</button>
+  <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:auto;min-width:0;overflow:hidden">
+    <span id="sidebarBadge" style="display:none;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap;flex-shrink:0"></span>
+    <span id="sidebarUser" style="font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px"></span>
+    <span id="sidebarUserId" style="font-size:11px;color:#94a3b8;white-space:nowrap;display:none"></span>
+    <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:10px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">마이페이지</button>
+    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:10px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">로그아웃</button>
   </div>
 </header>
 
