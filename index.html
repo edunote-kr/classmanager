@@ -1230,21 +1230,7 @@ onAuthStateChanged(auth, function(user) {
               <button type="button" class="comp-btn"        onclick="setComp('lastCompletion',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
               <button type="button" class="comp-btn"        onclick="setComp('lastCompletion',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4">✓ 완료</button>
             </div>
-            <div class="prog-wrap">
-              <svg width="48" height="48" style="transform:rotate(-90deg);flex-shrink:0">
-                <circle cx="24" cy="24" r="20" fill="none" stroke="#e2e8f0" stroke-width="6"/>
-                <circle id="ringArc" cx="24" cy="24" r="20" fill="none" stroke="#ef4444" stroke-width="6"
-                  stroke-dasharray="125.66" stroke-dashoffset="125.66"
-                  stroke-linecap="round" style="transition:all 0.4s ease"/>
-              </svg>
-              <div>
-                <div id="ringPct" style="font-size:20px;font-weight:800;color:#ef4444"></div>
-                <div id="ringLabel" style="font-size:11px;color:#94a3b8">미완료</div>
-              </div>
-              <div class="prog-bar-bg">
-                <div class="prog-bar" id="progBar" style="width:0%;background:#ef4444"></div>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>
@@ -1688,7 +1674,7 @@ onAuthStateChanged(auth, function(user) {
   <div class="panel" id="panel-students">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div class="card-title" style="color:#6366f1;margin:0">👥 학생 등록</div>
+        <div class="card-title" style="color:#6366f1;margin:0;white-space:nowrap">👥 학생 등록</div>
         <div style="display:flex;gap:6px">
           <button onclick="exportStudents()" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#dbeafe;color:#1d4ed8;white-space:nowrap">📥 저장</button>
           <label style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#dcfce7;color:#16a34a;margin:0;white-space:nowrap">
@@ -2362,29 +2348,7 @@ function setCompVal(field, val) {
   setComp(field, val);
 }
 
-function updateRing() {
-  const pct   = parseInt(document.getElementById('f-lastCompletion').value);
-  const circ  = 2*Math.PI*20;
-  const arc   = document.getElementById('ringArc');
-  if (pct === -1 || isNaN(pct)) {
-    arc.style.strokeDashoffset = circ;
-    arc.style.stroke = '#e2e8f0';
-    document.getElementById('ringPct').textContent   = '-';
-    document.getElementById('ringPct').style.color   = '#94a3b8';
-    document.getElementById('ringLabel').textContent = '선택 안함';
-    document.getElementById('progBar').style.width   = '0%';
-    document.getElementById('progBar').style.background = '#e2e8f0';
-    return;
-  }
-  const level = LEVELS.find(l=>l.value===pct) || LEVELS[0];
-  arc.style.strokeDashoffset = circ*(1-pct/100);
-  arc.style.stroke = level.color;
-  document.getElementById('ringPct').textContent   = '';
-  document.getElementById('ringPct').style.color   = level.color;
-  document.getElementById('ringLabel').textContent = level.label;
-  document.getElementById('progBar').style.width   = pct+'%';
-  document.getElementById('progBar').style.background = level.color;
-}
+function updateRing() { /* 링 UI 제거됨 */ }
 
 async function saveRecord() {
   try {
