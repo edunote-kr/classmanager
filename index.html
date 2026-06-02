@@ -90,7 +90,7 @@ textarea { resize:vertical; }
 
 /* ── Record card ── */
 .rec-card { background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
-.rec-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #f1f5f9; }
+.rec-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; }
 .rec-date   { font-size:12px; font-weight:700; color:#64748b; }
 .rec-student { font-size:12px; font-weight:800; color:#6366f1; background:#ede9fe; padding:2px 8px; border-radius:20px; }
 .po-badge    { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; margin-top:3px; }
@@ -875,6 +875,7 @@ onAuthStateChanged(auth, function(user) {
   </div>
   <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:auto;min-width:0;overflow:hidden">
     <span id="sidebarBadge" style="display:none;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap;flex-shrink:0"></span>
+    <span id="planBadge" style="display:none;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:#ede9fe;color:#6d28d9;white-space:nowrap;flex-shrink:0"></span>
     <span id="sidebarUser" style="font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px"></span>
     <span id="sidebarUserId" style="font-size:11px;color:#94a3b8;white-space:nowrap;display:none"></span>
     <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:10px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">마이페이지</button>
@@ -1161,18 +1162,18 @@ onAuthStateChanged(auth, function(user) {
       <div class="card-title" style="color:#6366f1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>기본 정보</div>
       <div style="margin-bottom:10px">
         <label class="field-label">날짜</label>
-        <input type="date" id="f-date" style="padding:6px 8px;font-size:11px;width:140px">
+        <input type="date" id="f-date" style="padding:11px 14px;font-size:14px;width:180px;border-radius:8px;border:1.5px solid #e2e8f0;font-family:inherit">
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <div>
+        <div style="flex:1;min-width:140px">
           <label class="field-label">반</label>
-          <select id="f-class" onchange="updateStudentSelect()" style="padding:6px 8px;font-size:11px;width:110px;border-radius:8px;border:1.5px solid #e2e8f0;font-family:inherit;background:#fff">
+          <select id="f-class" onchange="updateStudentSelect()" style="padding:11px 14px;font-size:14px;width:100%;box-sizing:border-box;border-radius:8px;border:1.5px solid #e2e8f0;font-family:inherit;background:#fff">
             <option value="">-- 선택 --</option>
           </select>
         </div>
-        <div>
+        <div style="flex:1;min-width:140px">
           <label class="field-label">학생 이름</label>
-          <select id="f-student" style="padding:6px 8px;font-size:11px;width:120px;border-radius:8px;border:1.5px solid #e2e8f0;font-family:inherit;background:#fff">
+          <select id="f-student" style="padding:11px 14px;font-size:14px;width:100%;box-sizing:border-box;border-radius:8px;border:1.5px solid #e2e8f0;font-family:inherit;background:#fff">
             <option value="">-- 선택 --</option>
           </select>
         </div>
@@ -1188,6 +1189,7 @@ onAuthStateChanged(auth, function(user) {
       <div style="display:none">
         <input type="text" id="f-wordTest">
         <input type="text" id="f-wordScore">
+        <input type="hidden" id="f-testsJson">
       </div>
     </div>
 
@@ -2895,10 +2897,9 @@ function serializeTests() {
   var s = document.getElementById('f-wordScore');
   if (r) r.value = _tests[0] ? _tests[0].range : '';
   if (s) s.value = _tests[0] ? _tests[0].score : '';
-  // _tests 배열 전체를 JSON으로도 저장 (다중 지원)
+  // _tests 배열 전체를 JSON으로 저장 (다중 지원)
   var el = document.getElementById('f-testsJson');
-  if (!el) { el = document.createElement('input'); el.type='hidden'; el.id='f-testsJson'; document.body.appendChild(el); }
-  el.value = JSON.stringify(_tests);
+  if (el) el.value = JSON.stringify(_tests);
 }
 
 function deserializeTests(wordTest, wordScore, testsJson) {
@@ -3739,6 +3740,11 @@ function doLogout() {
   currentUser = null; currentSchool = null; currentRole = null; GAS_URL = '';
   localStorage.removeItem('kms_cache_user');
   localStorage.removeItem('kms_cache_school');
+  // 동적 입력 상태 초기화 (다음 로그인 시 깨끗하게)
+  _tests = [{range:'', score:''}];
+  _homeworks = [''];
+  _lastHomeworks = [{text:'', comp:-1}];
+  _lessonBlocks = [{type:'today', items:[{text:'',comp:-1}]}];
 
   // 즉시 화면 전환 (signOut 비동기 완료 전에도 바로 숨김)
   document.getElementById('mainApp').style.display = 'none';
@@ -5336,7 +5342,17 @@ function initSidebar(profile) {
     var color = getRoleBadgeColor();
     badgeEl.style.background = color.bg;
     badgeEl.style.color = color.color;
-  }  updateSidebarCount();
+  }
+  // 플랜 뱃지
+  var planEl = document.getElementById('planBadge');
+  if (planEl) {
+    var planNames = { free:'무료 체험', basic:'베이직', standard:'스탠다드', premium:'프리미엄' };
+    var planKey = (currentSchoolProfile && currentSchoolProfile.plan) || 'free';
+    var planLabel = planNames[planKey] || planKey;
+    planEl.textContent = planLabel;
+    planEl.style.display = 'inline';
+  }
+  updateSidebarCount();
 }
 
 function updateSidebarCount() {
@@ -5706,7 +5722,7 @@ function renderStats() {
             +'</span></div>'
             +'<button onclick="saveStuStat(\''+gid+'\')" style="background:#334155;border:1.5px solid rgba(255,255,255,0.3);color:#fff;font-size:13px;padding:8px 10px;border-radius:8px;cursor:pointer;font-family:inherit;flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></button>'
             +'</div>'
-            +'<div class="group-body collapsed" id="gb-'+gid+'" style="max-height:0" data-student="'+esc(sname)+'">'
+            +'<div class="group-body collapsed" id="gb-'+gid+'" style="max-height:0" data-student="'+esc(sname)+'" data-month="'+esc(mon)+'">'
             +'<div id="stuinner-'+gid+'" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:0 0 8px 8px;padding:16px 18px">'
             +(attHTML?'<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:800;color:#475569"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 지각정도</span><br><div style="margin-top:4px">'+attHTML+'</div></div>':'')
             +(attitudeHTML?'<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:800;color:#475569"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 수업태도</span><br><div style="margin-top:4px">'+attitudeHTML+'</div></div>':'')
@@ -5808,7 +5824,8 @@ function captureStuStat(gid, done) {
     body.classList.remove('collapsed');
     body.style.maxHeight = '9999px';
     var student = body.getAttribute('data-student');
-    if (student) renderStuWordChart('wc-'+gid, student);
+    var cardMonth = body.getAttribute('data-month');
+    if (student) renderStuWordChart('wc-'+gid, student, cardMonth);
   }
 
   setTimeout(function(){
@@ -5859,7 +5876,8 @@ function captureStuStat(gid, done) {
       var cloneCanvas = innerClone.querySelector('canvas');
       var chartW = W - 24 - 32;
       if (cloneCanvas) {
-        drawWordChartOnCanvas(cloneCanvas, stuName, chartW);
+        var capMonth = body ? body.getAttribute('data-month') : null;
+        drawWordChartOnCanvas(cloneCanvas, stuName, chartW, capMonth);
       }
 
       html2canvas(wrapper, { scale:2, useCORS:true, backgroundColor:'#f1f5f9', width:W, windowWidth:W, scrollX:0, scrollY:0 })
@@ -5913,11 +5931,12 @@ function saveAllStuStats() {
 }
 
 // 캔버스 엘리먼트를 직접 받아서 그리는 버전 (캡처용)
-function drawWordChartOnCanvas(canvas, student, fixedW) {
+function drawWordChartOnCanvas(canvas, student, fixedW, month) {
   if (!canvas) return;
   var filtered = records.filter(function(r) {
     if (currentUser !== ADMIN_NAME && r.teacher !== currentUser) return false;
     if (r.student !== student) return false;
+    if (month && (r.date||'').slice(0,7) !== month) return false;
     var score = parseInt(String(r.wordScore).replace(/[^0-9]/g,''));
     return !isNaN(score) && score > 0;
   }).sort(function(a,b){ return a.date > b.date ? 1 : -1; });
@@ -5973,7 +5992,7 @@ function drawWordChartOnCanvas(canvas, student, fixedW) {
   });
 }
 
-function renderStuWordChart(canvasId, student) {
+function renderStuWordChart(canvasId, student, month) {
   var canvas = document.getElementById(canvasId);
   var empty  = document.getElementById(canvasId+'-empty');
   if (!canvas) return;
@@ -5981,6 +6000,7 @@ function renderStuWordChart(canvasId, student) {
   var filtered = records.filter(function(r) {
     if (currentUser !== ADMIN_NAME && r.teacher !== currentUser) return false;
     if (r.student !== student) return false;
+    if (month && (r.date||'').slice(0,7) !== month) return false;
     var score = parseInt(String(r.wordScore).replace(/[^0-9]/g,''));
     return !isNaN(score) && score > 0;
   }).sort(function(a,b){ return a.date > b.date ? 1 : -1; });
