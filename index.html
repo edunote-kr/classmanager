@@ -118,24 +118,19 @@ textarea { resize:vertical; }
   #mainApp.sidebar-active {
     display: grid !important;
     grid-template-columns: 220px 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: 64px 1fr;
     height: 100vh;
-    max-height: 100vh;
     overflow: hidden;
-    align-items: stretch;
   }
 
-  /* 사이드바: 좌측 전체 높이 */
+  /* 사이드바: 좌측 전체 높이 - position:fixed 방식 */
   #sidebar {
     display: flex !important;
     flex-direction: column;
     grid-column: 1;
-    grid-row: 1 / -1;
+    grid-row: 1 / span 2;
     background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-    position: sticky;
-    top: 0;
     height: 100vh;
-    min-height: 0;
     overflow: hidden;
     z-index: 100;
   }
@@ -145,15 +140,12 @@ textarea { resize:vertical; }
     display: flex !important;
     grid-column: 2;
     grid-row: 1;
-    position: sticky;
-    top: 0;
     z-index: 50;
     height: 64px;
     padding: 0 32px;
     background: #fff;
     border-bottom: 1.5px solid #e2e8f0;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    width: 100%;
     box-sizing: border-box;
     min-width: 0;
     overflow: hidden;
@@ -162,10 +154,9 @@ textarea { resize:vertical; }
   /* 탭: PC에서 숨김 */
   #mainApp.sidebar-active > .tabs { display: none !important; }
 
-  /* PC 헤더에서 로고/타이틀 숨김 - visibility로 DOM/src 유지 */
+  /* PC 헤더에서 로고/타이틀 숨김 */
   #mainApp.sidebar-active > header .logo-wrap { visibility: hidden; width: 0; overflow: hidden; padding: 0; margin: 0; }
   #headerSchoolName { display: block; }
-  /* PC에서 아이디 표시 복원 */
   #mainApp.sidebar-active > header #sidebarUserId { display: inline !important; }
   #mainApp.sidebar-active > header #sidebarUser { max-width: none !important; }
   #mainApp.sidebar-active > header #myPageBtn { font-size: 11px !important; padding: 6px 10px !important; }
@@ -177,9 +168,7 @@ textarea { resize:vertical; }
     grid-row: 2;
     background: #f1f5f9;
     min-width: 0;
-    min-height: 0;
     overflow-y: auto;
-    height: 100%;
   }
 
   .content { padding: 28px 32px; max-width: 1200px; }
@@ -212,24 +201,21 @@ textarea { resize:vertical; }
 /* 사이드바 내부 스타일 */
 .sidebar-logo {
   padding: 0 16px;
-  height: 60px;
-  min-height: 60px;
+  height: 64px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-shrink: 0;
+  flex: 0 0 64px;
 }
 .sidebar-nav {
-  flex: 1 1 0;
+  flex: 1;
   padding: 12px 10px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   overflow-y: auto;
   overflow-x: hidden;
-  min-height: 0;
-  height: 0;
 }
 .sidebar-tab {
   display: flex;
@@ -1238,7 +1224,46 @@ onAuthStateChanged(auth, function(user) {
     </div>
 
     <div class="card">
-      <div class="card-title" style="color:#d97706">지난 과제 이행도</div>
+      <div class="card-title" style="color:#4f46e5">📚 오늘 수업내용 및 이행도</div>
+      <label class="field-label">전체 수업 요약</label>
+      <textarea id="f-todayContent" rows="2" placeholder="전체 수업 내용을 입력하세요..."></textarea>
+
+      <!-- 동적 수업 블록 컨테이너 -->
+      <div id="lessonBlocksWrap" style="margin-top:12px;display:flex;flex-direction:column;gap:10px"></div>
+
+      <!-- 버튼 영역 -->
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button type="button" onclick="addLessonContent()" style="flex:1;padding:8px 12px;background:#ede9fe;color:#6366f1;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 내용 추가</button>
+        <button type="button" onclick="addLessonBlock()" style="flex:1;padding:8px 12px;background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 수업내용 추가</button>
+      </div>
+
+      <!-- 숨겨진 기존 필드 (저장 호환용) -->
+      <div style="display:none">
+        <input type="hidden" id="f-reading1"><input type="hidden" id="f-reading1Comp" value="0">
+        <input type="hidden" id="f-reading2"><input type="hidden" id="f-reading2Comp" value="0">
+        <input type="hidden" id="f-reading3"><input type="hidden" id="f-reading3Comp" value="0">
+        <input type="hidden" id="f-reading4"><input type="hidden" id="f-reading4Comp" value="0">
+        <input type="hidden" id="f-reading5"><input type="hidden" id="f-reading5Comp" value="0">
+        <input type="hidden" id="f-grammar1"><input type="hidden" id="f-grammar1Comp" value="0">
+        <input type="hidden" id="f-grammar2"><input type="hidden" id="f-grammar2Comp" value="0">
+        <input type="hidden" id="f-grammar3"><input type="hidden" id="f-grammar3Comp" value="0">
+        <input type="hidden" id="f-grammar4"><input type="hidden" id="f-grammar4Comp" value="0">
+        <input type="hidden" id="f-grammar5"><input type="hidden" id="f-grammar5Comp" value="0">
+        <input type="hidden" id="f-exam1"><input type="hidden" id="f-exam1Comp" value="0">
+        <input type="hidden" id="f-exam2"><input type="hidden" id="f-exam2Comp" value="0">
+        <input type="hidden" id="f-exam3"><input type="hidden" id="f-exam3Comp" value="0">
+        <input type="hidden" id="f-exam4"><input type="hidden" id="f-exam4Comp" value="0">
+        <input type="hidden" id="f-exam5"><input type="hidden" id="f-exam5Comp" value="0">
+        <input type="hidden" id="f-etc1"><input type="hidden" id="f-etc1Comp" value="0">
+        <input type="hidden" id="f-etc2"><input type="hidden" id="f-etc2Comp" value="0">
+        <input type="hidden" id="f-etc3"><input type="hidden" id="f-etc3Comp" value="0">
+        <input type="hidden" id="f-etc4"><input type="hidden" id="f-etc4Comp" value="0">
+        <input type="hidden" id="f-etc5"><input type="hidden" id="f-etc5Comp" value="0">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#d97706">📋 지난 과제 이행도</div>
       <!-- 동적 지난 과제 목록 -->
       <div id="lastHomeworkWrap" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
       
