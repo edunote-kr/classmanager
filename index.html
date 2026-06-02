@@ -1714,9 +1714,9 @@ onAuthStateChanged(auth, function(user) {
   <button class="po-dl"    onclick="doSaveImage()">⬇️ PNG 저장</button>
   <div id="printArea">
     <div class="po-header">
-      <img class="po-logo" src="data:image/png;base64,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" alt="KMS">
+      <img class="po-logo" id="printLogo" src="data:image/png;base64,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" alt="KMS">
       <div>
-        <div class="po-title">KMS ENGLISH x EPIC</div>
+        <div class="po-title" id="printSchoolName">EduNote</div>
         <div class="po-sub" id="printDateLine"></div>
       </div>
     </div>
@@ -1861,7 +1861,8 @@ function exportData() {
   if (myRecs.length === 0) { showToast('저장할 기록이 없습니다.', 'error'); return; }
   const json = JSON.stringify(myRecs, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
-  const fname = 'KMS_목록_' + new Date().toLocaleDateString('ko-KR').replace(/[.] /g,'').replace('.','') + '.json';
+  const _sName = (currentSchoolProfile && currentSchoolProfile.name) ? currentSchoolProfile.name.replace(/[^가-힣A-Za-z0-9]/g,'') : 'EduNote';
+  const fname = _sName + '_목록_' + new Date().toLocaleDateString('ko-KR').replace(/[.] /g,'').replace('.','') + '.json';
   if (window.showSaveFilePicker) {
     window.showSaveFilePicker({
       suggestedName: fname,
@@ -2120,7 +2121,7 @@ function makeStudentRow(s) {
   const absent  = stuRecs.filter(r => r.attendance === '결석').length;
   const ontime  = total - late - absent;
 
-  return '<div id="student-row-' + s.id + '" style="background:#f8fafc;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0;overflow:hidden">'
+  return '<div id="student-row-' + s.id + '" style="background:#f8fafc;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0">'
     // 메인 행
     + '<div style="padding:8px 10px">'
     // 첫째 줄: 이름+학년 / 출결 / 버튼
@@ -2147,15 +2148,13 @@ function makeStudentRow(s) {
     + '</div></div>'
     // 수정 폼
     + '<div id="student-edit-' + s.id + '" style="display:none;padding:10px;background:#f0f9ff;border-top:1.5px solid #bae6fd">'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">'
-    + '<input id="edit-class-'  + s.id + '" value="' + (s.className||'') + '" placeholder="반" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit">'
-    + '<input id="edit-name-'   + s.id + '" value="' + (s.name||'') + '" placeholder="이름" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit">'
-    + '<input id="edit-grade-'  + s.id + '" value="' + (s.grade||'') + '" placeholder="학년" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit">'
+    + '<div style="display:flex;gap:6px;margin-bottom:6px">'
+    + '<input id="edit-class-'  + s.id + '" value="' + (s.className||'') + '" placeholder="반" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
+    + '<input id="edit-name-'   + s.id + '" value="' + (s.name||'') + '" placeholder="이름" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
+    + '<input id="edit-grade-'  + s.id + '" value="' + (s.grade||'') + '" placeholder="학년" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
     + '</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'
-    + '<input id="edit-phone-'  + s.id + '" value="' + (s.phone||'') + '" placeholder="학생 번호" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit">'
-    + '<input id="edit-parent-' + s.id + '" value="' + (s.parent||'') + '" placeholder="학부모 번호" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit">'
-    + '</div>'
+    + '<input id="edit-phone-'  + s.id + '" value="' + (s.phone||'') + '" placeholder="학생 번호" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;margin-bottom:6px">'
+    + '<input id="edit-parent-' + s.id + '" value="' + (s.parent||'') + '" placeholder="학부모 번호" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;margin-bottom:8px">'
     + '<div style="display:flex;gap:6px">'
     + '<button onclick="saveEditStudent(\'' + s.id + '\')" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">저장</button>'
     + '<button onclick="cancelEditStudent(\'' + s.id + '\')" style="background:#f1f5f9;color:#64748b;border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>'
@@ -3183,13 +3182,16 @@ function finishLogin(fbUser, profile) {
     currentSchoolProfile.name = data.schoolName || '';
     currentSchoolProfile.phone = data.phone || '';
     currentSchoolProfile.logo = data.logo || null;
-    // 원장이면 schools 컬렉션에서도 확인
-    if (data.role === 'owner' && data.schoolId) {
+    // 원장/선생님 모두 소속 학원(schools)의 로고를 우선 적용 (학원별 통일)
+    if (data.schoolId) {
       window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', data.schoolId)).then(function(sSnap) {
         if (sSnap.exists()) {
           var sd = sSnap.data();
           if (sd.logo) currentSchoolProfile.logo = sd.logo;
           if (sd.phone) currentSchoolProfile.phone = sd.phone;
+          if (sd.name) currentSchoolProfile.name = sd.name;
+          // 헤더/사이드바 로고 즉시 갱신
+          refreshSchoolLogo();
         }
       }).catch(function(){});
     }
@@ -4867,6 +4869,29 @@ function closeMyPage() {
   myLogoBase64 = null;
 }
 
+// 학원 로고를 사이드바/헤더에 반영 (학원 로고 없으면 기본 EduNote 로고 유지)
+function refreshSchoolLogo() {
+  var hasLogo = currentSchoolProfile && currentSchoolProfile.logo;
+  // 사이드바 로고
+  var logoEl = document.getElementById('sidebarLogo');
+  if (logoEl && hasLogo) logoEl.src = currentSchoolProfile.logo;
+  // 헤더 학원 로고
+  var headerSchoolLogo = document.getElementById('headerSchoolLogo');
+  if (headerSchoolLogo) {
+    if (hasLogo) {
+      headerSchoolLogo.src = currentSchoolProfile.logo;
+      headerSchoolLogo.style.display = 'block';
+    } else {
+      headerSchoolLogo.style.display = 'none';
+    }
+  }
+  // 헤더 학원명
+  var headerSchoolName = document.getElementById('headerSchoolNameText');
+  if (headerSchoolName && currentSchoolProfile && currentSchoolProfile.name) {
+    headerSchoolName.textContent = currentSchoolProfile.name;
+  }
+}
+
 function initSidebar(profile) {
   var sidebar = document.getElementById('sidebar');
   var mainApp = document.getElementById('mainApp');
@@ -4882,27 +4907,15 @@ function initSidebar(profile) {
   applyLayout();
   window.addEventListener('resize', applyLayout);
 
-  // 사이드바 로고 - 학원 커스텀 로고 있을 때만 교체 (없으면 HTML에 박힌 EduNote 로고 유지)
-  var logoEl = document.getElementById('sidebarLogo');
-  if (logoEl && currentSchoolProfile && currentSchoolProfile.logo) {
-    logoEl.src = currentSchoolProfile.logo;
-  }
+  // 사이드바/헤더 로고 갱신 (학원 로고 → 없으면 기본 EduNote 로고)
+  refreshSchoolLogo();
 
   var schoolEl = document.getElementById('sidebarSchool');
   if (schoolEl) schoolEl.textContent = profile.schoolName || '';
 
-  // 헤더 학원 로고 + 학원명
+  // 헤더 학원명
   var headerSchoolName = document.getElementById('headerSchoolNameText');
-  if (headerSchoolName) headerSchoolName.textContent = profile.schoolName || '';  var headerSchoolLogo = document.getElementById('headerSchoolLogo');
-  if (headerSchoolLogo) {
-    var logoSrc = currentSchoolProfile.logo || profile.logo || '';
-    if (logoSrc) {
-      headerSchoolLogo.src = logoSrc;
-      headerSchoolLogo.style.display = 'block';
-    } else {
-      headerSchoolLogo.style.display = 'none';
-    }
-  }
+  if (headerSchoolName) headerSchoolName.textContent = (currentSchoolProfile && currentSchoolProfile.name) || profile.schoolName || '';
 
   var userEl = document.getElementById('sidebarUser');
   if (userEl) userEl.textContent = profile.name || '';
@@ -5736,6 +5749,22 @@ function renderWordChart() {
 function openPrint() {
   if (records.length===0) { showToast('저장할 기록이 없습니다.','error'); return; }
 
+  // 인쇄 헤더: 로그인한 학원 로고/이름으로 동적 교체 (학원별 분리)
+  var printLogoEl = document.getElementById('printLogo');
+  if (printLogoEl) {
+    if (currentSchoolProfile && currentSchoolProfile.logo) {
+      printLogoEl.src = currentSchoolProfile.logo;
+    } else {
+      // 학원 로고 없으면 기본 EduNote 로고 사용
+      var sidebarLogoEl = document.getElementById('sidebarLogo');
+      if (sidebarLogoEl) printLogoEl.src = sidebarLogoEl.src;
+    }
+  }
+  var printNameEl = document.getElementById('printSchoolName');
+  if (printNameEl) {
+    printNameEl.textContent = (currentSchoolProfile && currentSchoolProfile.name) || 'EduNote';
+  }
+
   document.getElementById('printDateLine').textContent =
     '출력일: ' + formatDate(new Date());
 
@@ -6172,7 +6201,8 @@ function closePrint() {
 
 function doSaveImage() {
   const node = document.getElementById('printArea');
-  const fname = 'KMS_과제기록_' + new Date().toLocaleDateString('ko-KR').replace(/[.] /g,'').replace('.','') + '.png';
+  const _sName = (currentSchoolProfile && currentSchoolProfile.name) ? currentSchoolProfile.name.replace(/[^가-힣A-Za-z0-9]/g,'') : 'EduNote';
+  const fname = _sName + '_과제기록_' + new Date().toLocaleDateString('ko-KR').replace(/[.] /g,'').replace('.','') + '.png';
   function capture() {
     const W = node.offsetWidth;
     const H = node.scrollHeight;
