@@ -1306,311 +1306,46 @@ onAuthStateChanged(auth, function(user) {
       </div>
     </div>
 
+
     <div class="card">
       <div class="card-title" style="color:#4f46e5">오늘 수업내용 및 이행도</div>
-      <label class="field-label">수업 내용</label>
+      <label class="field-label">전체 수업 요약</label>
       <textarea id="f-todayContent" rows="2" placeholder="전체 수업 내용을 입력하세요..."></textarea>
 
-      <div style="margin-top:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-size:12px;font-weight:800;color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 독해</div>
-          <button type="button" onclick="toggleInputGroup('extra-reading')" id="btn-extra-reading" style="font-size:11px;color:#4f46e5;background:transparent;border:1.5px solid #4f46e5;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:inherit;font-weight:700">+ 더보기</button>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 1번</label>
-          <textarea id="f-reading1" rows="2" placeholder="독해 1 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-reading1Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-reading1Comp">
-              <button type="button" class="comp-btn" onclick="setComp('reading1Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading1Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading1Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading1Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        </div>
-        <div id="extra-reading" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 2번</label>
-          <textarea id="f-reading2" rows="2" placeholder="독해 2 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-reading2Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-reading2Comp">
-              <button type="button" class="comp-btn" onclick="setComp('reading2Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading2Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading2Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading2Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 3번</label>
-          <textarea id="f-reading3" rows="2" placeholder="독해 3 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-reading3Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-reading3Comp">
-              <button type="button" class="comp-btn" onclick="setComp('reading3Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading3Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading3Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading3Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 4번</label>
-          <textarea id="f-reading4" rows="2" placeholder="독해 4 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-reading4Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-reading4Comp">
-              <button type="button" class="comp-btn" onclick="setComp('reading4Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading4Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading4Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading4Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 5번</label>
-          <textarea id="f-reading5" rows="2" placeholder="독해 5 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-reading5Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-reading5Comp">
-              <button type="button" class="comp-btn" onclick="setComp('reading5Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading5Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading5Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('reading5Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        </div>
+      <!-- 동적 수업 블록 컨테이너 -->
+      <div id="lessonBlocksWrap" style="margin-top:12px;display:flex;flex-direction:column;gap:10px"></div>
+
+      <!-- 버튼 영역 -->
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button type="button" onclick="addLessonContent()" style="flex:1;padding:8px 12px;background:#ede9fe;color:#6366f1;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 내용 추가</button>
+        <button type="button" onclick="addLessonBlock()" style="flex:1;padding:8px 12px;background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 수업내용 추가</button>
       </div>
-      <div style="margin-top:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-size:12px;font-weight:800;color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 문법</div>
-          <button type="button" onclick="toggleInputGroup('extra-grammar')" id="btn-extra-grammar" style="font-size:11px;color:#7c3aed;background:transparent;border:1.5px solid #7c3aed;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:inherit;font-weight:700">+ 더보기</button>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 1번</label>
-          <textarea id="f-grammar1" rows="2" placeholder="문법 1 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-grammar1Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-grammar1Comp">
-              <button type="button" class="comp-btn" onclick="setComp('grammar1Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar1Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar1Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar1Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        </div>
-        <div id="extra-grammar" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 2번</label>
-          <textarea id="f-grammar2" rows="2" placeholder="문법 2 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-grammar2Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-grammar2Comp">
-              <button type="button" class="comp-btn" onclick="setComp('grammar2Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar2Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar2Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar2Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 3번</label>
-          <textarea id="f-grammar3" rows="2" placeholder="문법 3 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-grammar3Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-grammar3Comp">
-              <button type="button" class="comp-btn" onclick="setComp('grammar3Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar3Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar3Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar3Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 4번</label>
-          <textarea id="f-grammar4" rows="2" placeholder="문법 4 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-grammar4Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-grammar4Comp">
-              <button type="button" class="comp-btn" onclick="setComp('grammar4Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar4Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar4Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar4Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 5번</label>
-          <textarea id="f-grammar5" rows="2" placeholder="문법 5 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-grammar5Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-grammar5Comp">
-              <button type="button" class="comp-btn" onclick="setComp('grammar5Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar5Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar5Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('grammar5Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        </div>
+
+      <!-- 숨겨진 기존 필드 (저장 호환용) -->
+      <div style="display:none">
+        <input type="hidden" id="f-reading1"><input type="hidden" id="f-reading1Comp" value="0">
+        <input type="hidden" id="f-reading2"><input type="hidden" id="f-reading2Comp" value="0">
+        <input type="hidden" id="f-reading3"><input type="hidden" id="f-reading3Comp" value="0">
+        <input type="hidden" id="f-reading4"><input type="hidden" id="f-reading4Comp" value="0">
+        <input type="hidden" id="f-reading5"><input type="hidden" id="f-reading5Comp" value="0">
+        <input type="hidden" id="f-grammar1"><input type="hidden" id="f-grammar1Comp" value="0">
+        <input type="hidden" id="f-grammar2"><input type="hidden" id="f-grammar2Comp" value="0">
+        <input type="hidden" id="f-grammar3"><input type="hidden" id="f-grammar3Comp" value="0">
+        <input type="hidden" id="f-grammar4"><input type="hidden" id="f-grammar4Comp" value="0">
+        <input type="hidden" id="f-grammar5"><input type="hidden" id="f-grammar5Comp" value="0">
+        <input type="hidden" id="f-exam1"><input type="hidden" id="f-exam1Comp" value="0">
+        <input type="hidden" id="f-exam2"><input type="hidden" id="f-exam2Comp" value="0">
+        <input type="hidden" id="f-exam3"><input type="hidden" id="f-exam3Comp" value="0">
+        <input type="hidden" id="f-exam4"><input type="hidden" id="f-exam4Comp" value="0">
+        <input type="hidden" id="f-exam5"><input type="hidden" id="f-exam5Comp" value="0">
+        <input type="hidden" id="f-etc1"><input type="hidden" id="f-etc1Comp" value="0">
+        <input type="hidden" id="f-etc2"><input type="hidden" id="f-etc2Comp" value="0">
+        <input type="hidden" id="f-etc3"><input type="hidden" id="f-etc3Comp" value="0">
+        <input type="hidden" id="f-etc4"><input type="hidden" id="f-etc4Comp" value="0">
+        <input type="hidden" id="f-etc5"><input type="hidden" id="f-etc5Comp" value="0">
       </div>
-      <div style="margin-top:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-size:12px;font-weight:800;color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 내신대비</div>
-          <button type="button" onclick="toggleInputGroup('extra-exam')" id="btn-extra-exam" style="font-size:11px;color:#0891b2;background:transparent;border:1.5px solid #0891b2;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:inherit;font-weight:700">+ 더보기</button>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 1번</label>
-          <textarea id="f-exam1" rows="2" placeholder="내신대비 1 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-exam1Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-exam1Comp">
-              <button type="button" class="comp-btn" onclick="setComp('exam1Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam1Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam1Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam1Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        </div>
-        <div id="extra-exam" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 2번</label>
-          <textarea id="f-exam2" rows="2" placeholder="내신대비 2 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-exam2Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-exam2Comp">
-              <button type="button" class="comp-btn" onclick="setComp('exam2Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam2Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam2Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam2Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 3번</label>
-          <textarea id="f-exam3" rows="2" placeholder="내신대비 3 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-exam3Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-exam3Comp">
-              <button type="button" class="comp-btn" onclick="setComp('exam3Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam3Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam3Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam3Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 4번</label>
-          <textarea id="f-exam4" rows="2" placeholder="내신대비 4 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-exam4Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-exam4Comp">
-              <button type="button" class="comp-btn" onclick="setComp('exam4Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam4Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam4Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam4Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-          <label class="field-label" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 5번</label>
-          <textarea id="f-exam5" rows="2" placeholder="내신대비 5 내용..."></textarea>
-          <div style="margin-top:6px">
-            <input type="hidden" id="f-exam5Comp" value="0">
-            <div class="comp-btn-wrap" id="wrap-exam5Comp">
-              <button type="button" class="comp-btn" onclick="setComp('exam5Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam5Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam5Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-              <button type="button" class="comp-btn" onclick="setComp('exam5Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-            </div>
-          </div>
-        </div>
-        </div>
-      </div>
-      <div style="margin-top:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-size:12px;font-weight:800;color:#64748b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 기타</div>
-          <button type="button" onclick="toggleInputGroup('extra-etc')" id="btn-extra-etc" style="font-size:11px;color:#64748b;background:transparent;border:1.5px solid #64748b;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:inherit;font-weight:700">+ 더보기</button>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-            <label class="field-label" style="color:#64748b"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 1번</label>
-            <textarea id="f-etc1" rows="2" placeholder="기타 1 내용..."></textarea>
-            <div style="margin-top:6px">
-              <input type="hidden" id="f-etc1Comp" value="0">
-              <div class="comp-btn-wrap" id="wrap-etc1Comp">
-                <button type="button" class="comp-btn" onclick="setComp('etc1Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc1Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc1Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc1Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div id="extra-etc" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
-          <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-            <label class="field-label" style="color:#64748b"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 2번</label>
-            <textarea id="f-etc2" rows="2" placeholder="기타 2 내용..."></textarea>
-            <div style="margin-top:6px">
-              <input type="hidden" id="f-etc2Comp" value="0">
-              <div class="comp-btn-wrap" id="wrap-etc2Comp">
-                <button type="button" class="comp-btn" onclick="setComp('etc2Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc2Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc2Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc2Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-              </div>
-            </div>
-          </div>
-          <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-            <label class="field-label" style="color:#64748b"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 3번</label>
-            <textarea id="f-etc3" rows="2" placeholder="기타 3 내용..."></textarea>
-            <div style="margin-top:6px">
-              <input type="hidden" id="f-etc3Comp" value="0">
-              <div class="comp-btn-wrap" id="wrap-etc3Comp">
-                <button type="button" class="comp-btn" onclick="setComp('etc3Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc3Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc3Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc3Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-              </div>
-            </div>
-          </div>
-          <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-            <label class="field-label" style="color:#64748b"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 4번</label>
-            <textarea id="f-etc4" rows="2" placeholder="기타 4 내용..."></textarea>
-            <div style="margin-top:6px">
-              <input type="hidden" id="f-etc4Comp" value="0">
-              <div class="comp-btn-wrap" id="wrap-etc4Comp">
-                <button type="button" class="comp-btn" onclick="setComp('etc4Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc4Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc4Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc4Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-              </div>
-            </div>
-          </div>
-          <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px">
-            <label class="field-label" style="color:#64748b"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 5번</label>
-            <textarea id="f-etc5" rows="2" placeholder="기타 5 내용..."></textarea>
-            <div style="margin-top:6px">
-              <input type="hidden" id="f-etc5Comp" value="0">
-              <div class="comp-btn-wrap" id="wrap-etc5Comp">
-                <button type="button" class="comp-btn" onclick="setComp('etc5Comp',25)"  style="--btn-color:#f97316;--btn-bg:#fff7ed">△ 시작함</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc5Comp',50)"  style="--btn-color:#d97706;--btn-bg:#fffbeb">◑ 절반</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc5Comp',75)"  style="--btn-color:#2563eb;--btn-bg:#eff6ff">◕ 거의</button>
-                <button type="button" class="comp-btn" onclick="setComp('etc5Comp',100)" style="--btn-color:#16a34a;--btn-bg:#f0fdf4"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M20 6 9 17l-5-5"/></svg> 완료</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    </div>
+
 
     <div class="card">
       <div class="card-title" style="color:#7c3aed">오늘 과제</div>
@@ -2599,6 +2334,8 @@ function updateRing() { /* 링 UI 제거됨 */ }
 
 async function saveRecord() {
   try {
+  // 동적 블록 → hidden 필드 동기화
+  serializeLessonBlocks();
   const todayContent = document.getElementById('f-todayContent').value.trim();
   const homework     = document.getElementById('f-homework').value.trim();
   const reading      = (document.getElementById('f-reading')||{value:''}).value.trim();
@@ -2730,6 +2467,7 @@ function resetForm() {
   updateSubRing('reading'); updateSubRing('grammar');
   document.querySelectorAll('input[name=attendance],input[name=attitude]').forEach(r=>r.checked=false);
   updateAttendance(); updateAttitude();
+  resetLessonBlocks(); // 동적 블록 초기화
   // setComp already handles lastCompletion reset above
   document.getElementById('saveBtn').textContent    = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> 저장';
   document.getElementById('cancelBtn').style.display = 'none';
@@ -2825,6 +2563,8 @@ function editRecord(id) {
   setComp('etc4Comp', rec.etc4Comp||0);
   var et5=document.getElementById('f-etc5'); if(et5) et5.value=rec.etc5||'';
   setComp('etc5Comp', rec.etc5Comp||0);
+  // 동적 블록으로 역직렬화
+  deserializeLessonBlocks(rec);
 
   document.getElementById('f-homework').value = rec.homework || '';
   var _hw2=document.getElementById('f-homework2'); if(_hw2) _hw2.value=rec.homework2||'';
@@ -2936,6 +2676,182 @@ function updateStudentSelect() {
       stuSel.appendChild(opt);
     });
   stuSel.value = cur;
+}
+
+
+// ── 동적 수업 블록 시스템 ─────────────────────────────────
+var _lessonBlocks = []; // [{type, items:[{text,comp}]}]
+
+var LESSON_TYPES = {
+  'today':  { label:'📖 오늘의 학습', color:'#4f46e5', placeholder:'오늘의 학습 내용...' },
+  'reading':{ label:'📗 독해',        color:'#0891b2', placeholder:'독해 내용...' },
+  'grammar':{ label:'✏️ 문법',        color:'#7c3aed', placeholder:'문법 내용...' },
+  'exam':   { label:'📝 내신대비',    color:'#0891b2', placeholder:'내신대비 내용...' },
+  'etc':    { label:'📌 기타',        color:'#64748b', placeholder:'기타 내용...' },
+};
+
+function renderLessonBlocks() {
+  var wrap = document.getElementById('lessonBlocksWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  _lessonBlocks.forEach(function(block, bi) {
+    var typeInfo = LESSON_TYPES[block.type] || LESSON_TYPES['today'];
+    var blockEl = document.createElement('div');
+    blockEl.style.cssText = 'border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;background:#fafafa';
+    blockEl.setAttribute('data-block', bi);
+
+    // 블록 헤더: 드롭다운 + 삭제
+    var header = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+      + '<select onchange="changeLessonType('+bi+',this.value)" style="flex:1;padding:6px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;font-family:inherit;background:#fff;font-weight:700;color:'+typeInfo.color+'">'
+      + Object.keys(LESSON_TYPES).map(function(k){
+          return '<option value="'+k+'"'+(block.type===k?' selected':'')+'>'+LESSON_TYPES[k].label+'</option>';
+        }).join('')
+      + '</select>'
+      + (_lessonBlocks.length > 1
+          ? '<button type="button" onclick="removeLessonBlock('+bi+')" style="padding:4px 10px;background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✕</button>'
+          : '')
+      + '</div>';
+
+    // 아이템들 (내용 + 이행도)
+    var items = '';
+    block.items.forEach(function(item, ii) {
+      var compBtns = [
+        {v:0,   label:'✗ 미완료', color:'#ef4444', bg:'#fef2f2'},
+        {v:25,  label:'△ 시작함', color:'#f97316', bg:'#fff7ed'},
+        {v:50,  label:'◑ 절반',   color:'#d97706', bg:'#fffbeb'},
+        {v:75,  label:'◕ 거의',   color:'#2563eb', bg:'#eff6ff'},
+        {v:100, label:'✓ 완료',   color:'#16a34a', bg:'#f0fdf4'},
+      ].map(function(b){
+        var active = item.comp === b.v;
+        return '<button type="button" onclick="setLessonComp('+bi+','+ii+','+b.v+')" '
+          +'style="flex:1;padding:5px 2px;border:1.5px solid '+(active?b.color:'#e2e8f0')+';border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;background:'+(active?b.bg:'#fff')+';color:'+(active?b.color:'#94a3b8')+'">'
+          +b.label+'</button>';
+      }).join('');
+
+      items += '<div style="margin-bottom:'+(ii<block.items.length-1?'10':'0')+'px" data-item="'+ii+'">'
+        + '<div style="font-size:11px;font-weight:800;color:'+typeInfo.color+';margin-bottom:4px">'+typeInfo.label+(block.items.length>1?' '+(ii+1)+'번':'')+'</div>'
+        + '<textarea rows="2" placeholder="'+typeInfo.placeholder+'" '
+        +   'oninput="updateLessonText('+bi+','+ii+',this.value)" '
+        +   'style="width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical">'+escHtml(item.text)+'</textarea>'
+        + '<div style="display:flex;gap:4px;margin-top:6px">'+compBtns+'</div>'
+        + (block.items.length > 1
+            ? '<button type="button" onclick="removeLessonItem('+bi+','+ii+')" style="margin-top:6px;font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer;font-family:inherit">− 이 항목 삭제</button>'
+            : '')
+        + '</div>';
+    });
+
+    blockEl.innerHTML = header + items;
+    wrap.appendChild(blockEl);
+  });
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function addLessonBlock() {
+  _lessonBlocks.push({ type:'today', items:[{text:'',comp:-1}] });
+  renderLessonBlocks();
+  // 새 블록으로 스크롤
+  setTimeout(function(){
+    var wrap = document.getElementById('lessonBlocksWrap');
+    if (wrap && wrap.lastChild) wrap.lastChild.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }, 50);
+}
+
+function addLessonContent() {
+  if (_lessonBlocks.length === 0) { addLessonBlock(); return; }
+  // 마지막 블록에 내용 추가
+  var last = _lessonBlocks[_lessonBlocks.length - 1];
+  last.items.push({text:'',comp:-1});
+  renderLessonBlocks();
+}
+
+function removeLessonBlock(bi) {
+  if (_lessonBlocks.length <= 1) return;
+  _lessonBlocks.splice(bi, 1);
+  renderLessonBlocks();
+}
+
+function removeLessonItem(bi, ii) {
+  if (_lessonBlocks[bi].items.length <= 1) { removeLessonBlock(bi); return; }
+  _lessonBlocks[bi].items.splice(ii, 1);
+  renderLessonBlocks();
+}
+
+function changeLessonType(bi, type) {
+  _lessonBlocks[bi].type = type;
+  renderLessonBlocks();
+}
+
+function updateLessonText(bi, ii, val) {
+  if (_lessonBlocks[bi] && _lessonBlocks[bi].items[ii] !== undefined) {
+    _lessonBlocks[bi].items[ii].text = val;
+  }
+}
+
+function setLessonComp(bi, ii, val) {
+  if (_lessonBlocks[bi] && _lessonBlocks[bi].items[ii] !== undefined) {
+    _lessonBlocks[bi].items[ii].comp = val;
+    renderLessonBlocks();
+  }
+}
+
+// 블록 데이터 → 기존 hidden 필드로 직렬화 (저장 전 호출)
+function serializeLessonBlocks() {
+  var counters = { reading:0, grammar:0, exam:0, etc:0, today:0 };
+  _lessonBlocks.forEach(function(block) {
+    block.items.forEach(function(item) {
+      var t = block.type;
+      var fieldBase = t === 'today' ? 'reading' : t; // today→reading 필드 사용
+      counters[t]++;
+      var n = counters[t];
+      var fieldName  = fieldBase + (n === 1 ? '1' : n);
+      var compName   = fieldBase + (n === 1 ? '1' : n) + 'Comp';
+      var el  = document.getElementById('f-'+fieldName);
+      var elC = document.getElementById('f-'+compName);
+      if (el)  el.value  = item.text;
+      if (elC) elC.value = item.comp >= 0 ? item.comp : 0;
+    });
+  });
+}
+
+// 기존 hidden 필드 → 블록 데이터로 역직렬화 (불러올 때 호출)
+function deserializeLessonBlocks(rec) {
+  _lessonBlocks = [];
+  var typeMap = [
+    {type:'today',  base:'reading'},
+    {type:'grammar',base:'grammar'},
+    {type:'exam',   base:'exam'},
+    {type:'etc',    base:'etc'},
+  ];
+  typeMap.forEach(function(tm) {
+    for (var n = 1; n <= 5; n++) {
+      var fn = tm.base + n;
+      var cn = tm.base + n + 'Comp';
+      var val  = rec[fn]  || '';
+      var comp = rec[cn] !== undefined ? rec[cn] : -1;
+      if (val) {
+        // 같은 타입의 기존 블록에 추가하거나 새 블록 생성
+        var existing = _lessonBlocks.find(function(b){ return b.type === tm.type; });
+        if (existing) {
+          existing.items.push({text:val, comp:comp});
+        } else {
+          _lessonBlocks.push({type:tm.type, items:[{text:val,comp:comp}]});
+        }
+      }
+    }
+  });
+  if (_lessonBlocks.length === 0) {
+    _lessonBlocks = [{type:'today', items:[{text:'',comp:-1}]}];
+  }
+  renderLessonBlocks();
+}
+
+// 초기화
+function resetLessonBlocks() {
+  _lessonBlocks = [{type:'today', items:[{text:'',comp:-1}]}];
+  renderLessonBlocks();
 }
 
 function toggleInputGroup(id) {
@@ -3450,6 +3366,8 @@ function finishLogin(fbUser, profile) {
   watchUserStatus(fbUser.uid);
   initSidebar(profile);
   startAutoLogoutTimer();
+  // 동적 수업 블록 초기 렌더링
+  setTimeout(function(){ resetLessonBlocks(); }, 100);
 }
 
 // ── 자동 로그아웃 (10시간 / localStorage 기반) ───────────────
@@ -6423,6 +6341,8 @@ function loadRecord() {
     var etEl = document.getElementById('f-etc'+ci); if(etEl) etEl.value = rec['etc'+ci]||'';
     setComp('etc'+ci+'Comp', rec['etc'+ci+'Comp']||0);
   }
+  // 동적 블록 역직렬화 (새날이면 초기화)
+  if (isNewDay) { resetLessonBlocks(); } else { deserializeLessonBlocks(rec); }
 
   // 오늘 과제 · 특이사항
   document.getElementById('f-homework').value = isNewDay ? '' : (rec.homework || '');
