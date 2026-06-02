@@ -164,11 +164,14 @@ textarea { resize:vertical; }
 
   /* 콘텐츠: 사이드바+헤더 공간 확보 */
   #mainContent {
-    margin-left: 220px;
-    margin-top: 64px;
-    height: calc(100vh - 64px);
+    position: fixed !important;
+    top: 64px;
+    left: 220px;
+    right: 0;
+    bottom: 0;
     background: #f1f5f9;
     overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .content { padding: 28px 32px; max-width: 1200px; }
@@ -6453,12 +6456,24 @@ function loadRecord() {
   // isNewDay 개념 제거 - 불러오기는 항상 homework → lastHomework
   var isNewDay = true; // 불러오기는 항상 새날 처리 (날짜를 오늘로 바꾸므로)
 
-  // 동적 지난 과제: rec.homework → 지난 과제로
+  // 동적 지난 과제: rec.homework → 지난 과제로 (없으면 rec.lastHomework fallback)
   _lastHomeworks = [];
   ['homework','homework2','homework3','homework4','homework5'].forEach(function(f) {
     var val = rec[f] || '';
     if (val) _lastHomeworks.push({text: val, comp: -1});
   });
+  // homework가 없으면 기존 lastHomework 데이터 사용
+  if (_lastHomeworks.length === 0) {
+    [['lastHomework','lastCompletion'],
+     ['lastHomework2','lastCompletion2'],
+     ['lastHomework3','lastCompletion3'],
+     ['lastHomework4','lastCompletion4'],
+     ['lastHomework5','lastCompletion5']].forEach(function(p) {
+      var t = rec[p[0]] || '';
+      var c = rec[p[1]] !== undefined ? rec[p[1]] : -1;
+      if (t) _lastHomeworks.push({text: t, comp: c});
+    });
+  }
   if (_lastHomeworks.length === 0) _lastHomeworks = [{text:'', comp:-1}];
   renderLastHomeworks();
 
@@ -6494,12 +6509,6 @@ function loadRecord() {
     resetHomeworks();
   } else {
     deserializeHomeworks(rec.homework||'', rec.homework2||'', rec.homework3||'', rec.homework4||'', rec.homework5||'');
-  }
-  // 지난 과제 이행도: 이전 기록의 과제 개수에 맞게 표시
-  if (isNewDay) {
-    var hwCount = [rec.homework, rec.homework2, rec.homework3, rec.homework4, rec.homework5]
-      .filter(function(h){ return h && h.trim(); }).length;
-    syncLastHomework(hwCount || 1);
   }
   document.getElementById('f-memo').value     = rec.memo     || '';
 
