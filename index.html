@@ -184,6 +184,10 @@ textarea { resize:vertical; }
     margin-right: auto;
     width: 100%;
   }
+  /* 입력 탭은 더 좁게 (가독성) */
+  #mainContent > #panel-input {
+    max-width: 900px;
+  }
 
   .card { padding: 24px; border-radius: 16px; }
   .card-title { font-size: 13px; }
@@ -1282,6 +1286,11 @@ onAuthStateChanged(auth, function(user) {
         <input type="hidden" id="f-etc3"><input type="hidden" id="f-etc3Comp" value="0">
         <input type="hidden" id="f-etc4"><input type="hidden" id="f-etc4Comp" value="0">
         <input type="hidden" id="f-etc5"><input type="hidden" id="f-etc5Comp" value="0">
+        <input type="hidden" id="f-supplement1"><input type="hidden" id="f-supplement1Comp" value="0">
+        <input type="hidden" id="f-supplement2"><input type="hidden" id="f-supplement2Comp" value="0">
+        <input type="hidden" id="f-supplement3"><input type="hidden" id="f-supplement3Comp" value="0">
+        <input type="hidden" id="f-supplement4"><input type="hidden" id="f-supplement4Comp" value="0">
+        <input type="hidden" id="f-supplement5"><input type="hidden" id="f-supplement5Comp" value="0">
       </div>
     </div>
 
@@ -2344,6 +2353,16 @@ async function saveRecord() {
     etc4Comp:      parseInt((document.getElementById('f-etc4Comp')||{value:'0'}).value)||0,
     etc5:          (document.getElementById('f-etc5')||{value:''}).value.trim(),
     etc5Comp:      parseInt((document.getElementById('f-etc5Comp')||{value:'0'}).value)||0,
+    supplement1:     (document.getElementById('f-supplement1')||{value:''}).value.trim(),
+    supplement1Comp: parseInt((document.getElementById('f-supplement1Comp')||{value:'0'}).value)||0,
+    supplement2:     (document.getElementById('f-supplement2')||{value:''}).value.trim(),
+    supplement2Comp: parseInt((document.getElementById('f-supplement2Comp')||{value:'0'}).value)||0,
+    supplement3:     (document.getElementById('f-supplement3')||{value:''}).value.trim(),
+    supplement3Comp: parseInt((document.getElementById('f-supplement3Comp')||{value:'0'}).value)||0,
+    supplement4:     (document.getElementById('f-supplement4')||{value:''}).value.trim(),
+    supplement4Comp: parseInt((document.getElementById('f-supplement4Comp')||{value:'0'}).value)||0,
+    supplement5:     (document.getElementById('f-supplement5')||{value:''}).value.trim(),
+    supplement5Comp: parseInt((document.getElementById('f-supplement5Comp')||{value:'0'}).value)||0,
 
   };
   if (editId!==null) {
@@ -2911,6 +2930,7 @@ var LESSON_TYPES = {
   'grammar':{ label:'문법',        color:'#7c3aed', placeholder:'문법 내용...' },
   'exam':   { label:'내신대비',    color:'#0891b2', placeholder:'내신대비 내용...' },
   'etc':    { label:'기타',        color:'#64748b', placeholder:'기타 내용...' },
+  'supplement': { label:'보충',    color:'#db2777', placeholder:'보충 내용...' },
 };
 
 function renderLessonBlocks() {
@@ -3022,7 +3042,7 @@ function setLessonComp(bi, ii, val) {
 
 // 블록 데이터 → 기존 hidden 필드로 직렬화 (저장 전 호출)
 function serializeLessonBlocks() {
-  var counters = { reading:0, grammar:0, exam:0, etc:0, today:0 };
+  var counters = { reading:0, grammar:0, exam:0, etc:0, today:0, supplement:0 };
   _lessonBlocks.forEach(function(block) {
     block.items.forEach(function(item) {
       var t = block.type;
@@ -3047,6 +3067,7 @@ function deserializeLessonBlocks(rec) {
     {type:'grammar',base:'grammar'},
     {type:'exam',   base:'exam'},
     {type:'etc',    base:'etc'},
+    {type:'supplement', base:'supplement'},
   ];
   typeMap.forEach(function(tm) {
     for (var n = 1; n <= 5; n++) {
@@ -5414,7 +5435,7 @@ function makeCard(rec) {
       }
       return rows ? `<div class="rec-row"><span class="po-section" style="color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 지난 과제 이행도</span><br>${rows}</div>` : '';
     })();
-    const todayC = (rec.todayContent||rec.reading||rec.grammar||rec.reading1||rec.grammar1||rec.exam1) ? (() => {
+    const todayC = (rec.todayContent||rec.reading||rec.grammar||rec.reading1||rec.grammar1||rec.exam1||rec.supplement1) ? (() => {
       const lR = LEVELS.find(l=>l.value===(rec.readingComp||0))||LEVELS[0];
       const lG = LEVELS.find(l=>l.value===(rec.grammarComp||0))||LEVELS[0];
       var readingRows = '';
@@ -5445,6 +5466,12 @@ function makeCard(rec) {
         var lEti=LEVELS.find(function(l){return l.value===etc;})||LEVELS[0];
         etcRows += `<div style="margin-bottom:4px"><strong><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 기타${eti}</strong> ${esc(etv)}<br>${compBadgeHTML(etc)}</div>`;
       }
+      var supplementRows = '';
+      for(var si=1;si<=5;si++){
+        var sv=rec['supplement'+si], sc=rec['supplement'+si+'Comp']||0;
+        if(!sv) continue;
+        supplementRows += `<div style="margin-bottom:4px"><strong style="color:#db2777"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M12 2v20M2 12h20"/></svg> 보충${si}</strong> ${esc(sv)}<br>${compBadgeHTML(sc)}</div>`;
+      }
       return `<div class="rec-row">
         <span class="po-section" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 오늘 수업내용</span><br>
 ${[rec.todayContent,rec.todayContent1,rec.todayContent2,rec.todayContent3,rec.todayContent4,rec.todayContent5].filter(Boolean).map(function(t,i){return `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:#4f46e5">${i===0&&rec.todayContent?'':'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> '+(i+(rec.todayContent?0:-1)+1)+'번 </strong>'}</strong>${esc(t)}</div>`;}).join('')}
@@ -5454,6 +5481,7 @@ ${[rec.todayContent,rec.todayContent1,rec.todayContent2,rec.todayContent3,rec.to
         ${readingRows}${grammarRows}
         ${examRows ? '<div style="border-top:1.5px solid #cbd5e1;margin:6px 0 4px;"></div>' + examRows : ''}
         ${etcRows ? '<div style="border-top:1.5px solid #cbd5e1;margin:6px 0 4px;"></div>' + etcRows : ''}
+        ${supplementRows ? '<div style="border-top:1.5px solid #cbd5e1;margin:6px 0 4px;"></div>' + supplementRows : ''}
       </div>`;
     })() : '';
     const hw = (() => {
