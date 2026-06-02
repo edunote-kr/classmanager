@@ -2298,6 +2298,7 @@ async function saveRecord() {
     attendance:     (document.querySelector('input[name=attendance]:checked')||{}).value || '',
     wordTest:       document.getElementById('f-wordTest').value.trim(),
     wordScore:      document.getElementById('f-wordScore').value.trim(),
+    testsJson:      (document.getElementById('f-testsJson')||{value:''}).value || '',
     attitude:       (document.querySelector('input[name=attitude]:checked')||{}).value || '',
     reading:        (document.getElementById('f-reading')||{value:''}).value.trim(),
     readingComp:    parseInt((document.getElementById('f-readingComp')||{value:'0'}).value)||0,
@@ -2445,7 +2446,7 @@ function editRecord(id) {
   setComp('lastCompletion', rec.lastCompletion ?? 0);
   document.getElementById('f-wordTest').value        = rec.wordTest       || '';
   document.getElementById('f-wordScore').value       = rec.wordScore      || '';
-  deserializeTests(rec.wordTest||'', rec.wordScore||'');
+  deserializeTests(rec.wordTest||'', rec.wordScore||'', rec.testsJson||'');
   document.getElementById('f-todayContent').value = rec.todayContent || '';
   var _fr=document.getElementById('f-reading'); if(_fr) _fr.value=rec.reading||'';
   setComp('readingComp', rec.readingComp ?? 0);
@@ -2870,13 +2871,28 @@ function updateTest(i, field, val) {
 }
 
 function serializeTests() {
+  // 첫 번째: 기존 호환 필드
   var r = document.getElementById('f-wordTest');
   var s = document.getElementById('f-wordScore');
   if (r) r.value = _tests[0] ? _tests[0].range : '';
   if (s) s.value = _tests[0] ? _tests[0].score : '';
+  // _tests 배열 전체를 JSON으로도 저장 (다중 지원)
+  var el = document.getElementById('f-testsJson');
+  if (!el) { el = document.createElement('input'); el.type='hidden'; el.id='f-testsJson'; document.body.appendChild(el); }
+  el.value = JSON.stringify(_tests);
 }
 
-function deserializeTests(wordTest, wordScore) {
+function deserializeTests(wordTest, wordScore, testsJson) {
+  if (testsJson) {
+    try {
+      var parsed = JSON.parse(testsJson);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        _tests = parsed;
+        renderTests();
+        return;
+      }
+    } catch(e) {}
+  }
   _tests = [{range: wordTest||'', score: wordScore||''}];
   renderTests();
 }
@@ -5458,11 +5474,25 @@ ${[rec.todayContent,rec.todayContent1,rec.todayContent2,rec.todayContent3,rec.to
       const [bg,col]=(m[rec.attitude]||['#f1f5f9','#475569']);
       return `<span class="po-badge att-badge" data-val="${esc(rec.attitude)}" data-type="attitude" style="background:${bg};color:${col};font-size:11px;padding:2px 10px;border-radius:20px;font-weight:700">수업태도: ${esc(rec.attitude)}</span>`;
     })() : '';
-    const wordTest = (rec.wordTest||rec.wordScore) ? `
-      <div class="rec-row">
-        <span class="po-section" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 단어 시험</span><br>
-        ${rec.wordTest ? esc(rec.wordTest) : ''}${rec.wordScore ? ' <strong style="color:#0891b2">'+esc(rec.wordScore)+'</strong>' : ''}
-      </div>` : '';
+    const wordTest = (() => {
+      var tests = [];
+      if (rec.testsJson) {
+        try { tests = JSON.parse(rec.testsJson); } catch(e) {}
+      }
+      if (!tests || tests.length === 0) {
+        if (rec.wordTest || rec.wordScore) tests = [{range: rec.wordTest||'', score: rec.wordScore||''}];
+      }
+      if (!tests || tests.length === 0) return '';
+      var rows = tests.map(function(t, i) {
+        if (!t.range && !t.score) return '';
+        return (t.range ? esc(t.range) : '') + (t.score ? ' <strong style="color:#0891b2">'+esc(t.score)+'</strong>' : '');
+      }).filter(Boolean);
+      if (rows.length === 0) return '';
+      var BOOK_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
+      return '<div class="rec-row"><span class="po-section" style="color:#0891b2">'+BOOK_SVG+' TEST</span><br>'
+        + rows.map(function(r, i){ return (tests.length > 1 ? '<span style="font-size:10px;color:#94a3b8;font-weight:700">TEST'+(i+1)+' </span>' : '') + r; }).join('<br>')
+        + '</div>';
+    })();
     const memo = rec.memo ? `<div class="rec-memo"><span class="po-section" style="color:#64748b"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 특이사항</span><br><span style="white-space:pre-wrap">${esc(rec.memo)}</span></div>` : '';
     const studentBadge = (rec.className||rec.student) ? `${rec.className ? '<span class="rec-student" style="background:#dbeafe;color:#1d4ed8">'+esc(rec.className)+'</span> ' : ''}${rec.student ? '<span class="rec-student">'+esc(rec.student)+'</span>' : ''}` : '';
     const teacherBadge = rec.teacher ? `<span style="margin-left:auto;font-size:11px;font-weight:700;color:#7c3aed;background:#f3e8ff;padding:2px 10px;border-radius:20px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M15 14l2 2 4-4"/></svg>${esc(rec.teacher)} 선생님</span>` : '';
@@ -6180,7 +6210,7 @@ function openPrint() {
     })() : '';
     const wordTest = (rec.wordTest||rec.wordScore) ? `
       <div style="margin-bottom:6px">
-        <div class="po-section" style="color:#000;font-weight:800">단어 시험</div>
+        <div class="po-section" style="color:#000;font-weight:800">TEST</div>
         <div style="font-size:12px;color:#334155;line-height:1.5">${rec.wordTest ? esc(rec.wordTest) : ''} ${rec.wordScore ? '<strong style="color:#0891b2">'+esc(rec.wordScore)+'</strong>' : ''}</div>
       </div>` : '';
     const memo = rec.memo ? `<div style="font-size:11px;color:#94a3b8;margin-top:4px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> ${esc(rec.memo)}</div>` : '';
@@ -6516,7 +6546,7 @@ function loadRecord() {
   // 단어 시험
   document.getElementById('f-wordTest').value  = rec.wordTest  || '';
   document.getElementById('f-wordScore').value = rec.wordScore || '';
-  deserializeTests(rec.wordTest||'', rec.wordScore||'');
+  deserializeTests(rec.wordTest||'', rec.wordScore||'', rec.testsJson||'');
 
   // 불러오기: 항상 날짜를 오늘로 → 기존 과제를 지난 과제로 이동
   // isNewDay 개념 제거 - 불러오기는 항상 homework → lastHomework
