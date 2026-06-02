@@ -166,7 +166,7 @@ textarea { resize:vertical; }
   #mainContent {
     margin-left: 220px;
     margin-top: 64px;
-    min-height: calc(100vh - 64px);
+    height: calc(100vh - 64px);
     background: #f1f5f9;
     overflow-y: auto;
   }
@@ -6449,19 +6449,18 @@ function loadRecord() {
   document.getElementById('f-wordTest').value  = rec.wordTest  || '';
   document.getElementById('f-wordScore').value = rec.wordScore || '';
 
-  // 날짜가 다를 때만 오늘 과제 → 지난 과제로 이동
-  var isNewDay = rec.date !== todayStr();
-  // 날짜가 다르면 오늘과제→지난과제1, todayContent1~5→lastHomework1~5 연동
-  // 동적 지난 과제 역직렬화
-  deserializeLastHomeworks(rec, isNewDay);
-  // 호환용 hidden 필드 채우기
-  document.getElementById('f-lastHomework').value = isNewDay ? (rec.homework||'') : (rec.lastHomework||'');
-  setComp('lastCompletion', isNewDay ? -1 : (rec.lastCompletion ?? -1));
-  for (var lhi = 2; lhi <= 5; lhi++) {
-    var lhEl = document.getElementById('f-lastHomework'+lhi);
-    if (lhEl) lhEl.value = isNewDay ? (rec['homework'+(lhi===1?'':lhi)]||'') : (rec['lastHomework'+lhi]||'');
-    setComp('lastCompletion'+lhi, isNewDay ? -1 : (rec['lastCompletion'+lhi] ?? -1));
-  }
+  // 불러오기: 항상 날짜를 오늘로 → 기존 과제를 지난 과제로 이동
+  // isNewDay 개념 제거 - 불러오기는 항상 homework → lastHomework
+  var isNewDay = true; // 불러오기는 항상 새날 처리 (날짜를 오늘로 바꾸므로)
+
+  // 동적 지난 과제: rec.homework → 지난 과제로
+  _lastHomeworks = [];
+  ['homework','homework2','homework3','homework4','homework5'].forEach(function(f) {
+    var val = rec[f] || '';
+    if (val) _lastHomeworks.push({text: val, comp: -1});
+  });
+  if (_lastHomeworks.length === 0) _lastHomeworks = [{text:'', comp:-1}];
+  renderLastHomeworks();
 
   // 오늘 수업내용
   var _tc = document.getElementById('f-todayContent'); if(_tc) _tc.value = isNewDay ? '' : (rec.todayContent||'');
