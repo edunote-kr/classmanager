@@ -3587,6 +3587,7 @@ function finishLogin(fbUser, profile) {
   watchUserStatus(fbUser.uid);
   initSidebar(profile);
   startAutoLogoutTimer();
+  switchTab('input'); // 로그인 시 항상 수업내용 입력 탭으로
   // 동적 수업 블록 초기 렌더링
   setTimeout(function(){ resetLessonBlocks(); resetHomeworks(); resetLastHomeworks(); resetTests(); }, 300);
 }
