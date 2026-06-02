@@ -1238,7 +1238,7 @@ onAuthStateChanged(auth, function(user) {
                   stroke-linecap="round" style="transition:all 0.4s ease"/>
               </svg>
               <div>
-                <div id="ringPct" style="font-size:20px;font-weight:800;color:#ef4444">0%</div>
+                <div id="ringPct" style="font-size:20px;font-weight:800;color:#ef4444"></div>
                 <div id="ringLabel" style="font-size:11px;color:#94a3b8">미완료</div>
               </div>
               <div class="prog-bar-bg">
@@ -1690,11 +1690,11 @@ onAuthStateChanged(auth, function(user) {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div class="card-title" style="color:#6366f1;margin:0">👥 학생 등록</div>
         <div style="display:flex;gap:6px">
-          <button onclick="exportStudents()" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#dbeafe;color:#1d4ed8">📥 저장</button>
-          <label style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#dcfce7;color:#16a34a;margin:0">
+          <button onclick="exportStudents()" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#dbeafe;color:#1d4ed8;white-space:nowrap">📥 저장</button>
+          <label style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#dcfce7;color:#16a34a;margin:0;white-space:nowrap">
             📤 불러오기<input type="file" id="importStudentFile" accept=".json" onchange="importStudents(event)" style="display:none">
           </label>
-          <button onclick="deleteAllStudents()" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fee2e2;color:#dc2626">🗑️ 전체삭제</button>
+          <button onclick="deleteAllStudents()" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fee2e2;color:#dc2626;white-space:nowrap">🗑️ 전체삭제</button>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
@@ -1709,7 +1709,7 @@ onAuthStateChanged(auth, function(user) {
       </div>
       <div id="studentList">
         <!-- 컬럼 헤더 -->
-        <div style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1.5fr 1.5fr 1.5fr auto;padding:6px 10px;gap:6px;font-size:11px;font-weight:700;color:#94a3b8;border-bottom:1.5px solid #e2e8f0;margin-bottom:6px">
+        <div class="stu-header-row" style="display:none;grid-template-columns:2fr 1fr 1.5fr 1.5fr 1.5fr 1.5fr auto;padding:6px 10px;gap:6px;font-size:11px;font-weight:700;color:#94a3b8;border-bottom:1.5px solid #e2e8f0;margin-bottom:6px">
           <div>이름 / 학년</div><div>수강반</div><div>학생 번호</div><div>학부모 번호</div><div>출결 현황</div><div></div><div></div>
         </div>
       </div>
@@ -2136,22 +2136,29 @@ function makeStudentRow(s) {
 
   return '<div id="student-row-' + s.id + '" style="background:#f8fafc;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0;overflow:hidden">'
     // 메인 행
-    + '<div style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1.5fr 1.5fr 1.5fr auto;align-items:center;padding:8px 10px;gap:6px">'
-    + '<div><span style="font-size:13px;font-weight:700;color:#1e293b">👤 ' + s.name + '</span>'
-    + (s.grade ? '<span style="font-size:10px;color:#6366f1;font-weight:700;margin-left:6px;background:#ede9fe;padding:1px 6px;border-radius:4px">' + s.grade + '</span>' : '') + '</div>'
-    + '<div style="font-size:12px;color:#64748b">' + (s.className || '-') + '</div>'
-    + '<div style="font-size:12px;color:#475569">' + (s.phone  || '-') + '</div>'
-    + '<div style="font-size:12px;color:#475569">' + (s.parent || '-') + '</div>'
-    // 출결 현황
-    + '<div style="display:flex;gap:4px;font-size:11px;font-weight:700">'
-    + '<span style="background:#dcfce7;color:#16a34a;padding:2px 6px;border-radius:4px">출 ' + ontime + '</span>'
-    + '<span style="background:#fef9c3;color:#92400e;padding:2px 6px;border-radius:4px">지 ' + late + '</span>'
-    + '<span style="background:#fee2e2;color:#dc2626;padding:2px 6px;border-radius:4px">결 ' + absent + '</span>'
+    + '<div style="padding:8px 10px">'
+    // 첫째 줄: 이름+학년 / 출결 / 버튼
+    + '<div style="display:flex;align-items:center;gap:6px;justify-content:space-between">'
+    + '<div style="display:flex;align-items:center;gap:4px;min-width:0">'
+    + '<span style="font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap">👤 ' + s.name + '</span>'
+    + (s.grade ? '<span style="font-size:10px;color:#6366f1;font-weight:700;background:#ede9fe;padding:1px 6px;border-radius:4px;white-space:nowrap">' + s.grade + '</span>' : '')
     + '</div>'
-    + '<div style="display:flex;gap:5px">'
-    + '<button onclick="startEditStudent(\'' + s.id + '\')" style="background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">수정</button>'
-    + '<button onclick="deleteStudent(\'' + s.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">삭제</button>'
-    + '</div></div></div>'
+    + '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">'
+    + '<div style="display:flex;gap:3px;font-size:11px;font-weight:700">'
+    + '<span style="background:#dcfce7;color:#16a34a;padding:2px 5px;border-radius:4px;white-space:nowrap">출 ' + ontime + '</span>'
+    + '<span style="background:#fef9c3;color:#92400e;padding:2px 5px;border-radius:4px;white-space:nowrap">지 ' + late + '</span>'
+    + '<span style="background:#fee2e2;color:#dc2626;padding:2px 5px;border-radius:4px;white-space:nowrap">결 ' + absent + '</span>'
+    + '</div>'
+    + '<button onclick="startEditStudent(\'' + s.id + '\')" style="background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">수정</button>'
+    + '<button onclick="deleteStudent(\'' + s.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">삭제</button>'
+    + '</div></div>'
+    // 둘째 줄: 반 / 전화번호
+    + '<div style="display:flex;gap:8px;margin-top:5px;font-size:11px;color:#64748b;flex-wrap:wrap">'
+    + (s.className ? '<span style="background:#f1f5f9;padding:1px 7px;border-radius:4px;font-weight:600">' + s.className + '</span>' : '')
+    + (s.phone  ? '<span>📱 ' + s.phone  + '</span>' : '')
+    + (s.parent ? '<span>👪 ' + s.parent + '</span>' : '')
+    + '</div>'
+    + '</div></div>'
     // 수정 폼
     + '<div id="student-edit-' + s.id + '" style="display:none;padding:10px;background:#f0f9ff;border-top:1.5px solid #bae6fd">'
     + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">'
@@ -2372,7 +2379,7 @@ function updateRing() {
   const level = LEVELS.find(l=>l.value===pct) || LEVELS[0];
   arc.style.strokeDashoffset = circ*(1-pct/100);
   arc.style.stroke = level.color;
-  document.getElementById('ringPct').textContent   = pct+'%';
+  document.getElementById('ringPct').textContent   = '';
   document.getElementById('ringPct').style.color   = level.color;
   document.getElementById('ringLabel').textContent = level.label;
   document.getElementById('progBar').style.width   = pct+'%';
@@ -6154,12 +6161,12 @@ function loadRecord() {
   var isNewDay = rec.date !== todayStr();
   // 날짜가 다르면 오늘과제→지난과제1, todayContent1~5→lastHomework1~5 연동
   document.getElementById('f-lastHomework').value = isNewDay ? (rec.homework || '') : (rec.lastHomework || '');
-  setComp('lastCompletion', isNewDay ? 0 : (rec.lastCompletion || 0));
+  setComp('lastCompletion', isNewDay ? -1 : (rec.lastCompletion ?? -1));
 
   for (var lhi = 2; lhi <= 5; lhi++) {
     var lhEl = document.getElementById('f-lastHomework'+lhi);
     if (lhEl) lhEl.value = isNewDay ? (rec['homework'+(lhi===1?'':lhi)] || '') : (rec['lastHomework'+lhi] || '');
-    setComp('lastCompletion'+lhi, isNewDay ? 0 : (rec['lastCompletion'+lhi]||0));
+    setComp('lastCompletion'+lhi, isNewDay ? -1 : (rec['lastCompletion'+lhi] ?? -1));
   }
 
   // 오늘 수업내용
