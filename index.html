@@ -1673,9 +1673,9 @@ onAuthStateChanged(auth, function(user) {
   <!-- STUDENTS PANEL -->
   <div class="panel" id="panel-students">
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div class="card-title" style="color:#6366f1;margin:0;white-space:nowrap">👥 학생 등록</div>
-        <div style="display:flex;gap:6px">
+      <div style="margin-bottom:12px">
+        <div class="card-title" style="color:#6366f1;margin:0 0 8px 0;white-space:nowrap">👥 학생 등록</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button onclick="exportStudentsXlsx()" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#dbeafe;color:#1d4ed8;white-space:nowrap">📊 엑셀 저장</button>
           <label style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#dcfce7;color:#16a34a;margin:0;white-space:nowrap">
             📂 엑셀 불러오기<input type="file" id="importStudentFile" accept=".xlsx,.xls" onchange="importStudentsXlsx(event)" style="display:none">
