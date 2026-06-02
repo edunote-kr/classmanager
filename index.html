@@ -44,7 +44,7 @@ header {
   box-sizing: border-box;
 }
 #headerSchoolName { display: none; }
-.logo-img   { width: 40px; height: 40px; border-radius: 10px; background: #1e293b; padding: 0; border: 2px solid #6366f1; object-fit: cover; flex-shrink: 0; }
+.logo-img   { width: 40px; height: 40px; border-radius: 10px; background: transparent; padding: 0; border: none; object-fit: contain; flex-shrink: 0; }
 .logo-title { font-size: 14px; font-weight: 900; letter-spacing: 0px; color: #1e293b; font-family: Georgia, serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .logo-date  { font-size: 11px; color: #94a3b8; margin-top: 2px; white-space: nowrap; }
 
@@ -3227,6 +3227,38 @@ function finishLogin(fbUser, profile) {
   initWithFirebase(fbUser.uid);
   watchUserStatus(fbUser.uid);
   initSidebar(profile);
+  startAutoLogoutTimer();
+}
+
+// ── 자동 로그아웃 (10시간 / localStorage 기반) ───────────────
+var _autoLogoutTimer = null;
+var AUTO_LOGOUT_MS = 10 * 60 * 60 * 1000; // 10시간
+var AUTO_LOGOUT_KEY = 'kms_login_time';
+
+function startAutoLogoutTimer() {
+  clearAutoLogoutTimer();
+  // 로그인 시각 저장 (새로고침해도 유지)
+  var loginTime = parseInt(localStorage.getItem(AUTO_LOGOUT_KEY), 10);
+  if (!loginTime) {
+    loginTime = Date.now();
+    localStorage.setItem(AUTO_LOGOUT_KEY, loginTime);
+  }
+  var elapsed = Date.now() - loginTime;
+  var remaining = AUTO_LOGOUT_MS - elapsed;
+  if (remaining <= 0) {
+    showToast('10시간이 경과하여 자동 로그아웃되었습니다.', 'error');
+    setTimeout(function() { doLogout(); }, 2000);
+    return;
+  }
+  _autoLogoutTimer = setTimeout(function() {
+    showToast('10시간이 경과하여 자동 로그아웃되었습니다.', 'error');
+    setTimeout(function() { doLogout(); }, 2000);
+  }, remaining);
+}
+
+function clearAutoLogoutTimer() {
+  if (_autoLogoutTimer) { clearTimeout(_autoLogoutTimer); _autoLogoutTimer = null; }
+  localStorage.removeItem(AUTO_LOGOUT_KEY);
 }
 
 function loadOwnerData(ownerUid) {
@@ -3318,6 +3350,7 @@ function initWithFirebase(uid) {
 
 function doLogout() {
   if (window._importing) { showToast('저장 중입니다.', 'error'); return; }
+  clearAutoLogoutTimer();
   // 실시간 감지 해제
   if (statusUnsubscribe) { statusUnsubscribe(); statusUnsubscribe = null; }
   currentUser = null; currentSchool = null; currentRole = null; GAS_URL = '';
