@@ -135,7 +135,8 @@ textarea { resize:vertical; }
     position: sticky;
     top: 0;
     height: 100vh;
-    overflow-y: auto;
+    min-height: 0;
+    overflow: hidden;
     z-index: 100;
   }
 
@@ -212,6 +213,7 @@ textarea { resize:vertical; }
 .sidebar-logo {
   padding: 0 16px;
   height: 60px;
+  min-height: 60px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: center;
@@ -219,7 +221,7 @@ textarea { resize:vertical; }
   flex-shrink: 0;
 }
 .sidebar-nav {
-  flex: 1;
+  flex: 1 1 0;
   padding: 12px 10px;
   display: flex;
   flex-direction: column;
@@ -227,6 +229,7 @@ textarea { resize:vertical; }
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
+  height: 0;
 }
 .sidebar-tab {
   display: flex;
@@ -257,6 +260,7 @@ textarea { resize:vertical; }
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex-shrink: 0;
 }
 .sidebar-count {
   background: rgba(255,255,255,0.15);
@@ -2156,7 +2160,7 @@ function switchTab(tab) {
   });
   if (tab==='list')     { updateStudentFilter(); renderList(); }
   if (tab==='stats')    renderStats();
-  if (tab==='input')    updateLoadSelect();
+  if (tab==='input')    { updateLoadSelect(); renderHomeworks(); renderLastHomeworks(); renderLessonBlocks(); }
   if (tab==='students') renderStudents();
 }
 
@@ -2612,13 +2616,6 @@ function renderLastHomeworks() {
       + '<div style="display:flex;gap:4px">'+compBtns+'</div>';
     wrap.appendChild(row);
   });
-  // + 추가 버튼
-  var addBtn = document.createElement('button');
-  addBtn.type = 'button';
-  addBtn.textContent = '＋ 지난 과제 추가';
-  addBtn.onclick = addLastHW;
-  addBtn.style.cssText = 'width:100%;padding:7px;background:#fff7ed;color:#d97706;border:1.5px solid #fed7aa;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px';
-  wrap.appendChild(addBtn);
 }
 
 function addLastHW() {
@@ -3469,7 +3466,7 @@ function finishLogin(fbUser, profile) {
   initSidebar(profile);
   startAutoLogoutTimer();
   // 동적 수업 블록 초기 렌더링
-  setTimeout(function(){ resetLessonBlocks(); resetHomeworks(); resetLastHomeworks(); }, 100);
+  setTimeout(function(){ resetLessonBlocks(); resetHomeworks(); resetLastHomeworks(); }, 300);
 }
 
 // ── 자동 로그아웃 (10시간 / localStorage 기반) ───────────────
