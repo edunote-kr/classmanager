@@ -3156,6 +3156,7 @@ function doFirebaseLogin() {
   if (!id || !pw) { showAuthError('아이디와 비밀번호를 입력해주세요.'); return; }
   // 아이디 → 내부 이메일로 변환
   var email = id + '@edunote.kr';
+  window._freshLogin = true; // 로그인 폼에서 직접 로그인 (새로고침과 구분)
   showLoading(true);
   // 로그인만 수행 → onAuthStateChanged가 loadUserProfile 처리
   window.fbSignIn(window.fbAuth, email, pw)
@@ -3482,12 +3483,23 @@ function loadUserProfile(fbUser) {
         return;
       }
 
-      // ② status 체크 - inactive면 활성화 화면으로
+      // ② status 체크 - inactive
       if (!profile.status || profile.status === 'inactive') {
         hideInitLoader();
         showLoading(false);
-        document.getElementById('loginScreen').style.display = 'none';
-        showActivateScreen(fbUser, profile);
+        if (window._freshLogin) {
+          // 로그인 폼에서 직접 로그인 → 활성화 화면
+          window._freshLogin = false;
+          document.getElementById('loginScreen').style.display = 'none';
+          showActivateScreen(fbUser, profile);
+        } else {
+          // 새로고침/세션 복원 → 자동 로그아웃 후 랜딩으로
+          window.currentUser = null;
+          if (window.fbSignOut && window.fbAuth) window.fbSignOut(window.fbAuth).catch(function(){});
+          var lp = document.getElementById('landingPage');
+          if (lp) lp.style.display = 'block';
+          document.getElementById('loginScreen').style.display = 'none';
+        }
         return;
       }
 
@@ -3622,8 +3634,10 @@ function finishLogin(fbUser, profile) {
           if (sd.logo) currentSchoolProfile.logo = sd.logo;  // schools 로고로 덮어쓰기
           if (sd.phone) currentSchoolProfile.phone = sd.phone;
           if (sd.name) currentSchoolProfile.name = sd.name;
+          currentSchoolProfile.plan = sd.plan || 'free';  // 학원 플랜 동기화
           // 헤더/사이드바 로고 즉시 갱신
           refreshSchoolLogo();
+          refreshPlanBadge();  // 플랜 뱃지 갱신
         }
       }).catch(function(){});
     }
@@ -5585,15 +5599,19 @@ function initSidebar(profile) {
     badgeEl.style.color = color.color;
   }
   // 플랜 뱃지
-  var planEl = document.getElementById('planBadge');
-  if (planEl) {
-    var planNames = { free:'무료 체험', basic:'베이직', standard:'스탠다드', premium:'프리미엄' };
-    var planKey = (currentSchoolProfile && currentSchoolProfile.plan) || 'free';
-    var planLabel = planNames[planKey] || planKey;
-    planEl.textContent = planLabel;
-    planEl.style.display = 'inline';
-  }
+  refreshPlanBadge();
   updateSidebarCount();
+}
+
+// 헤더 플랜 뱃지 갱신 (학원 플랜 변경 동기화)
+function refreshPlanBadge() {
+  var planEl = document.getElementById('planBadge');
+  if (!planEl) return;
+  var planNames = { free:'무료 체험', basic:'베이직', standard:'스탠다드', premium:'프리미엄' };
+  var planKey = (currentSchoolProfile && currentSchoolProfile.plan) || 'free';
+  var planLabel = planNames[planKey] || planKey;
+  planEl.textContent = planLabel;
+  planEl.style.display = 'inline';
 }
 
 function updateSidebarCount() {
