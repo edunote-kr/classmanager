@@ -3865,12 +3865,23 @@ function loadOwnerData(ownerUid) {
     dbgLog('② 로드할 멤버 UID 수 = ' + memberUids.length);
     window._dbgMemberCount = memberUids.length;
 
-    // 모든 멤버 데이터 병렬 로드
+    // 하위컬렉션 읽기 타임아웃 래퍼: 매달리면 빈 결과로 처리하고 진행
+    var _emptySnap = { forEach: function(){}, size: 0, _timedout: true };
+    function getDocsTO(collRef, tag) {
+      return Promise.race([
+        window.fbGetDocs(collRef),
+        new Promise(function(resolve){
+          setTimeout(function(){ dbgLog('  ⏱ ' + tag + ' 8초 초과 → 건너뜀'); resolve(_emptySnap); }, 8000);
+        })
+      ]).catch(function(e){ dbgLog('  ✖ ' + tag + ' 오류: ' + (e&&(e.code||e.message)||e)); return _emptySnap; });
+    }
+
+    // 모든 멤버 데이터 병렬 로드 (각 요청 개별 타임아웃)
     var recPromises = memberUids.map(function(uid) {
-      return window.fbGetDocs(window.fbCollection(window.fbDb, 'users', uid, 'records'));
+      return getDocsTO(window.fbCollection(window.fbDb, 'users', uid, 'records'), 'rec ' + uid.slice(0,6));
     });
     var stuPromises = memberUids.map(function(uid) {
-      return window.fbGetDocs(window.fbCollection(window.fbDb, 'users', uid, 'students'));
+      return getDocsTO(window.fbCollection(window.fbDb, 'users', uid, 'students'), 'stu ' + uid.slice(0,6));
     });
 
     return Promise.all([Promise.all(recPromises), Promise.all(stuPromises)]);
