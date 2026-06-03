@@ -398,7 +398,7 @@ const auth = getAuth(app);
 // long-polling 자동 감지로 폴백하여 연결 안정성 향상
 let db;
 try {
-  db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+  db = initializeFirestore(app, { experimentalForceLongPolling: true });
 } catch (e) {
   // 이미 초기화됐거나 옵션 미지원 시 기본값
   db = getFirestore(app);
