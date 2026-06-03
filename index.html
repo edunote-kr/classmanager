@@ -423,14 +423,21 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
 
 // Firebase 준비 완료 → 직접 auth 상태 감지 시작
 onAuthStateChanged(auth, function(user) {
-  if (window._authHandled) return;
-  window._authHandled = true;
-  if (user && !window.currentUser) {
-    if (typeof loadUserProfile === 'function') loadUserProfile(user);
-  } else if (!user) {
+  if (user) {
+    // 로그인 폼에서 직접 처리하지 않은 경우에만 (새로고침/자동로그인)
+    if (!window.currentUser && !window._loginInProgress) {
+      if (typeof loadUserProfile === 'function') loadUserProfile(user);
+    }
+  } else {
+    // 로그아웃 상태
+    window._loginInProgress = false;
     if (typeof hideInitLoader === 'function') hideInitLoader();
     var lp = document.getElementById('landingPage');
-    if (lp) lp.style.display = 'block';
+    var act = document.getElementById('activateScreen');
+    var sub = document.getElementById('subscribeScreen');
+    var actShown = act && act.style.display !== 'none' && act.style.display !== '';
+    var subShown = sub && sub.style.display !== 'none' && sub.style.display !== '';
+    if (lp && !actShown && !subShown) lp.style.display = 'block';
   }
 });
 </script>
@@ -3148,10 +3155,12 @@ function doFirebaseLogin() {
   if (!id || !pw) { showAuthError('아이디와 비밀번호를 입력해주세요.'); return; }
   // 아이디 → 내부 이메일로 변환
   var email = id + '@edunote.kr';
+  window._loginInProgress = true;
   showLoading(true);
   window.fbSignIn(window.fbAuth, email, pw)
-    .then(function(cred) { return loadUserProfile(cred.user); })
+    .then(function(cred) { window._loginInProgress = false; return loadUserProfile(cred.user); })
     .catch(function(err) {
+      window._loginInProgress = false;
       showLoading(false);
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         showAuthError('아이디 또는 비밀번호가 틀렸습니다.');
@@ -3453,6 +3462,7 @@ function loadUserProfile(fbUser) {
     .then(function(snap) {
       var profile = snap.exists() ? snap.data() : {};
       currentUser     = profile.name || fbUser.email || fbUser.uid;
+      window.currentUser = currentUser;
       currentRole     = profile.role || 'teacher';
       currentSchool   = fbUser.uid;
       currentSchoolId = profile.schoolId || null;
@@ -3753,6 +3763,8 @@ function doLogout() {
   // 실시간 감지 해제
   if (statusUnsubscribe) { statusUnsubscribe(); statusUnsubscribe = null; }
   currentUser = null; currentSchool = null; currentRole = null; GAS_URL = '';
+  window.currentUser = null;
+  window._loginInProgress = false;
   localStorage.removeItem('kms_cache_user');
   localStorage.removeItem('kms_cache_school');
   // 동적 입력 상태 초기화 (다음 로그인 시 깨끗하게)
@@ -3789,6 +3801,16 @@ var selectedActivatePlan = 'free';
 
 function showActivateScreen(fbUser, profile) {
   activateUser = { fbUser: fbUser, profile: profile };
+  hideInitLoader();
+  // 다른 화면 모두 숨김
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('landingPage').style.display = 'none';
+  var sub = document.getElementById('subscribeScreen');
+  if (sub) sub.style.display = 'none';
+  var mainApp = document.getElementById('mainApp');
+  if (mainApp) mainApp.style.display = 'none';
+  var sidebar = document.getElementById('sidebar');
+  if (sidebar) sidebar.style.display = 'none';
   document.getElementById('activateScreen').style.display = 'flex';
   document.getElementById('activateCodeInput').value = '';
   document.getElementById('activateCodeResult').style.display = 'none';
