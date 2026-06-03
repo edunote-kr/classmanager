@@ -157,7 +157,10 @@ textarea { resize:vertical; }
   #mainApp.sidebar-active > header .logo-wrap { visibility: hidden; width: 0; overflow: hidden; padding: 0; margin: 0; }
   #headerSchoolName { display: block; }
   #mainApp.sidebar-active > header #sidebarUserId { display: inline !important; }
-  #mainApp.sidebar-active > header #sidebarUser { max-width: none !important; }
+  #mainApp.sidebar-active > header #sidebarUser { max-width: none !important; font-size: 13px !important; }
+  #mainApp.sidebar-active > header #sidebarBadge { font-size: 11px !important; padding: 3px 8px !important; }
+  #mainApp.sidebar-active > header #planBadge { font-size: 11px !important; padding: 3px 8px !important; }
+  #mainApp.sidebar-active > header > div:last-child { gap: 8px !important; }
   #mainApp.sidebar-active > header #myPageBtn { font-size: 11px !important; padding: 6px 10px !important; }
   #mainApp.sidebar-active > header #logoutBtn { font-size: 11px !important; padding: 6px 10px !important; }
 
@@ -873,13 +876,13 @@ onAuthStateChanged(auth, function(user) {
     <img id="headerSchoolLogo" src="" alt="" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1.5px solid #e2e8f0;background:#f8fafc;display:none;flex-shrink:0">
     <span id="headerSchoolNameText" style="font-size:16px;font-weight:800;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
   </div>
-  <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:auto;min-width:0;overflow:hidden">
-    <span id="sidebarBadge" style="display:none;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap;flex-shrink:0"></span>
-    <span id="planBadge" style="display:none;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:#ede9fe;color:#6d28d9;white-space:nowrap;flex-shrink:0"></span>
-    <span id="sidebarUser" style="font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px"></span>
+  <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;margin-left:auto;min-width:0;overflow:hidden">
+    <span id="sidebarBadge" style="display:none;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap;flex-shrink:0"></span>
+    <span id="planBadge" style="display:none;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;background:#ede9fe;color:#6d28d9;white-space:nowrap;flex-shrink:0"></span>
+    <span id="sidebarUser" style="font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px"></span>
     <span id="sidebarUserId" style="font-size:11px;color:#94a3b8;white-space:nowrap;display:none"></span>
-    <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:10px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">마이페이지</button>
-    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:10px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">로그아웃</button>
+    <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:10px;font-weight:700;padding:5px 7px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">마이페이지</button>
+    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:10px;font-weight:700;padding:5px 7px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">로그아웃</button>
   </div>
 </header>
 
@@ -2598,8 +2601,9 @@ function toggleGroup(id){
     if(arrow)arrow.classList.add('open');
     // 학생별 단어시험 차트 그리기
     var student = body.getAttribute('data-student');
+    var cardMonth = body.getAttribute('data-month');
     var canvasId = 'wc-'+id;
-    if(student) renderStuWordChart(canvasId, student);
+    if(student) renderStuWordChart(canvasId, student, cardMonth);
   }else{
     body.classList.add('collapsed');
     body.style.maxHeight='0';
@@ -5711,7 +5715,16 @@ function renderStats() {
             if(r.lastCompletion!==undefined&&r.lastCompletion>=0){monthMap2[m2].sum+=r.lastCompletion;monthMap2[m2].cnt++;}
           });
           var monthHTML = Object.keys(monthMap2).sort().map(function(m2){
-            var mm=monthMap2[m2], avg2=Math.round(mm.sum/mm.cnt), lvm=levelOf(avg2);
+            var mm=monthMap2[m2];
+            if (mm.cnt === 0) {
+              // 이행도 입력 기록 없음 → 회색 막대 + 안내
+              return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">'
+                +'<span style="font-size:11px;color:#475569;font-weight:700;min-width:50px">'+m2.slice(5)+'월</span>'
+                +'<div style="flex:1;background:#f1f5f9;border-radius:4px;height:8px"></div>'
+                +'<span style="font-size:11px;font-weight:700;color:#94a3b8;min-width:36px;text-align:right">-</span>'
+                +'<span style="font-size:10px;color:#94a3b8">(기록 없음)</span></div>';
+            }
+            var avg2=Math.round(mm.sum/mm.cnt), lvm=levelOf(avg2);
             return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">'
               +'<span style="font-size:11px;color:#475569;font-weight:700;min-width:50px">'+m2.slice(5)+'월</span>'
               +'<div style="flex:1;background:#f1f5f9;border-radius:4px;height:8px">'
