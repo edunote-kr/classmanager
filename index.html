@@ -424,14 +424,21 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
 // Firebase 준비 완료 → 직접 auth 상태 감지 시작
 onAuthStateChanged(auth, function(user) {
   if (user) {
-    // 중복 호출 방지 가드
+    // 중복 호출 완전 방지: uid 단위로 처리 중 여부 추적
     if (window._profileLoading) return;
-    if (window.currentUser) return; // 이미 로그인 처리됨
+    if (window._loadedUid === user.uid) return; // 이미 이 UID로 로그인 처리 완료
     if (typeof loadUserProfile === 'function') {
       window._profileLoading = true;
-      loadUserProfile(user).finally(function(){ window._profileLoading = false; });
+      loadUserProfile(user).finally(function(){
+        window._profileLoading = false;
+        // 성공적으로 완료된 경우에만 UID 기록 (로그아웃/오류 시엔 재시도 가능하도록)
+        if (window.currentUser) window._loadedUid = user.uid;
+      });
     }
   } else {
+    // 로그아웃 시 UID 초기화
+    window._loadedUid = null;
+    window._profileLoading = false;
     if (typeof hideInitLoader === 'function') hideInitLoader();
     var lp = document.getElementById('landingPage');
     var act = document.getElementById('activateScreen');
@@ -3513,12 +3520,17 @@ function loadUserProfile(fbUser) {
       }
 
       // ④ schoolId 있음 → 학원 만료 체크
+      var expectedUid = fbUser.uid; // 클로저로 캡처: 느린 응답 후 다른 사용자로 바뀌었는지 검증용
       return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId))
         .then(function(schoolSnap) {
+          // 느린 응답 중 다른 계정으로 바뀌었으면 무시
+          if (!window.fbAuth || (window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid)) return;
           if (!schoolSnap.exists()) {
             // schoolId가 코드값인 경우 전체 검색 후 실제 ID 업데이트
             return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools'))
               .then(function(allSnap) {
+                // 응답 후에도 동일 사용자인지 재확인
+                if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) return;
                 var found = null;
                 allSnap.forEach(function(d) {
                   var sd = d.data();
@@ -3543,8 +3555,16 @@ function loadUserProfile(fbUser) {
       hideInitLoader();
       showLoading(false);
       console.error('loadUserProfile error:', err);
-      document.getElementById('loginScreen').style.display = 'flex';
-      showAuthError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      // 네트워크 일시 오류 시 로그아웃 대신 토스트만 표시
+      // (loginScreen 강제 표시하면 사용자가 로그아웃된 것처럼 보임)
+      if (window.currentUser) {
+        // 이미 로그인된 상태라면 조용히 유지
+        showToast('일시적 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+      } else {
+        // 초기 로그인 시도 중 오류
+        document.getElementById('loginScreen').style.display = 'flex';
+        showAuthError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
     });
 }
 
@@ -3618,8 +3638,12 @@ function finishLogin(fbUser, profile) {
   localStorage.setItem('kms_cache_school', currentSchool);
 
   // 학원 프로필 로드 (이미지 저장용)
+  var finishUid = fbUser.uid; // 비동기 완료 후 현재 로그인 사용자와 동일한지 검증용
   window.fbGetDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid)).then(function(snap) {
     if (!snap.exists()) return;
+    // 느린 응답 후 다른 계정으로 바뀌었으면 무시
+    if (!window.currentUser) return;
+    if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== finishUid) return;
     var data = snap.data();
     currentSchoolProfile.name = data.schoolName || '';
     currentSchoolProfile.phone = data.phone || '';
@@ -3628,6 +3652,7 @@ function finishLogin(fbUser, profile) {
 
     // 학원 프로필 적용 헬퍼
     function applySchool(sd, realId) {
+      if (!window.currentUser) return; // 로그아웃 중이면 무시
       if (sd.logo) currentSchoolProfile.logo = sd.logo;
       if (sd.phone) currentSchoolProfile.phone = sd.phone;
       if (sd.name) currentSchoolProfile.name = sd.name;
@@ -3645,12 +3670,16 @@ function finishLogin(fbUser, profile) {
     if (!sid) return;
 
     window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', sid)).then(function(sSnap) {
+      if (!window.currentUser) return; // 로그아웃 중이면 무시
+      if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== finishUid) return;
       if (sSnap.exists()) {
         applySchool(sSnap.data(), sSnap.id);
         return;
       }
       // 문서 못 찾음 → 코드/학원명으로 fallback 검색
       window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(allSnap) {
+        if (!window.currentUser) return;
+        if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== finishUid) return;
         var found = null, foundId = null;
         allSnap.forEach(function(d) {
           var s = d.data();
@@ -3706,11 +3735,17 @@ function clearAutoLogoutTimer() {
 
 function loadOwnerData(ownerUid) {
   showLoading(true);
+  var expectedUid = ownerUid; // 느린 로딩 중 로그아웃/교체 감지용
   // 같은 schoolId를 가진 모든 사용자 조회
   var usersRef = window.fbCollection(window.fbDb, 'users');
   var q = window.fbQuery(usersRef, window.fbWhere('schoolId', '==', currentSchoolId));
 
   window.fbGetDocs(q).then(function(snap) {
+    // 로딩 중 로그아웃했으면 중단
+    if (!window.currentUser) { showLoading(false); return Promise.reject('cancelled'); }
+    if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) {
+      showLoading(false); return Promise.reject('cancelled');
+    }
     var memberUids = [ownerUid]; // 원장 본인 포함
     snap.forEach(function(d) {
       if (d.id !== ownerUid) memberUids.push(d.id);
@@ -3726,6 +3761,11 @@ function loadOwnerData(ownerUid) {
 
     return Promise.all([Promise.all(recPromises), Promise.all(stuPromises)]);
   }).then(function(results) {
+    // 최종 결과 도착 후에도 현재 로그인 상태 재확인
+    if (!window.currentUser) { showLoading(false); return; }
+    if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) {
+      showLoading(false); return;
+    }
     var allRecs = [];
     var allStus = [];
     results[0].forEach(function(snap) {
@@ -3742,7 +3782,8 @@ function loadOwnerData(ownerUid) {
     setupAdminFilter(); // 원장도 선생님 필터 사용
     renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
     showToast('학원 전체 데이터 불러오기 완료!');
-  }).catch(function() {
+  }).catch(function(e) {
+    if (e === 'cancelled') return; // 의도적 중단 - 토스트 불필요
     showToast('오프라인 모드', 'info');
   }).finally(function() { showLoading(false); });
 }
@@ -3798,6 +3839,7 @@ function doLogout() {
   if (statusUnsubscribe) { statusUnsubscribe(); statusUnsubscribe = null; }
   currentUser = null; currentSchool = null; currentRole = null; GAS_URL = '';
   window.currentUser = null;
+  window._loadedUid = null; // 재로그인 시 loadUserProfile 재실행 허용
   window._loginInProgress = false;
   localStorage.removeItem('kms_cache_user');
   localStorage.removeItem('kms_cache_school');
