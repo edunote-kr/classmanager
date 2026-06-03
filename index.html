@@ -423,6 +423,7 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
 
 // Firebase 준비 완료 → 직접 auth 상태 감지 시작
 onAuthStateChanged(auth, function(user) {
+  window._authHandled = true;
   if (user) {
     // 중복 호출 방지 가드
     if (window._profileLoading) return;
@@ -3460,8 +3461,7 @@ function loadUserProfile(fbUser) {
   return window.fbGetDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid))
     .then(function(snap) {
       var profile = snap.exists() ? snap.data() : {};
-      currentUser     = profile.name || fbUser.email || fbUser.uid;
-      window.currentUser = currentUser;
+      var profileName = profile.name || fbUser.email || fbUser.uid;
       currentRole     = profile.role || 'teacher';
       currentSchool   = fbUser.uid;
       currentSchoolId = profile.schoolId || null;
@@ -3469,6 +3469,8 @@ function loadUserProfile(fbUser) {
 
       // ① 슈퍼관리자 → 항상 통과
       if (fbUser.uid === SUPER_ADMIN_UID || profile.role === 'superadmin') {
+        currentUser = profileName;
+        window.currentUser = currentUser;
         // 모든 화면 숨기기
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('landingPage').style.display = 'none';
@@ -3484,6 +3486,8 @@ function loadUserProfile(fbUser) {
 
       // ② status 체크 - inactive면 활성화 화면으로
       if (!profile.status || profile.status === 'inactive') {
+        currentUser = null;
+        window.currentUser = null;
         hideInitLoader();
         showLoading(false);
         document.getElementById('loginScreen').style.display = 'none';
@@ -3492,6 +3496,8 @@ function loadUserProfile(fbUser) {
       }
 
       // ③ status === 'active' → schoolId 체크
+      currentUser = profileName;
+      window.currentUser = currentUser;
       if (!currentSchoolId) {
         // schoolId 없음 → 구독 화면
         hideInitLoader();
@@ -3801,19 +3807,29 @@ var selectedActivatePlan = 'free';
 function showActivateScreen(fbUser, profile) {
   activateUser = { fbUser: fbUser, profile: profile };
   hideInitLoader();
+  showLoading(false);
   // 다른 화면 모두 숨김
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('landingPage').style.display = 'none';
+  var login = document.getElementById('loginScreen');
+  if (login) login.style.display = 'none';
+  var landing = document.getElementById('landingPage');
+  if (landing) landing.style.display = 'none';
   var sub = document.getElementById('subscribeScreen');
   if (sub) sub.style.display = 'none';
   var mainApp = document.getElementById('mainApp');
-  if (mainApp) mainApp.style.display = 'none';
+  if (mainApp) {
+    mainApp.style.display = 'none';
+    mainApp.classList.remove('sidebar-active');
+  }
   var sidebar = document.getElementById('sidebar');
   if (sidebar) sidebar.style.display = 'none';
-  document.getElementById('activateScreen').style.display = 'flex';
-  document.getElementById('activateCodeInput').value = '';
-  document.getElementById('activateCodeResult').style.display = 'none';
-  document.getElementById('activatePlanSection').style.display = 'none';
+  var act = document.getElementById('activateScreen');
+  if (act) act.style.display = 'flex';
+  var codeInput = document.getElementById('activateCodeInput');
+  if (codeInput) codeInput.value = '';
+  var codeResult = document.getElementById('activateCodeResult');
+  if (codeResult) codeResult.style.display = 'none';
+  var planSection = document.getElementById('activatePlanSection');
+  if (planSection) planSection.style.display = 'none';
   selectActivatePlan('free');
 }
 
@@ -5515,7 +5531,7 @@ function initLoginSelect() {
   // 모듈 스크립트에서 직접 onAuthStateChanged 처리함
   // 여기서는 Firebase가 로드 안 됐을 때만 fallback
   setTimeout(function() {
-    if (!window._authHandled) {
+    if (!window._authHandled && !window._profileLoading) {
       hideInitLoader();
       var lp = document.getElementById('landingPage');
       if (lp) lp.style.display = 'block';
