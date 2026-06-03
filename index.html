@@ -424,13 +424,14 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
 // Firebase 준비 완료 → 직접 auth 상태 감지 시작
 onAuthStateChanged(auth, function(user) {
   if (user) {
-    // 로그인 폼에서 직접 처리하지 않은 경우에만 (새로고침/자동로그인)
-    if (!window.currentUser && !window._loginInProgress) {
-      if (typeof loadUserProfile === 'function') loadUserProfile(user);
+    // 중복 호출 방지 가드
+    if (window._profileLoading) return;
+    if (window.currentUser) return; // 이미 로그인 처리됨
+    if (typeof loadUserProfile === 'function') {
+      window._profileLoading = true;
+      loadUserProfile(user).finally(function(){ window._profileLoading = false; });
     }
   } else {
-    // 로그아웃 상태
-    window._loginInProgress = false;
     if (typeof hideInitLoader === 'function') hideInitLoader();
     var lp = document.getElementById('landingPage');
     var act = document.getElementById('activateScreen');
@@ -3155,12 +3156,10 @@ function doFirebaseLogin() {
   if (!id || !pw) { showAuthError('아이디와 비밀번호를 입력해주세요.'); return; }
   // 아이디 → 내부 이메일로 변환
   var email = id + '@edunote.kr';
-  window._loginInProgress = true;
   showLoading(true);
+  // 로그인만 수행 → onAuthStateChanged가 loadUserProfile 처리
   window.fbSignIn(window.fbAuth, email, pw)
-    .then(function(cred) { window._loginInProgress = false; return loadUserProfile(cred.user); })
     .catch(function(err) {
-      window._loginInProgress = false;
       showLoading(false);
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         showAuthError('아이디 또는 비밀번호가 틀렸습니다.');
