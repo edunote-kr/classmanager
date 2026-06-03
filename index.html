@@ -1192,19 +1192,6 @@ onAuthStateChanged(auth, function(user) {
     </div>
 
     <div class="card">
-      <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>TEST</div>
-      <!-- 동적 TEST 목록 -->
-      <div id="testWrap" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
-      <button type="button" onclick="addTest()" style="width:100%;padding:8px;background:#e0f2fe;color:#0891b2;border:1.5px solid #7dd3fc;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ TEST 추가</button>
-      <!-- 호환용 hidden 필드 -->
-      <div style="display:none">
-        <input type="text" id="f-wordTest">
-        <input type="text" id="f-wordScore">
-        <input type="hidden" id="f-testsJson">
-      </div>
-    </div>
-
-    <div class="card">
       <div class="card-title" style="color:#e11d48"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>지각 정도</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
@@ -1241,6 +1228,19 @@ onAuthStateChanged(auth, function(user) {
           <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-low" value="하" onchange="updateAttitude()">
           하
         </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>TEST</div>
+      <!-- 동적 TEST 목록 -->
+      <div id="testWrap" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
+      <button type="button" onclick="addTest()" style="width:100%;padding:8px;background:#e0f2fe;color:#0891b2;border:1.5px solid #7dd3fc;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ TEST 추가</button>
+      <!-- 호환용 hidden 필드 -->
+      <div style="display:none">
+        <input type="text" id="f-wordTest">
+        <input type="text" id="f-wordScore">
+        <input type="hidden" id="f-testsJson">
       </div>
     </div>
 
