@@ -423,7 +423,6 @@ window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
 
 // Firebase 준비 완료 → 직접 auth 상태 감지 시작
 onAuthStateChanged(auth, function(user) {
-  window._authHandled = true;
   if (user) {
     // 중복 호출 방지 가드
     if (window._profileLoading) return;
@@ -431,8 +430,6 @@ onAuthStateChanged(auth, function(user) {
     if (typeof loadUserProfile === 'function') {
       window._profileLoading = true;
       loadUserProfile(user).finally(function(){ window._profileLoading = false; });
-    } else {
-      window._pendingAuthUser = user;
     }
   } else {
     if (typeof hideInitLoader === 'function') hideInitLoader();
@@ -967,7 +964,7 @@ onAuthStateChanged(auth, function(user) {
 
 <!-- 활성화 화면 -->
 <!-- 비활성화 계정 팝업 모달 -->
-<div id="activateScreen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9500;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif">
+<div id="activateScreen" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);z-index:9500;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;overflow-y:auto">
   <div style="background:#fff;border-radius:20px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto">
     <div style="background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:20px 20px 0 0;padding:24px;text-align:center">
       <div style="font-size:36px;margin-bottom:10px"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
@@ -3463,7 +3460,8 @@ function loadUserProfile(fbUser) {
   return window.fbGetDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid))
     .then(function(snap) {
       var profile = snap.exists() ? snap.data() : {};
-      var profileName = profile.name || fbUser.email || fbUser.uid;
+      currentUser     = profile.name || fbUser.email || fbUser.uid;
+      window.currentUser = currentUser;
       currentRole     = profile.role || 'teacher';
       currentSchool   = fbUser.uid;
       currentSchoolId = profile.schoolId || null;
@@ -3471,8 +3469,6 @@ function loadUserProfile(fbUser) {
 
       // ① 슈퍼관리자 → 항상 통과
       if (fbUser.uid === SUPER_ADMIN_UID || profile.role === 'superadmin') {
-        currentUser = profileName;
-        window.currentUser = currentUser;
         // 모든 화면 숨기기
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('landingPage').style.display = 'none';
@@ -3488,8 +3484,6 @@ function loadUserProfile(fbUser) {
 
       // ② status 체크 - inactive면 활성화 화면으로
       if (!profile.status || profile.status === 'inactive') {
-        currentUser = null;
-        window.currentUser = null;
         hideInitLoader();
         showLoading(false);
         document.getElementById('loginScreen').style.display = 'none';
@@ -3498,8 +3492,6 @@ function loadUserProfile(fbUser) {
       }
 
       // ③ status === 'active' → schoolId 체크
-      currentUser = profileName;
-      window.currentUser = currentUser;
       if (!currentSchoolId) {
         // schoolId 없음 → 구독 화면
         hideInitLoader();
@@ -3809,29 +3801,22 @@ var selectedActivatePlan = 'free';
 function showActivateScreen(fbUser, profile) {
   activateUser = { fbUser: fbUser, profile: profile };
   hideInitLoader();
-  showLoading(false);
   // 다른 화면 모두 숨김
-  var login = document.getElementById('loginScreen');
-  if (login) login.style.display = 'none';
-  var landing = document.getElementById('landingPage');
-  if (landing) landing.style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('landingPage').style.display = 'none';
   var sub = document.getElementById('subscribeScreen');
   if (sub) sub.style.display = 'none';
   var mainApp = document.getElementById('mainApp');
-  if (mainApp) {
-    mainApp.style.display = 'none';
-    mainApp.classList.remove('sidebar-active');
-  }
+  if (mainApp) mainApp.style.display = 'none';
   var sidebar = document.getElementById('sidebar');
   if (sidebar) sidebar.style.display = 'none';
   var act = document.getElementById('activateScreen');
-  if (act) act.style.display = 'flex';
-  var codeInput = document.getElementById('activateCodeInput');
-  if (codeInput) codeInput.value = '';
-  var codeResult = document.getElementById('activateCodeResult');
-  if (codeResult) codeResult.style.display = 'none';
-  var planSection = document.getElementById('activatePlanSection');
-  if (planSection) planSection.style.display = 'none';
+  // activateScreen이 mainApp(display:none) 안에 있으면 안 보이므로 body로 이동
+  if (act.parentElement !== document.body) document.body.appendChild(act);
+  act.style.display = 'flex';
+  document.getElementById('activateCodeInput').value = '';
+  document.getElementById('activateCodeResult').style.display = 'none';
+  document.getElementById('activatePlanSection').style.display = 'none';
   selectActivatePlan('free');
 }
 
@@ -3969,7 +3954,12 @@ function showSubscribeScreen(fbUser, profile, reason, expDate) {
   hideInitLoader();
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('landingPage').style.display = 'none';
-  document.getElementById('subscribeScreen').style.display = 'block';
+  var mainApp = document.getElementById('mainApp');
+  if (mainApp) mainApp.style.display = 'none';
+  var subEl = document.getElementById('subscribeScreen');
+  // subscribeScreen이 mainApp(display:none) 안에 있으면 안 보이므로 body로 이동
+  if (subEl.parentElement !== document.body) document.body.appendChild(subEl);
+  subEl.style.display = 'block';
 
   var title = document.getElementById('subscribeTitle');
   var sub   = document.getElementById('subscribeSubtitle');
@@ -5533,7 +5523,7 @@ function initLoginSelect() {
   // 모듈 스크립트에서 직접 onAuthStateChanged 처리함
   // 여기서는 Firebase가 로드 안 됐을 때만 fallback
   setTimeout(function() {
-    if (!window._authHandled && !window._profileLoading) {
+    if (!window._authHandled) {
       hideInitLoader();
       var lp = document.getElementById('landingPage');
       if (lp) lp.style.display = 'block';
@@ -6889,18 +6879,7 @@ function showToast(msg, type='success') {
   toastTimer = setTimeout(()=>{el.style.display='none';}, 2400);
 }
 
-function processPendingAuthUser() {
-  if (window._profileLoading || window.currentUser || typeof loadUserProfile !== 'function') return;
-  var user = window._pendingAuthUser || (window.fbAuth && window.fbAuth.currentUser);
-  if (!user) return;
-  window._pendingAuthUser = null;
-  window._profileLoading = true;
-  loadUserProfile(user).finally(function(){ window._profileLoading = false; });
-}
-
-// Firebase 모듈이 head에서 먼저 auth 이벤트를 받으면 여기서 다시 처리한다.
-setTimeout(processPendingAuthUser, 0);
-setTimeout(processPendingAuthUser, 800);
+// initLoginSelect는 Firebase 모듈 로드 후 실행됨
 </script>
 </div><!-- /mainApp -->
 </body>
