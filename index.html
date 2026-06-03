@@ -376,11 +376,39 @@ textarea { resize:vertical; }
   color: var(--btn-color);
   font-weight:800;
 }
+/* 카카오 실시간 상담 플로팅 버튼 반응형 */
+#kakaoFab {
+  position:fixed; right:18px; bottom:18px; z-index:99990;
+  height:52px; padding:0 18px; border-radius:26px; background:#FEE500;
+  display:flex; align-items:center; gap:8px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.22); text-decoration:none;
+  transition:transform .15s ease;
+}
+#kakaoFab .kakaoFabText { font-size:14px; font-weight:800; color:#3C1E1E; white-space:nowrap; }
+#kakaoFab .kakaoFabShort { display:none; }
+#kakaoFab svg { width:26px; height:26px; flex-shrink:0; }
+@media (max-width: 640px) {
+  #kakaoFab { right:12px; bottom:40px; height:48px; width:48px; padding:0; border-radius:50%; justify-content:center; gap:0; overflow:visible; }
+  #kakaoFab svg { width:24px; height:24px; }
+  #kakaoFab .kakaoFabLong { display:none; }
+  #kakaoFab .kakaoFabShort {
+    display:block;
+    position:absolute; bottom:-16px; left:50%; transform:translateX(-50%);
+    font-size:11px; font-weight:800; color:#3C1E1E;
+    background:#FEE500; padding:1px 7px; border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.18); white-space:nowrap;
+  }
+  #kakaoFab .kakaoFabShort::after {
+    content:''; position:absolute; top:-4px; left:50%; transform:translateX(-50%);
+    border-left:4px solid transparent; border-right:4px solid transparent;
+    border-bottom:4px solid #FEE500;
+  }
+}
 </style>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+import { getAuth, setPersistence, browserSessionPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 import { getFirestore, initializeFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, addDoc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -395,12 +423,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 // WebChannel(Listen/channel) 연결이 불안정한 환경(맥 Safari, 추적방지 등) 대비:
-// long-polling 자동 감지로 폴백하여 연결 안정성 향상
+// long-polling 강제로 연결 안정성 확보 (변경 금지)
 let db;
 try {
   db = initializeFirestore(app, { experimentalForceLongPolling: true });
 } catch (e) {
-  // 이미 초기화됐거나 옵션 미지원 시 기본값
   db = getFirestore(app);
 }
 const googleProvider = new GoogleAuthProvider();
@@ -429,22 +456,24 @@ window.fbSignInWithPopup = signInWithPopup;
 window.fbRecaptchaVerifier = RecaptchaVerifier;
 window.fbSignInWithPhoneNumber = signInWithPhoneNumber;
 
+// #2 브라우저 종료 시 자동 로그아웃: 세션 지속성으로 설정
+// (같은 탭 새로고침은 유지되고, 브라우저/탭을 닫으면 세션 해제됨)
+setPersistence(auth, browserSessionPersistence).catch(function(e){ console.warn('persistence:', e); });
+
 // Firebase 준비 완료 → 직접 auth 상태 감지 시작
 onAuthStateChanged(auth, function(user) {
   if (user) {
-    // 중복 호출 완전 방지: uid 단위로 처리 중 여부 추적
+    // 중복 호출 완전 방지: uid 단위 추적
     if (window._profileLoading) return;
-    if (window._loadedUid === user.uid) return; // 이미 이 UID로 로그인 처리 완료
+    if (window._loadedUid === user.uid) return; // 이미 이 UID로 처리 완료
     if (typeof loadUserProfile === 'function') {
       window._profileLoading = true;
       loadUserProfile(user).finally(function(){
         window._profileLoading = false;
-        // 성공적으로 완료된 경우에만 UID 기록 (로그아웃/오류 시엔 재시도 가능하도록)
         if (window.currentUser) window._loadedUid = user.uid;
       });
     }
   } else {
-    // 로그아웃 시 UID 초기화
     window._loadedUid = null;
     window._profileLoading = false;
     if (typeof hideInitLoader === 'function') hideInitLoader();
@@ -961,19 +990,31 @@ onAuthStateChanged(auth, function(user) {
           <button onclick="copyCode(document.getElementById('myTeacherCode').textContent)" style="margin-top:6px;font-size:10px;background:#3b82f6;color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-family:inherit">복사</button>
         </div>
       </div>
+      <!-- 코드 공유 안내 + 경고 (코드 카드 바로 아래) -->
+      <div style="font-size:11px;color:#64748b;text-align:center;margin-bottom:6px">선생님들에게 <b>선생님 코드</b>를 공유해주세요</div>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:11px;color:#dc2626;font-weight:700;text-align:center;line-height:1.4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        주의! 원장 코드는 절대 공유하지 마세요
+      </div>
       <!-- 만료일 표시 -->
       <div id="myExpirySection" style="display:none;border-radius:10px;padding:12px;text-align:center;margin-bottom:6px">
         <div style="font-size:11px;color:#64748b;margin-bottom:4px">서비스 만료일</div>
         <div id="myExpiryDate" style="font-size:16px;font-weight:900"></div>
         <div id="myExpiryDday" style="font-size:12px;margin-top:4px;font-weight:700"></div>
-        <button id="myRenewBtn" onclick="requestRenewal()" style="margin-top:8px;width:100%;padding:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:none"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.44 2.68h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.6-.6a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 19z"/></svg> 갱신 문의하기</button>
+        <button id="myRenewBtn" onclick="openPlanExtend()" style="margin-top:8px;width:100%;padding:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:none"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> 플랜 연장하기</button>
       </div>
-      <div style="font-size:11px;color:#94a3b8;text-align:center">선생님들에게 코드를 공유해주세요</div>
     </div>
 
     <!-- 저장 버튼 (원장만) -->
     <button id="mySaveBtn" onclick="saveMyPage()" style="display:none;width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">저장</button>
     <div id="myPageResult" style="display:none;text-align:center;margin-top:10px;font-size:12px;font-weight:700;color:#16a34a"></div>
+
+    <!-- 카카오톡 실시간 문의 -->
+    <a href="http://pf.kakao.com/_XFxbGX/chat" target="_blank" rel="noopener"
+       style="margin-top:10px;width:100%;box-sizing:border-box;padding:11px;background:#FEE500;color:#3C1E1E;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.86 1.9 5.37 4.76 6.78-.21.77-.76 2.8-.87 3.23-.14.54.2.53.42.39.17-.11 2.71-1.84 3.81-2.59.6.09 1.23.13 1.88.13 5.52 0 10-3.58 10-8s-4.48-8-10-8z"/></svg>
+      카카오톡 실시간 문의
+    </a>
   </div>
 </div>
 
@@ -1074,6 +1115,7 @@ onAuthStateChanged(auth, function(user) {
       <div id="subscribeTitle" style="font-size:18px;font-weight:900;color:#1e293b;margin-bottom:6px">서비스 이용권이 없습니다</div>
       <div id="subscribeSubtitle" style="font-size:13px;color:#64748b">요금제를 선택하고 신청해주세요</div>
       <button onclick="doLogout()" style="margin-top:12px;background:none;border:none;font-size:12px;color:#94a3b8;cursor:pointer;font-family:inherit">로그아웃</button>
+      <button id="subBackBtn" onclick="closeSubscribeScreen()" style="display:none;margin-top:12px;margin-left:10px;background:none;border:none;font-size:12px;color:#6366f1;font-weight:700;cursor:pointer;font-family:inherit">← 앱으로 돌아가기</button>
     </div>
 
     <!-- 요금제 카드 -->
@@ -3470,27 +3512,18 @@ function doGoogleLogin() {
     });
 }
 
-// getDoc에 타임아웃 래퍼 (무한 대기 방지)
+// getDoc 타임아웃 래퍼 (무한 대기 방지)
 function getDocWithTimeout(ref, ms) {
   ms = ms || 8000;
   return Promise.race([
     window.fbGetDoc(ref),
-    new Promise(function(_, reject) {
-      setTimeout(function(){ reject(new Error('timeout')); }, ms);
-    })
+    new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('timeout')); }, ms); })
   ]);
 }
-
 // users 문서 읽기 (실패 시 1회 재시도)
 function readUserDoc(uid, retried) {
   return getDocWithTimeout(window.fbDoc(window.fbDb, 'users', uid), 8000)
-    .catch(function(err) {
-      if (!retried) {
-        // 일시적 오류/타임아웃 → 1회 재시도
-        return readUserDoc(uid, true);
-      }
-      throw err;
-    });
+    .catch(function(err){ if (!retried) return readUserDoc(uid, true); throw err; });
 }
 
 function loadUserProfile(fbUser) {
@@ -3521,22 +3554,19 @@ function loadUserProfile(fbUser) {
       }
 
       // ② status 체크 - inactive
-      // ⚠️ 새로고침 시 문서 읽기가 일시적으로 비어 잘못 로그아웃되는 것 방지:
-      //    문서가 실제로 존재하고 status가 명시적으로 'inactive'일 때만 로그아웃 처리.
+      // 새로고침 시 일시적 빈 읽기로 잘못 로그아웃되는 것 방지:
+      // 문서가 실제 존재하고 status가 명시적 inactive/누락일 때만 처리.
       var docExists = snap.exists();
       var isExplicitInactive = docExists && profile.status === 'inactive';
-      var isMissingStatus    = docExists && !profile.status; // 문서는 있는데 status 필드 없음
-
+      var isMissingStatus    = docExists && !profile.status;
       if (isExplicitInactive || isMissingStatus) {
         hideInitLoader();
         showLoading(false);
         if (window._freshLogin) {
-          // 로그인 폼에서 직접 로그인 → 활성화 화면
           window._freshLogin = false;
           document.getElementById('loginScreen').style.display = 'none';
           showActivateScreen(fbUser, profile);
         } else {
-          // 새로고침/세션 복원 → 자동 로그아웃 후 랜딩으로
           window.currentUser = null;
           window._loadedUid = null;
           if (window.fbSignOut && window.fbAuth) window.fbSignOut(window.fbAuth).catch(function(){});
@@ -3546,9 +3576,8 @@ function loadUserProfile(fbUser) {
         }
         return;
       }
-
       if (!docExists) {
-        // 문서 자체를 못 읽음 (일시적 오류 가능성) → 로그아웃하지 않고 대기/안내
+        // 문서 자체를 못 읽음 (일시적 오류 가능성) → 로그아웃하지 않음
         hideInitLoader();
         showLoading(false);
         if (window._freshLogin) {
@@ -3556,7 +3585,6 @@ function loadUserProfile(fbUser) {
           document.getElementById('loginScreen').style.display = 'none';
           showActivateScreen(fbUser, profile);
         } else {
-          // 세션은 유효하므로 로그아웃하지 않음. 로더만 내리고 토스트.
           showToast('정보를 불러오지 못했습니다. 새로고침 해주세요.', 'error');
         }
         return;
@@ -3573,17 +3601,12 @@ function loadUserProfile(fbUser) {
       }
 
       // ④ schoolId 있음 → 학원 만료 체크
-      var expectedUid = fbUser.uid; // 클로저로 캡처: 느린 응답 후 다른 사용자로 바뀌었는지 검증용
       return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId))
         .then(function(schoolSnap) {
-          // 느린 응답 중 다른 계정으로 바뀌었으면 무시
-          if (!window.fbAuth || (window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid)) return;
           if (!schoolSnap.exists()) {
             // schoolId가 코드값인 경우 전체 검색 후 실제 ID 업데이트
             return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools'))
               .then(function(allSnap) {
-                // 응답 후에도 동일 사용자인지 재확인
-                if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) return;
                 var found = null;
                 allSnap.forEach(function(d) {
                   var sd = d.data();
@@ -3607,19 +3630,16 @@ function loadUserProfile(fbUser) {
     .catch(function(err) {
       showLoading(false);
       console.error('loadUserProfile error:', err);
-      // 세션이 유효하면(=Firebase에 인증된 사용자 존재) 로그아웃/로그인화면 금지.
-      // 일시적 네트워크/타임아웃이므로 자동 재시도 안내.
       var sessionAlive = window.fbAuth && window.fbAuth.currentUser;
       if (window.currentUser || sessionAlive) {
+        // 세션 유효 → 로그아웃/로그인화면 금지. 로더 유지 + 자동 재시도.
         if (sessionAlive && !window.currentUser) {
-          // 아직 로그인 화면 진입 전 + 세션 유효 → 로더 유지(랜딩 깜빡임 방지)
           var il = document.getElementById('initLoader');
           if (il) il.style.display = 'flex';
         } else {
           hideInitLoader();
         }
         showToast('연결이 불안정합니다. 잠시 후 자동으로 다시 시도합니다.', 'error');
-        // 세션 유효 시 5초 후 1회 자동 재시도 (사용자가 새로고침 안 해도 복구)
         if (sessionAlive && !window._profileRetryScheduled) {
           window._profileRetryScheduled = true;
           setTimeout(function() {
@@ -3631,7 +3651,6 @@ function loadUserProfile(fbUser) {
                 if (window.currentUser) window._loadedUid = window.fbAuth.currentUser.uid;
               });
             } else if (!window.fbAuth || !window.fbAuth.currentUser) {
-              // 그 사이 세션이 사라졌으면 로더 내리고 랜딩
               hideInitLoader();
               var lp = document.getElementById('landingPage');
               if (lp) lp.style.display = 'block';
@@ -3639,7 +3658,6 @@ function loadUserProfile(fbUser) {
           }, 5000);
         }
       } else {
-        // 진짜 비로그인 상태에서의 초기 오류
         hideInitLoader();
         document.getElementById('loginScreen').style.display = 'flex';
         showAuthError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
@@ -3717,12 +3735,8 @@ function finishLogin(fbUser, profile) {
   localStorage.setItem('kms_cache_school', currentSchool);
 
   // 학원 프로필 로드 (이미지 저장용)
-  var finishUid = fbUser.uid; // 비동기 완료 후 현재 로그인 사용자와 동일한지 검증용
   window.fbGetDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid)).then(function(snap) {
     if (!snap.exists()) return;
-    // 느린 응답 후 다른 계정으로 바뀌었으면 무시
-    if (!window.currentUser) return;
-    if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== finishUid) return;
     var data = snap.data();
     currentSchoolProfile.name = data.schoolName || '';
     currentSchoolProfile.phone = data.phone || '';
@@ -3731,7 +3745,6 @@ function finishLogin(fbUser, profile) {
 
     // 학원 프로필 적용 헬퍼
     function applySchool(sd, realId) {
-      if (!window.currentUser) return; // 로그아웃 중이면 무시
       if (sd.logo) currentSchoolProfile.logo = sd.logo;
       if (sd.phone) currentSchoolProfile.phone = sd.phone;
       if (sd.name) currentSchoolProfile.name = sd.name;
@@ -3749,16 +3762,12 @@ function finishLogin(fbUser, profile) {
     if (!sid) return;
 
     window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', sid)).then(function(sSnap) {
-      if (!window.currentUser) return; // 로그아웃 중이면 무시
-      if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== finishUid) return;
       if (sSnap.exists()) {
         applySchool(sSnap.data(), sSnap.id);
         return;
       }
       // 문서 못 찾음 → 코드/학원명으로 fallback 검색
       window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(allSnap) {
-        if (!window.currentUser) return;
-        if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== finishUid) return;
         var found = null, foundId = null;
         allSnap.forEach(function(d) {
           var s = d.data();
@@ -3781,30 +3790,58 @@ function finishLogin(fbUser, profile) {
   setTimeout(function(){ resetLessonBlocks(); resetHomeworks(); resetLastHomeworks(); resetTests(); }, 300);
 }
 
-// ── 자동 로그아웃 (10시간 / localStorage 기반) ───────────────
+// ── 자동 로그아웃 (2시간 미활동 / localStorage 기반) ───────────
+// 마지막 활동 시각을 저장하고, 활동(클릭/입력/터치/스크롤)이 있으면 갱신.
+// 2시간 동안 활동이 없으면 자동 로그아웃. 새로고침해도 마지막 활동 시각 유지.
 var _autoLogoutTimer = null;
-var AUTO_LOGOUT_MS = 10 * 60 * 60 * 1000; // 10시간
-var AUTO_LOGOUT_KEY = 'kms_login_time';
+var AUTO_LOGOUT_MS = 2 * 60 * 60 * 1000; // 2시간 (미활동 기준)
+var AUTO_LOGOUT_KEY = 'kms_last_activity';
+var _activityListenersBound = false;
+
+function markActivity() {
+  if (!window.currentUser) return;
+  localStorage.setItem(AUTO_LOGOUT_KEY, Date.now());
+  scheduleAutoLogout();
+}
+
+function scheduleAutoLogout() {
+  if (_autoLogoutTimer) { clearTimeout(_autoLogoutTimer); _autoLogoutTimer = null; }
+  var last = parseInt(localStorage.getItem(AUTO_LOGOUT_KEY), 10) || Date.now();
+  var remaining = AUTO_LOGOUT_MS - (Date.now() - last);
+  if (remaining <= 0) { doAutoLogout(); return; }
+  _autoLogoutTimer = setTimeout(function() {
+    // 타이머 만료 시 실제 미활동 시간 재확인 (다른 탭에서 활동했을 수 있음)
+    var l = parseInt(localStorage.getItem(AUTO_LOGOUT_KEY), 10) || 0;
+    if (Date.now() - l >= AUTO_LOGOUT_MS) doAutoLogout();
+    else scheduleAutoLogout();
+  }, remaining);
+}
+
+function doAutoLogout() {
+  showToast('2시간 동안 활동이 없어 자동 로그아웃되었습니다.', 'error');
+  setTimeout(function() { doLogout(); }, 2000);
+}
 
 function startAutoLogoutTimer() {
   clearAutoLogoutTimer();
-  // 로그인 시각 저장 (새로고침해도 유지)
-  var loginTime = parseInt(localStorage.getItem(AUTO_LOGOUT_KEY), 10);
-  if (!loginTime) {
-    loginTime = Date.now();
-    localStorage.setItem(AUTO_LOGOUT_KEY, loginTime);
+  localStorage.setItem(AUTO_LOGOUT_KEY, Date.now());
+  scheduleAutoLogout();
+  // 활동 이벤트 바인딩 (1회만)
+  if (!_activityListenersBound) {
+    _activityListenersBound = true;
+    ['click','keydown','touchstart','scroll','mousemove'].forEach(function(ev) {
+      // mousemove/scroll은 과도 호출 방지를 위해 throttle
+      window.addEventListener(ev, throttledActivity, { passive: true });
+    });
   }
-  var elapsed = Date.now() - loginTime;
-  var remaining = AUTO_LOGOUT_MS - elapsed;
-  if (remaining <= 0) {
-    showToast('10시간이 경과하여 자동 로그아웃되었습니다.', 'error');
-    setTimeout(function() { doLogout(); }, 2000);
-    return;
-  }
-  _autoLogoutTimer = setTimeout(function() {
-    showToast('10시간이 경과하여 자동 로그아웃되었습니다.', 'error');
-    setTimeout(function() { doLogout(); }, 2000);
-  }, remaining);
+}
+
+var _activityThrottle = 0;
+function throttledActivity() {
+  var now = Date.now();
+  if (now - _activityThrottle < 30000) return; // 30초에 한 번만 기록
+  _activityThrottle = now;
+  markActivity();
 }
 
 function clearAutoLogoutTimer() {
@@ -3814,9 +3851,8 @@ function clearAutoLogoutTimer() {
 
 function loadOwnerData(ownerUid) {
   showLoading(true);
-  var expectedUid = ownerUid; // 느린 로딩 중 로그아웃/교체 감지용
-  var _pendingTimers = []; // 멤버별 타임아웃 타이머 (완료 시 일괄 취소)
-  // 안전 타임아웃: 15초 내 완료 안 되면 로딩 바 내리고 캐시 데이터 유지
+  var expectedUid = ownerUid;
+  var _pendingTimers = [];
   var _ownerLoadDone = false;
   var _ownerTimeout = setTimeout(function() {
     if (_ownerLoadDone) return;
@@ -3835,7 +3871,6 @@ function loadOwnerData(ownerUid) {
   var q = window.fbQuery(usersRef, window.fbWhere('schoolId', '==', currentSchoolId));
 
   window.fbGetDocs(q).then(function(snap) {
-    // 로딩 중 로그아웃했으면 중단
     if (!window.currentUser) { finishOwnerLoad(); return Promise.reject('cancelled'); }
     if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) {
       finishOwnerLoad(); return Promise.reject('cancelled');
@@ -3851,10 +3886,7 @@ function loadOwnerData(ownerUid) {
       var timer;
       return Promise.race([
         window.fbGetDocs(collRef),
-        new Promise(function(resolve){
-          timer = setTimeout(function(){ resolve(_emptySnap); }, 8000);
-          _pendingTimers.push(timer);
-        })
+        new Promise(function(resolve){ timer = setTimeout(function(){ resolve(_emptySnap); }, 8000); _pendingTimers.push(timer); })
       ]).then(function(r){ clearTimeout(timer); return r; })
         .catch(function(){ clearTimeout(timer); return _emptySnap; });
     }
@@ -3870,7 +3902,6 @@ function loadOwnerData(ownerUid) {
     return Promise.all([Promise.all(recPromises), Promise.all(stuPromises)]);
   }).then(function(results) {
     if (!results) { finishOwnerLoad(); return; }
-    // 최종 결과 도착 후에도 현재 로그인 상태 재확인
     if (!window.currentUser) { finishOwnerLoad(); return; }
     if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) {
       finishOwnerLoad(); return;
@@ -3892,7 +3923,7 @@ function loadOwnerData(ownerUid) {
     renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
     showToast('학원 전체 데이터 불러오기 완료!');
   }).catch(function(e) {
-    if (e === 'cancelled') return; // 의도적 중단 - 토스트 불필요
+    if (e === 'cancelled') return;
     showToast('오프라인 모드', 'info');
   }).finally(function() { finishOwnerLoad(); });
 }
@@ -4257,10 +4288,17 @@ function showSubscribeScreen(fbUser, profile, reason, expDate) {
   } else if (reason === 'inactive') {
     title.textContent = '서비스가 비활성화됐습니다';
     sub.textContent   = '관리자에게 문의하거나 새 플랜을 신청해주세요';
+  } else if (reason === 'extend') {
+    title.textContent = '플랜 연장하기';
+    sub.textContent   = '연장할 플랜을 선택하고 신청해주세요';
   } else {
     title.textContent = '서비스 이용권이 없습니다';
     sub.textContent   = '플랜을 선택하고 신청해주세요';
   }
+
+  // 활성 사용자가 연장하러 온 경우 앱으로 돌아갈 수 있게 닫기 버튼 표시
+  var backBtn = document.getElementById('subBackBtn');
+  if (backBtn) backBtn.style.display = (reason === 'extend') ? 'block' : 'none';
 
   // 학원명/이름 자동 입력
   selectSubPlan('free');
@@ -5561,6 +5599,27 @@ function showMyExpiry(expiresAt) {
   renewBtn.style.display = 'block'; // 항상 표시
 }
 
+function closeSubscribeScreen() {
+  var subEl = document.getElementById('subscribeScreen');
+  if (subEl) subEl.style.display = 'none';
+  var mainApp = document.getElementById('mainApp');
+  if (mainApp) mainApp.style.display = 'block';
+}
+
+function openPlanExtend() {
+  // 마이페이지 닫고 → 플랜 안내표/선택/신청 화면으로 이동
+  if (!window.fbAuth || !window.fbAuth.currentUser) return;
+  var fbUser = window.fbAuth.currentUser;
+  closeMyPage();
+  // 현재 프로필을 읽어 신청 화면에 학원명/이름 등을 채움
+  window.fbGetDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid)).then(function(snap) {
+    var profile = snap.exists() ? snap.data() : {};
+    showSubscribeScreen(fbUser, profile, 'extend');
+  }).catch(function() {
+    showSubscribeScreen(fbUser, {}, 'extend');
+  });
+}
+
 function requestRenewal() {
   // 갱신 문의 - 관리자에게 Firestore 문의 저장
   if (!window.fbDb || !window.fbAuth || !window.fbAuth.currentUser) return;
@@ -5803,22 +5862,15 @@ function initLoaderFallbackCheck(attempt) {
   attempt = attempt || 1;
   var loader = document.getElementById('initLoader');
   var loaderVisible = loader && loader.style.display !== 'none';
-  if (!loaderVisible) return; // 이미 처리됨
+  if (!loaderVisible) return;
+  if (currentUser) return; // 이미 로그인 처리 완료
 
-  // 이미 로그인 처리 완료 → 아무것도 안 함
-  if (currentUser) return;
-
-  // Firebase에 인증된 사용자가 있음 = 세션 유효 → 랜딩으로 보내면 안 됨
-  // 프로필 로딩이 진행 중이거나 곧 시작됨. 로더 유지하며 잠시 더 대기
+  // Firebase에 인증된 사용자가 있음 = 세션 유효 → 랜딩 금지, 로딩 유지하며 대기
   if ((window.fbAuth && window.fbAuth.currentUser) || window._profileLoading) {
-    if (attempt < 6) { // 최대 약 12초까지 대기 (인증된 사용자이므로 안전)
-      setTimeout(function(){ initLoaderFallbackCheck(attempt + 1); }, 2000);
-    }
-    // 6회 초과해도 인증 사용자가 있으면 랜딩으로 보내지 않고 loadUserProfile이 끝내도록 둠
+    if (attempt < 6) setTimeout(function(){ initLoaderFallbackCheck(attempt + 1); }, 2000);
     return;
   }
-
-  // 인증된 사용자가 없을 때만 랜딩 표시 (진짜 비로그인 상태)
+  // 인증된 사용자가 없을 때만 랜딩 표시 (진짜 비로그인)
   hideInitLoader();
   document.getElementById('landingPage').style.display = 'block';
 }
@@ -6002,6 +6054,7 @@ ${[rec.todayContent,rec.todayContent1,rec.todayContent2,rec.todayContent3,rec.to
         <div class="rec-btns">
           <button class="btn-edit" onclick="editRecord('${rec.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 수정</button>
           <button class="btn-edit" style="background:#dcfce7;border-color:#86efac;color:#16a34a" onclick="saveListCard('${rec.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> 저장</button>
+          <button class="btn-edit" style="background:#fef3c7;border-color:#fcd34d;color:#d97706" onclick="saveListCard('${rec.id}','share')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg> 공유</button>
           <button class="btn-edit" style="background:#ede9fe;border-color:#c4b5fd;color:#6366f1" onclick="copyRecord('${rec.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> 복사</button>
           <button class="btn-del"  onclick="deleteRecord('${rec.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
         </div>
@@ -6178,6 +6231,7 @@ function renderStats() {
             +'<span class="group-arrow" id="ga-'+gid+'">▶</span>'
             +'</span></div>'
             +'<button onclick="saveStuStat(\''+gid+'\')" style="background:#334155;border:1.5px solid rgba(255,255,255,0.3);color:#fff;font-size:13px;padding:8px 10px;border-radius:8px;cursor:pointer;font-family:inherit;flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></button>'
+            +'<button onclick="shareStuStat(\''+gid+'\')" style="background:#d97706;border:1.5px solid rgba(255,255,255,0.3);color:#fff;font-size:13px;padding:8px 10px;border-radius:8px;cursor:pointer;font-family:inherit;flex-shrink:0;margin-left:6px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg></button>'
             +'</div>'
             +'<div class="group-body collapsed" id="gb-'+gid+'" style="max-height:0" data-student="'+esc(sname)+'" data-month="'+esc(mon)+'">'
             +'<div id="stuinner-'+gid+'" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:0 0 8px 8px;padding:16px 18px">'
@@ -6273,7 +6327,8 @@ function saveClsStuStats(clsGid) {
   document.head.appendChild(s);
 }
 
-function captureStuStat(gid, done) {
+function captureStuStat(gid, done, mode) {
+  mode = mode || 'save';
   // 펼치기
   var body = document.getElementById('gb-'+gid);
   var wasCollapsed = body && body.classList.contains('collapsed');
@@ -6341,6 +6396,11 @@ function captureStuStat(gid, done) {
         .then(function(canvas){
           document.body.removeChild(wrapper);
           if (wasCollapsed && body) { body.classList.add('collapsed'); body.style.maxHeight='0'; }
+          if (mode === 'share') {
+            shareCanvasImage(canvas, fname);
+            if (done) setTimeout(done, 300);
+            return;
+          }
           var a = document.createElement('a');
           a.download = fname;
           a.href = canvas.toDataURL('image/png');
@@ -6357,6 +6417,15 @@ function captureStuStat(gid, done) {
 
 function saveStuStat(gid) {
   function go() { captureStuStat(gid, null); }
+  if (window.html2canvas) { go(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  s.onload = go;
+  document.head.appendChild(s);
+}
+
+function shareStuStat(gid) {
+  function go() { captureStuStat(gid, null, 'share'); }
   if (window.html2canvas) { go(); return; }
   var s = document.createElement('script');
   s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
@@ -6760,7 +6829,8 @@ function saveAllByDate(date) {
   });
 }
 
-function saveListCard(id) {
+function saveListCard(id, mode) {
+  mode = mode || 'save';
   const rec = records.find(r => String(r.id) === String(id));
   if (!rec) return;
   const node = document.getElementById('list-card-' + id);
@@ -6894,6 +6964,10 @@ function saveListCard(id) {
     }).then(async canvas => {
       document.body.removeChild(wrapper);
       if (btns) btns.style.display = '';
+      if (mode === 'share') {
+        shareCanvasImage(canvas, fname);
+        return;
+      }
       if (window.showSaveFilePicker) {
         try {
           const handle = await window.showSaveFilePicker({
@@ -7178,6 +7252,39 @@ function esc(str) {
 }
 
 let toastTimer;
+// ── 이미지 공유 공통 유틸 (Web Share API + 데스크톱 폴백) ──────
+// canvas를 받아 모바일은 공유 시트(카톡/문자 등), 미지원 환경은 다운로드로 폴백
+function shareCanvasImage(canvas, filename) {
+  filename = filename || ('edunote_' + Date.now() + '.png');
+  function fallbackDownload() {
+    try {
+      var a = document.createElement('a');
+      a.download = filename;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+      showToast('이미지를 저장했습니다. 카톡/문자로 공유해 보세요.', 'info');
+    } catch (e) {
+      showToast('이미지 처리 실패', 'error');
+    }
+  }
+  if (!canvas || !canvas.toBlob) { fallbackDownload(); return; }
+  canvas.toBlob(function(blob) {
+    if (!blob) { fallbackDownload(); return; }
+    var file = new File([blob], filename, { type: 'image/png' });
+    // Web Share API(파일 공유) 지원 여부 확인
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+      navigator.share({ files: [file], title: 'EduNote 학습 기록' })
+        .catch(function(err) {
+          // 사용자가 취소한 경우(AbortError)는 조용히 무시, 그 외엔 폴백
+          if (err && err.name === 'AbortError') return;
+          fallbackDownload();
+        });
+    } else {
+      fallbackDownload();
+    }
+  }, 'image/png');
+}
+
 function showToast(msg, type='success') {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -7190,5 +7297,15 @@ function showToast(msg, type='success') {
 // initLoginSelect는 Firebase 모듈 로드 후 실행됨
 </script>
 </div><!-- /mainApp -->
+
+<!-- 카카오톡 실시간 문의 플로팅 버튼 (모든 화면 우하단) -->
+<a id="kakaoFab" href="http://pf.kakao.com/_XFxbGX/chat" target="_blank" rel="noopener"
+   title="실시간 상담" aria-label="카카오톡 실시간 상담"
+   onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.86 1.9 5.37 4.76 6.78-.21.77-.76 2.8-.87 3.23-.14.54.2.53.42.39.17-.11 2.71-1.84 3.81-2.59.6.09 1.23.13 1.88.13 5.52 0 10-3.58 10-8s-4.48-8-10-8z"/></svg>
+  <span class="kakaoFabText kakaoFabLong">실시간 상담</span>
+  <span class="kakaoFabText kakaoFabShort">상담</span>
+</a>
+
 </body>
 </html>
