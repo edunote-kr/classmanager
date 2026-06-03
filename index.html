@@ -3625,21 +3625,43 @@ function finishLogin(fbUser, profile) {
     currentSchoolProfile.phone = data.phone || '';
     currentSchoolProfile.logo = data.logo || null;  // users 로고 먼저 적용
     refreshSchoolLogo();  // users 로고라도 즉시 표시
-    // 원장/선생님 모두 소속 학원(schools)의 로고를 우선 적용 (학원별 통일)
-    if (data.schoolId) {
-      window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', data.schoolId)).then(function(sSnap) {
-        if (sSnap.exists()) {
-          var sd = sSnap.data();
-          if (sd.logo) currentSchoolProfile.logo = sd.logo;  // schools 로고로 덮어쓰기
-          if (sd.phone) currentSchoolProfile.phone = sd.phone;
-          if (sd.name) currentSchoolProfile.name = sd.name;
-          currentSchoolProfile.plan = sd.plan || 'free';  // 학원 플랜 동기화
-          // 헤더/사이드바 로고 즉시 갱신
-          refreshSchoolLogo();
-          refreshPlanBadge();  // 플랜 뱃지 갱신
-        }
-      }).catch(function(){});
+
+    // 학원 프로필 적용 헬퍼
+    function applySchool(sd, realId) {
+      if (sd.logo) currentSchoolProfile.logo = sd.logo;
+      if (sd.phone) currentSchoolProfile.phone = sd.phone;
+      if (sd.name) currentSchoolProfile.name = sd.name;
+      currentSchoolProfile.plan = sd.plan || 'free';
+      refreshSchoolLogo();
+      refreshPlanBadge();
+      // schoolId가 코드값이었으면 실제 ID로 교정 저장 (새로고침 시 정상 동작)
+      if (realId && data.schoolId !== realId) {
+        window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid), { schoolId: realId }).catch(function(){});
+      }
     }
+
+    // 교정된 currentSchoolId 우선 사용 (loadUserProfile ④분기에서 실제 ID로 교정됨)
+    var sid = currentSchoolId || data.schoolId;
+    if (!sid) return;
+
+    window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', sid)).then(function(sSnap) {
+      if (sSnap.exists()) {
+        applySchool(sSnap.data(), sSnap.id);
+        return;
+      }
+      // 문서 못 찾음 → 코드/학원명으로 fallback 검색
+      window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(allSnap) {
+        var found = null, foundId = null;
+        allSnap.forEach(function(d) {
+          var s = d.data();
+          if (s.ownerCode === sid || s.teacherCode === sid ||
+              (s.name && data.schoolName && s.name.trim() === data.schoolName.trim())) {
+            found = s; foundId = d.id;
+          }
+        });
+        if (found) applySchool(found, foundId);
+      }).catch(function(){});
+    }).catch(function(){});
   }).catch(function(){});
 
   initWithFirebase(fbUser.uid);
