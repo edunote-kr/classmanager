@@ -3462,9 +3462,32 @@ function doGoogleLogin() {
     });
 }
 
+// getDoc에 타임아웃 래퍼 (무한 대기 방지)
+function getDocWithTimeout(ref, ms) {
+  ms = ms || 8000;
+  return Promise.race([
+    window.fbGetDoc(ref),
+    new Promise(function(_, reject) {
+      setTimeout(function(){ reject(new Error('timeout')); }, ms);
+    })
+  ]);
+}
+
+// users 문서 읽기 (실패 시 1회 재시도)
+function readUserDoc(uid, retried) {
+  return getDocWithTimeout(window.fbDoc(window.fbDb, 'users', uid), 8000)
+    .catch(function(err) {
+      if (!retried) {
+        // 일시적 오류/타임아웃 → 1회 재시도
+        return readUserDoc(uid, true);
+      }
+      throw err;
+    });
+}
+
 function loadUserProfile(fbUser) {
   showLoading(true);
-  return window.fbGetDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid))
+  return readUserDoc(fbUser.uid)
     .then(function(snap) {
       var profile = snap.exists() ? snap.data() : {};
       currentUser     = profile.name || fbUser.email || fbUser.uid;
@@ -3490,7 +3513,13 @@ function loadUserProfile(fbUser) {
       }
 
       // ② status 체크 - inactive
-      if (!profile.status || profile.status === 'inactive') {
+      // ⚠️ 새로고침 시 문서 읽기가 일시적으로 비어 잘못 로그아웃되는 것 방지:
+      //    문서가 실제로 존재하고 status가 명시적으로 'inactive'일 때만 로그아웃 처리.
+      var docExists = snap.exists();
+      var isExplicitInactive = docExists && profile.status === 'inactive';
+      var isMissingStatus    = docExists && !profile.status; // 문서는 있는데 status 필드 없음
+
+      if (isExplicitInactive || isMissingStatus) {
         hideInitLoader();
         showLoading(false);
         if (window._freshLogin) {
@@ -3501,10 +3530,26 @@ function loadUserProfile(fbUser) {
         } else {
           // 새로고침/세션 복원 → 자동 로그아웃 후 랜딩으로
           window.currentUser = null;
+          window._loadedUid = null;
           if (window.fbSignOut && window.fbAuth) window.fbSignOut(window.fbAuth).catch(function(){});
           var lp = document.getElementById('landingPage');
           if (lp) lp.style.display = 'block';
           document.getElementById('loginScreen').style.display = 'none';
+        }
+        return;
+      }
+
+      if (!docExists) {
+        // 문서 자체를 못 읽음 (일시적 오류 가능성) → 로그아웃하지 않고 대기/안내
+        hideInitLoader();
+        showLoading(false);
+        if (window._freshLogin) {
+          window._freshLogin = false;
+          document.getElementById('loginScreen').style.display = 'none';
+          showActivateScreen(fbUser, profile);
+        } else {
+          // 세션은 유효하므로 로그아웃하지 않음. 로더만 내리고 토스트.
+          showToast('정보를 불러오지 못했습니다. 새로고침 해주세요.', 'error');
         }
         return;
       }
@@ -3552,16 +3597,42 @@ function loadUserProfile(fbUser) {
         });
     })
     .catch(function(err) {
-      hideInitLoader();
       showLoading(false);
       console.error('loadUserProfile error:', err);
-      // 네트워크 일시 오류 시 로그아웃 대신 토스트만 표시
-      // (loginScreen 강제 표시하면 사용자가 로그아웃된 것처럼 보임)
-      if (window.currentUser) {
-        // 이미 로그인된 상태라면 조용히 유지
-        showToast('일시적 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+      // 세션이 유효하면(=Firebase에 인증된 사용자 존재) 로그아웃/로그인화면 금지.
+      // 일시적 네트워크/타임아웃이므로 자동 재시도 안내.
+      var sessionAlive = window.fbAuth && window.fbAuth.currentUser;
+      if (window.currentUser || sessionAlive) {
+        if (sessionAlive && !window.currentUser) {
+          // 아직 로그인 화면 진입 전 + 세션 유효 → 로더 유지(랜딩 깜빡임 방지)
+          var il = document.getElementById('initLoader');
+          if (il) il.style.display = 'flex';
+        } else {
+          hideInitLoader();
+        }
+        showToast('연결이 불안정합니다. 잠시 후 자동으로 다시 시도합니다.', 'error');
+        // 세션 유효 시 5초 후 1회 자동 재시도 (사용자가 새로고침 안 해도 복구)
+        if (sessionAlive && !window._profileRetryScheduled) {
+          window._profileRetryScheduled = true;
+          setTimeout(function() {
+            window._profileRetryScheduled = false;
+            if (!window.currentUser && window.fbAuth && window.fbAuth.currentUser && !window._profileLoading) {
+              window._profileLoading = true;
+              loadUserProfile(window.fbAuth.currentUser).finally(function(){
+                window._profileLoading = false;
+                if (window.currentUser) window._loadedUid = window.fbAuth.currentUser.uid;
+              });
+            } else if (!window.fbAuth || !window.fbAuth.currentUser) {
+              // 그 사이 세션이 사라졌으면 로더 내리고 랜딩
+              hideInitLoader();
+              var lp = document.getElementById('landingPage');
+              if (lp) lp.style.display = 'block';
+            }
+          }, 5000);
+        }
       } else {
-        // 초기 로그인 시도 중 오류
+        // 진짜 비로그인 상태에서의 초기 오류
+        hideInitLoader();
         document.getElementById('loginScreen').style.display = 'flex';
         showAuthError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
       }
@@ -3736,15 +3807,27 @@ function clearAutoLogoutTimer() {
 function loadOwnerData(ownerUid) {
   showLoading(true);
   var expectedUid = ownerUid; // 느린 로딩 중 로그아웃/교체 감지용
+  // 안전 타임아웃: 15초 내 완료 안 되면 로딩 바 내리고 캐시 데이터 유지
+  var _ownerLoadDone = false;
+  var _ownerTimeout = setTimeout(function() {
+    if (_ownerLoadDone) return;
+    showLoading(false);
+    showToast('학원 데이터 로딩이 지연됩니다. 저장된 데이터로 표시합니다.', 'info');
+  }, 15000);
+  function finishOwnerLoad() {
+    _ownerLoadDone = true;
+    clearTimeout(_ownerTimeout);
+    showLoading(false);
+  }
   // 같은 schoolId를 가진 모든 사용자 조회
   var usersRef = window.fbCollection(window.fbDb, 'users');
   var q = window.fbQuery(usersRef, window.fbWhere('schoolId', '==', currentSchoolId));
 
   window.fbGetDocs(q).then(function(snap) {
     // 로딩 중 로그아웃했으면 중단
-    if (!window.currentUser) { showLoading(false); return Promise.reject('cancelled'); }
+    if (!window.currentUser) { finishOwnerLoad(); return Promise.reject('cancelled'); }
     if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) {
-      showLoading(false); return Promise.reject('cancelled');
+      finishOwnerLoad(); return Promise.reject('cancelled');
     }
     var memberUids = [ownerUid]; // 원장 본인 포함
     snap.forEach(function(d) {
@@ -3761,10 +3844,11 @@ function loadOwnerData(ownerUid) {
 
     return Promise.all([Promise.all(recPromises), Promise.all(stuPromises)]);
   }).then(function(results) {
+    if (!results) { finishOwnerLoad(); return; }
     // 최종 결과 도착 후에도 현재 로그인 상태 재확인
-    if (!window.currentUser) { showLoading(false); return; }
+    if (!window.currentUser) { finishOwnerLoad(); return; }
     if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) {
-      showLoading(false); return;
+      finishOwnerLoad(); return;
     }
     var allRecs = [];
     var allStus = [];
@@ -3785,7 +3869,7 @@ function loadOwnerData(ownerUid) {
   }).catch(function(e) {
     if (e === 'cancelled') return; // 의도적 중단 - 토스트 불필요
     showToast('오프라인 모드', 'info');
-  }).finally(function() { showLoading(false); });
+  }).finally(function() { finishOwnerLoad(); });
 }
 
 function initWithFirebase(uid) {
@@ -5689,14 +5773,31 @@ function hideInitLoader() {
   if (loader) loader.style.display = 'none';
 }
 
-// 5초 안에 로그인 확인 안 되면 랜딩으로 fallback
-setTimeout(function() {
-  if (!currentUser && document.getElementById('initLoader') &&
-      document.getElementById('initLoader').style.display !== 'none') {
-    hideInitLoader();
-    document.getElementById('landingPage').style.display = 'block';
+// 로그인 확인 fallback — 인증된 사용자는 절대 랜딩으로 보내지 않음
+function initLoaderFallbackCheck(attempt) {
+  attempt = attempt || 1;
+  var loader = document.getElementById('initLoader');
+  var loaderVisible = loader && loader.style.display !== 'none';
+  if (!loaderVisible) return; // 이미 처리됨
+
+  // 이미 로그인 처리 완료 → 아무것도 안 함
+  if (currentUser) return;
+
+  // Firebase에 인증된 사용자가 있음 = 세션 유효 → 랜딩으로 보내면 안 됨
+  // 프로필 로딩이 진행 중이거나 곧 시작됨. 로더 유지하며 잠시 더 대기
+  if ((window.fbAuth && window.fbAuth.currentUser) || window._profileLoading) {
+    if (attempt < 6) { // 최대 약 12초까지 대기 (인증된 사용자이므로 안전)
+      setTimeout(function(){ initLoaderFallbackCheck(attempt + 1); }, 2000);
+    }
+    // 6회 초과해도 인증 사용자가 있으면 랜딩으로 보내지 않고 loadUserProfile이 끝내도록 둠
+    return;
   }
-}, 5000);
+
+  // 인증된 사용자가 없을 때만 랜딩 표시 (진짜 비로그인 상태)
+  hideInitLoader();
+  document.getElementById('landingPage').style.display = 'block';
+}
+setTimeout(function(){ initLoaderFallbackCheck(1); }, 5000);
 
 var _initLoginSelectCalled = false;
 function initLoginSelect() {
