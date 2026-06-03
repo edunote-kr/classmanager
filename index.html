@@ -3812,47 +3812,22 @@ function clearAutoLogoutTimer() {
   localStorage.removeItem(AUTO_LOGOUT_KEY);
 }
 
-// ── 화면 디버그 패널 (F12 없이 폰에서 확인용) ───────────────
-function dbgPanel() {
-  var el = document.getElementById('dbgPanel');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'dbgPanel';
-    el.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:999999;background:rgba(15,23,42,0.95);color:#a7f3d0;font-family:monospace;font-size:11px;line-height:1.5;padding:10px 12px;border-radius:10px;white-space:pre-wrap;word-break:break-all;max-height:45vh;overflow:auto;box-shadow:0 4px 20px rgba(0,0,0,0.4)';
-    el.title = '탭하면 닫힘';
-    el.onclick = function(){ el.style.display = 'none'; };
-    document.body.appendChild(el);
-  }
-  el.style.display = 'block';
-  return el;
-}
-function dbgLog(msg) {
-  var el = dbgPanel();
-  var t = new Date().toLocaleTimeString('ko-KR', { hour12:false });
-  el.textContent += '[' + t + '] ' + msg + '\n';
-  el.scrollTop = el.scrollHeight;
-}
-
 function loadOwnerData(ownerUid) {
   showLoading(true);
   var expectedUid = ownerUid; // 느린 로딩 중 로그아웃/교체 감지용
-  var _t0 = Date.now();
-  dbgPanel().textContent = ''; // 초기화
-  dbgLog('▶ loadOwnerData 시작');
-  dbgLog('currentSchoolId = ' + JSON.stringify(currentSchoolId));
-  dbgLog('currentRole = ' + currentRole);
-  dbgLog('ownerUid = ' + ownerUid);
+  var _pendingTimers = []; // 멤버별 타임아웃 타이머 (완료 시 일괄 취소)
   // 안전 타임아웃: 15초 내 완료 안 되면 로딩 바 내리고 캐시 데이터 유지
   var _ownerLoadDone = false;
   var _ownerTimeout = setTimeout(function() {
     if (_ownerLoadDone) return;
-    dbgLog('⏱ 15초 타임아웃 — 위 마지막 단계에서 멈춤');
     showLoading(false);
     showToast('학원 데이터 로딩이 지연됩니다. 저장된 데이터로 표시합니다.', 'info');
   }, 15000);
   function finishOwnerLoad() {
     _ownerLoadDone = true;
     clearTimeout(_ownerTimeout);
+    _pendingTimers.forEach(function(t){ clearTimeout(t); });
+    _pendingTimers = [];
     showLoading(false);
   }
   // 같은 schoolId를 가진 모든 사용자 조회
@@ -3860,42 +3835,41 @@ function loadOwnerData(ownerUid) {
   var q = window.fbQuery(usersRef, window.fbWhere('schoolId', '==', currentSchoolId));
 
   window.fbGetDocs(q).then(function(snap) {
-    dbgLog('① 멤버 쿼리 완료: ' + (Date.now()-_t0) + 'ms, 결과 ' + snap.size + '명');
     // 로딩 중 로그아웃했으면 중단
-    if (!window.currentUser) { dbgLog('✖ 중단: 로그아웃 상태'); finishOwnerLoad(); return Promise.reject('cancelled'); }
+    if (!window.currentUser) { finishOwnerLoad(); return Promise.reject('cancelled'); }
     if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) {
-      dbgLog('✖ 중단: 사용자 교체'); finishOwnerLoad(); return Promise.reject('cancelled');
+      finishOwnerLoad(); return Promise.reject('cancelled');
     }
     var memberUids = [ownerUid]; // 원장 본인 포함
     snap.forEach(function(d) {
       if (d.id !== ownerUid) memberUids.push(d.id);
     });
-    dbgLog('② 로드할 멤버 UID 수 = ' + memberUids.length);
-    window._dbgMemberCount = memberUids.length;
 
     // 하위컬렉션 읽기 타임아웃 래퍼: 매달리면 빈 결과로 처리하고 진행
-    var _emptySnap = { forEach: function(){}, size: 0, _timedout: true };
-    function getDocsTO(collRef, tag) {
+    var _emptySnap = { forEach: function(){}, size: 0 };
+    function getDocsTO(collRef) {
+      var timer;
       return Promise.race([
         window.fbGetDocs(collRef),
         new Promise(function(resolve){
-          setTimeout(function(){ dbgLog('  ⏱ ' + tag + ' 8초 초과 → 건너뜀'); resolve(_emptySnap); }, 8000);
+          timer = setTimeout(function(){ resolve(_emptySnap); }, 8000);
+          _pendingTimers.push(timer);
         })
-      ]).catch(function(e){ dbgLog('  ✖ ' + tag + ' 오류: ' + (e&&(e.code||e.message)||e)); return _emptySnap; });
+      ]).then(function(r){ clearTimeout(timer); return r; })
+        .catch(function(){ clearTimeout(timer); return _emptySnap; });
     }
 
     // 모든 멤버 데이터 병렬 로드 (각 요청 개별 타임아웃)
     var recPromises = memberUids.map(function(uid) {
-      return getDocsTO(window.fbCollection(window.fbDb, 'users', uid, 'records'), 'rec ' + uid.slice(0,6));
+      return getDocsTO(window.fbCollection(window.fbDb, 'users', uid, 'records'));
     });
     var stuPromises = memberUids.map(function(uid) {
-      return getDocsTO(window.fbCollection(window.fbDb, 'users', uid, 'students'), 'stu ' + uid.slice(0,6));
+      return getDocsTO(window.fbCollection(window.fbDb, 'users', uid, 'students'));
     });
 
     return Promise.all([Promise.all(recPromises), Promise.all(stuPromises)]);
   }).then(function(results) {
     if (!results) { finishOwnerLoad(); return; }
-    dbgLog('③ 전체 데이터 로드 완료: ' + (Date.now()-_t0) + 'ms');
     // 최종 결과 도착 후에도 현재 로그인 상태 재확인
     if (!window.currentUser) { finishOwnerLoad(); return; }
     if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) {
@@ -3909,7 +3883,6 @@ function loadOwnerData(ownerUid) {
     results[1].forEach(function(snap) {
       snap.forEach(function(d) { allStus.push(Object.assign({id: d.id}, d.data())); });
     });
-    dbgLog('④ records ' + allRecs.length + '건, students ' + allStus.length + '건');
 
     records = allRecs.map(normalizeRec);
     students = allStus;
@@ -3917,11 +3890,9 @@ function loadOwnerData(ownerUid) {
     localStorage.setItem(stuKey(), JSON.stringify(students));
     setupAdminFilter(); // 원장도 선생님 필터 사용
     renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
-    dbgLog('✔ 완료 (총 ' + (Date.now()-_t0) + 'ms) — 탭하면 닫힘');
     showToast('학원 전체 데이터 불러오기 완료!');
   }).catch(function(e) {
     if (e === 'cancelled') return; // 의도적 중단 - 토스트 불필요
-    dbgLog('✖ 오류: ' + (e && (e.code || e.message) || e));
     showToast('오프라인 모드', 'info');
   }).finally(function() { finishOwnerLoad(); });
 }
