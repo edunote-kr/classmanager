@@ -885,10 +885,10 @@ onAuthStateChanged(auth, function(user) {
     <span id="headerSchoolNameText" style="font-size:16px;font-weight:800;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
   </div>
   <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;margin-left:auto;min-width:0;overflow:hidden">
-    <span id="sidebarBadge" style="display:none;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap;flex-shrink:0"></span>
-    <span id="planBadge" style="display:none;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;background:#ede9fe;color:#6d28d9;white-space:nowrap;flex-shrink:0"></span>
     <span id="sidebarUser" style="font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px"></span>
     <span id="sidebarUserId" style="font-size:11px;color:#94a3b8;white-space:nowrap;display:none"></span>
+    <span id="sidebarBadge" style="display:none;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap;flex-shrink:0"></span>
+    <span id="planBadge" style="display:none;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;background:#ede9fe;color:#6d28d9;white-space:nowrap;flex-shrink:0"></span>
     <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:10px;font-weight:700;padding:5px 7px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">마이페이지</button>
     <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:10px;font-weight:700;padding:5px 7px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">로그아웃</button>
   </div>
@@ -1232,19 +1232,6 @@ onAuthStateChanged(auth, function(user) {
     </div>
 
     <div class="card">
-      <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>TEST</div>
-      <!-- 동적 TEST 목록 -->
-      <div id="testWrap" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
-      <button type="button" onclick="addTest()" style="width:100%;padding:8px;background:#e0f2fe;color:#0891b2;border:1.5px solid #7dd3fc;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ TEST 추가</button>
-      <!-- 호환용 hidden 필드 -->
-      <div style="display:none">
-        <input type="text" id="f-wordTest">
-        <input type="text" id="f-wordScore">
-        <input type="hidden" id="f-testsJson">
-      </div>
-    </div>
-
-    <div class="card">
       <div class="card-title" style="color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>지난 과제 이행도</div>
       <!-- 동적 지난 과제 목록 -->
       <div id="lastHomeworkWrap" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
@@ -1261,6 +1248,18 @@ onAuthStateChanged(auth, function(user) {
         <input type="hidden" id="f-lastCompletion4" value="-1">
         <textarea id="f-lastHomework5"></textarea>
         <input type="hidden" id="f-lastCompletion5" value="-1">
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>TEST</div>
+      <!-- 동적 TEST 목록 -->
+      <div id="testWrap" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
+      <button type="button" onclick="addTest()" style="width:100%;padding:8px;background:#e0f2fe;color:#0891b2;border:1.5px solid #7dd3fc;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ TEST 추가</button>
+      <!-- 호환용 hidden 필드 -->
+      <div style="display:none">
+        <input type="text" id="f-wordTest">
+        <input type="text" id="f-wordScore">
+        <input type="hidden" id="f-testsJson">
       </div>
     </div>
     <div class="card">
@@ -5278,7 +5277,7 @@ function isOwnerOrAdmin() {
 
 function getRoleBadge() {
   if (currentRole === 'superadmin') return '관리자';
-  if (currentRole === 'owner') return '원장';
+  if (currentRole === 'owner') return '원장님';
   if (currentRole === 'teacher') return '선생님';
   return '';
 }
