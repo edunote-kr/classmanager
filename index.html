@@ -941,14 +941,14 @@ onAuthStateChanged(auth, function(user) {
     <img id="headerSchoolLogo" src="" alt="" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1.5px solid #e2e8f0;background:#f8fafc;display:none;flex-shrink:0">
     <span id="headerSchoolNameText" style="font-size:16px;font-weight:800;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
   </div>
-  <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;margin-left:auto;min-width:0;overflow:hidden">
+  <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;margin-left:auto;min-width:0;overflow:visible">
     <span id="sidebarUser" style="font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px"></span>
     <span id="sidebarUserId" style="font-size:11px;color:#94a3b8;white-space:nowrap;display:none"></span>
     <span id="sidebarBadge" style="display:none;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap;flex-shrink:0"></span>
     <span id="planBadge" style="display:none;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;background:#ede9fe;color:#6d28d9;white-space:nowrap;flex-shrink:0"></span>
     <span style="position:relative;display:inline-flex;flex-shrink:0">
       <button id="myMsgBtn" onclick="showMessageBox()" style="display:none;background:#fff;border:1.5px solid #6366f1;color:#6366f1;font-size:13px;font-weight:700;padding:4px 8px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0" title="쪽지함"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button>
-      <span id="myPageBadge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;line-height:18px;text-align:center;background:#ef4444;color:#fff;font-size:10px;font-weight:800;border-radius:99px;padding:0 5px;box-sizing:border-box;border:1.5px solid #fff">0</span>
+      <span id="myPageBadge" style="display:none;position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;line-height:16px;text-align:center;background:#ef4444;color:#fff;font-size:9px;font-weight:800;border-radius:99px;padding:0 4px;box-sizing:border-box;border:1.5px solid #fff;z-index:5">0</span>
     </span>
     <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:10px;font-weight:700;padding:5px 7px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">마이페이지</button>
     <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:10px;font-weight:700;padding:5px 7px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">로그아웃</button>
@@ -1052,6 +1052,23 @@ onAuthStateChanged(auth, function(user) {
     </div>
     <div id="msgModalList" style="display:flex;flex-direction:column;gap:10px">
       <div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
+<!-- 쪽지 상세 모달 (방식 A: 답장=새 문의) -->
+<div id="msgDetailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9100;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:15px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> 쪽지 상세</div>
+      <button onclick="closeMsgDetail()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer">×</button>
+    </div>
+    <div id="msgDetailBody"></div>
+    <!-- 답장 -->
+    <div style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:14px">
+      <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px">답장 / 추가 문의</div>
+      <textarea id="msgReplyText" placeholder="답장 내용을 입력하세요" rows="3" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:none;margin-bottom:8px"></textarea>
+      <button id="msgReplyBtn" onclick="sendMessageReply()" style="width:100%;padding:11px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">답장 보내기</button>
     </div>
   </div>
 </div>
@@ -5894,6 +5911,7 @@ function drawMessageList() {
 }
 
 // 쪽지 클릭 → 읽음 처리 (4번): 캐시 즉시 갱신 + 업데이트는 백그라운드
+var _currentMsgId = null;
 function openMessage(id) {
   // 1) 화면(캐시) 먼저 읽음으로 — 재조회 안 함
   var found = false;
@@ -5915,6 +5933,70 @@ function openMessage(id) {
     .catch(function(err) {
       showToast('읽음 저장 실패: ' + (err && (err.code||err.message) || ''), 'error');
     });
+  // 3) 상세 모달 열기
+  showMsgDetail(id);
+}
+
+// 쪽지 상세 모달 표시
+function showMsgDetail(id) {
+  _currentMsgId = id;
+  var q = _myMessages.filter(function(m){ return m.id === id; })[0];
+  if (!q) return;
+  var body = document.getElementById('msgDetailBody');
+  var typeText = q.type === 'renewal' ? '플랜 연장/변경' : '1:1 문의';
+  if (body) {
+    body.innerHTML =
+      '<div style="font-size:11px;color:#94a3b8;margin-bottom:8px"><span style="background:#ede9fe;color:#6d28d9;font-weight:700;padding:1px 7px;border-radius:5px">' + typeText + '</span></div>'
+      + '<div style="background:#f8fafc;border-radius:8px;padding:10px 12px;font-size:13px;color:#475569;line-height:1.5;margin-bottom:8px"><b>내 문의:</b><br>' + escapeMsg(q.message||'') + '</div>'
+      + '<div style="background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;padding:10px 12px;font-size:13px;color:#166534;line-height:1.5"><b>관리자 답변:</b><br>' + escapeMsg(q.reply||'') + '<div style="font-size:10px;color:#94a3b8;margin-top:5px">' + (q.replyAt||'').slice(0,16).replace('T',' ') + '</div></div>';
+  }
+  var ta = document.getElementById('msgReplyText');
+  if (ta) ta.value = '';
+  var modal = document.getElementById('msgDetailModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeMsgDetail() {
+  var modal = document.getElementById('msgDetailModal');
+  if (modal) modal.style.display = 'none';
+  _currentMsgId = null;
+}
+
+// 답장 보내기 (방식 A: 새 문의로 생성)
+function sendMessageReply() {
+  if (!window.fbDb || !window.fbAuth || !window.fbAuth.currentUser) {
+    showToast('로그인이 필요합니다.', 'error'); return;
+  }
+  var ta = document.getElementById('msgReplyText');
+  var text = ta ? ta.value.trim() : '';
+  if (!text) { showToast('답장 내용을 입력해주세요.', 'error'); return; }
+
+  var orig = _myMessages.filter(function(m){ return m.id === _currentMsgId; })[0];
+  var uid = window.fbAuth.currentUser.uid;
+  var btn = document.getElementById('msgReplyBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '전송 중...'; }
+
+  window.fbGetDoc(window.fbDoc(window.fbDb, 'users', uid)).then(function(snap) {
+    var data = snap.exists() ? snap.data() : {};
+    return window.fbAddDoc(window.fbCollection(window.fbDb, 'inquiries'), {
+      type: orig ? (orig.type || 'cs') : 'cs',
+      name: data.name || '',
+      schoolName: data.schoolName || '',
+      phone: data.phone || '',
+      message: text,
+      uid: uid,
+      replyTo: _currentMsgId || null,  // 원 문의 참조 (참고용)
+      createdAt: new Date().toISOString(),
+      status: 'unread'
+    });
+  }).then(function() {
+    showToast('답장을 보냈습니다. 관리자 답변은 쪽지함에서 확인하실 수 있어요.');
+    if (btn) { btn.disabled = false; btn.textContent = '답장 보내기'; }
+    closeMsgDetail();
+  }).catch(function(err) {
+    if (btn) { btn.disabled = false; btn.textContent = '답장 보내기'; }
+    showToast('전송 실패: ' + (err && (err.code||err.message) || ''), 'error');
+  });
 }
 
 // 사용자 쪽지 삭제 (3번)
