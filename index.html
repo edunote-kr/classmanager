@@ -5847,67 +5847,89 @@ function closeMessageBox() {
 }
 
 // 쪽지 목록 렌더링 (자동 읽음 처리 안 함 — 클릭해야 읽음)
+var _myMessages = []; // 쪽지함 목록 캐시
+
 function renderMessageList() {
   var listEl = document.getElementById('msgModalList');
   if (!listEl) return;
   listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">불러오는 중...</div>';
 
   fetchMyRepliedInquiries().then(function(list) {
-    if (list.length === 0) {
-      listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">받은 쪽지가 없습니다</div>';
-      return;
-    }
-    listEl.innerHTML = list.map(function(q) {
-      var isUnread = !q.replyRead;
-      var typeText = q.type === 'renewal' ? '플랜 연장/변경' : '1:1 문의';
-      // 읽은 쪽지는 흐릿하게(opacity), 미확인은 강조
-      var opacity = isUnread ? '1' : '0.55';
-      var border  = isUnread ? '#c4b5fd' : '#e2e8f0';
-      var bg      = isUnread ? '#faf5ff' : '#f8fafc';
-      return '<div onclick="openMessage(\'' + q.id + '\')" style="position:relative;border:1.5px solid ' + border + ';border-radius:10px;padding:12px;background:' + bg + ';opacity:' + opacity + ';cursor:pointer;transition:opacity .2s">'
-        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
-        + '<div style="font-size:11px;color:#94a3b8">'
-        + '<span style="background:#ede9fe;color:#6d28d9;font-weight:700;padding:1px 7px;border-radius:5px">' + typeText + '</span> '
-        + (isUnread
-            ? '<span style="background:#ef4444;color:#fff;font-weight:700;padding:1px 7px;border-radius:8px;font-size:9px">미확인</span>'
-            : '<span style="color:#94a3b8;font-weight:700;font-size:10px">읽음</span>')
-        + '</div>'
-        + '<button onclick="event.stopPropagation();deleteMyMessage(\'' + q.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;font-size:10px;font-weight:700;padding:3px 8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">삭제</button>'
-        + '</div>'
-        + '<div style="font-size:12px;color:#64748b;margin-bottom:6px"><b>내 문의:</b> ' + escapeMsg(q.message||'') + '</div>'
-        + '<div style="background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;padding:8px 10px;font-size:12px;color:#166534"><b>답변:</b> ' + escapeMsg(q.reply||'') + '<div style="font-size:10px;color:#94a3b8;margin-top:3px">' + (q.replyAt||'').slice(0,16).replace('T',' ') + '</div></div>'
-        + (isUnread ? '<div style="font-size:10px;color:#a78bfa;margin-top:6px;text-align:center">탭하면 읽음 처리됩니다</div>' : '')
-        + '</div>';
-    }).join('');
+    _myMessages = list;
+    drawMessageList();
   }).catch(function(err) {
     listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:30px;font-size:13px">쪽지를 불러오지 못했습니다.<br><span style="font-size:11px;color:#94a3b8">' + (err && (err.code||err.message) || '') + '</span></div>';
   });
 }
 
-// 쪽지 클릭 → 읽음 처리 (4번)
+// 캐시(_myMessages)를 화면에 그림 — 재조회 없음
+function drawMessageList() {
+  var listEl = document.getElementById('msgModalList');
+  if (!listEl) return;
+  if (!_myMessages || _myMessages.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">받은 쪽지가 없습니다</div>';
+    return;
+  }
+  listEl.innerHTML = _myMessages.map(function(q) {
+    var isUnread = !q.replyRead;
+    var typeText = q.type === 'renewal' ? '플랜 연장/변경' : '1:1 문의';
+    var opacity = isUnread ? '1' : '0.55';
+    var border  = isUnread ? '#c4b5fd' : '#e2e8f0';
+    var bg      = isUnread ? '#faf5ff' : '#f8fafc';
+    return '<div onclick="openMessage(\'' + q.id + '\')" style="position:relative;border:1.5px solid ' + border + ';border-radius:10px;padding:12px;background:' + bg + ';opacity:' + opacity + ';cursor:pointer;transition:opacity .2s">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
+      + '<div style="font-size:11px;color:#94a3b8">'
+      + '<span style="background:#ede9fe;color:#6d28d9;font-weight:700;padding:1px 7px;border-radius:5px">' + typeText + '</span> '
+      + (isUnread
+          ? '<span style="background:#ef4444;color:#fff;font-weight:700;padding:1px 7px;border-radius:8px;font-size:9px">미확인</span>'
+          : '<span style="color:#94a3b8;font-weight:700;font-size:10px">읽음</span>')
+      + '</div>'
+      + '<button onclick="event.stopPropagation();deleteMyMessage(\'' + q.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;font-size:10px;font-weight:700;padding:3px 8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">삭제</button>'
+      + '</div>'
+      + '<div style="font-size:12px;color:#64748b;margin-bottom:6px"><b>내 문의:</b> ' + escapeMsg(q.message||'') + '</div>'
+      + '<div style="background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;padding:8px 10px;font-size:12px;color:#166534"><b>답변:</b> ' + escapeMsg(q.reply||'') + '<div style="font-size:10px;color:#94a3b8;margin-top:3px">' + (q.replyAt||'').slice(0,16).replace('T',' ') + '</div></div>'
+      + (isUnread ? '<div style="font-size:10px;color:#a78bfa;margin-top:6px;text-align:center">탭하면 읽음 처리됩니다</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+// 쪽지 클릭 → 읽음 처리 (4번): 캐시 즉시 갱신 + 업데이트는 백그라운드
 function openMessage(id) {
+  // 1) 화면(캐시) 먼저 읽음으로 — 재조회 안 함
+  var found = false;
+  _myMessages.forEach(function(q) {
+    if (q.id === id && !q.replyRead) { q.replyRead = true; found = true; }
+  });
+  if (found) {
+    drawMessageList();
+    // 헤더 뱃지 숫자도 즉시 반영
+    var badge = document.getElementById('myPageBadge');
+    if (badge) {
+      var unread = _myMessages.filter(function(q){ return !q.replyRead; }).length;
+      if (unread > 0) { badge.style.display = 'block'; badge.textContent = unread > 9 ? '9+' : unread; }
+      else { badge.style.display = 'none'; }
+    }
+  }
+  // 2) 서버에 백그라운드 저장 (실패해도 화면 유지)
   window.fbUpdateDoc(window.fbDoc(window.fbDb, 'inquiries', id), { replyRead: true })
-    .then(function() {
-      renderMessageList();      // 흐릿하게 갱신
-      refreshMyMessageBadge();  // 헤더 뱃지 갱신
-    })
     .catch(function(err) {
-      // 업데이트 실패(권한 등) 시에도 목록은 유지, 원인 토스트
-      showToast('읽음 처리 실패: ' + (err && (err.code||err.message) || ''), 'error');
+      showToast('읽음 저장 실패: ' + (err && (err.code||err.message) || ''), 'error');
     });
 }
 
-// 사용자 쪽지 삭제 (3번) — replyRead만 못 바꾸므로 본인 문서 삭제는 별도 권한 필요
+// 사용자 쪽지 삭제 (3번)
 function deleteMyMessage(id) {
   if (!confirm('이 쪽지를 삭제할까요? 되돌릴 수 없습니다.')) return;
   window.fbDeleteDoc(window.fbDoc(window.fbDb, 'inquiries', id))
     .then(function() {
       showToast('쪽지를 삭제했습니다.');
-      renderMessageList();
+      // 캐시에서 제거 후 재그리기 (재조회 없음)
+      _myMessages = _myMessages.filter(function(q){ return q.id !== id; });
+      drawMessageList();
       refreshMyMessageBadge();
     })
-    .catch(function() {
-      showToast('삭제 권한이 없습니다.', 'error');
+    .catch(function(err) {
+      showToast('삭제 실패: ' + (err && (err.code||err.message) || ''), 'error');
     });
 }
 
