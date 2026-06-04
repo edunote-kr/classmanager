@@ -947,9 +947,10 @@ onAuthStateChanged(auth, function(user) {
     <span id="sidebarBadge" style="display:none;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;background:#f59e0b;color:#1e293b;white-space:nowrap;flex-shrink:0"></span>
     <span id="planBadge" style="display:none;font-size:9px;font-weight:800;padding:2px 5px;border-radius:6px;background:#ede9fe;color:#6d28d9;white-space:nowrap;flex-shrink:0"></span>
     <span style="position:relative;display:inline-flex;flex-shrink:0">
-      <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:10px;font-weight:700;padding:5px 7px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">마이페이지</button>
-      <span id="myPageBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;line-height:16px;text-align:center;background:#ef4444;color:#fff;font-size:9px;font-weight:800;border-radius:99px;padding:0 4px;box-sizing:border-box">0</span>
+      <button id="myMsgBtn" onclick="showMessageBox()" style="display:none;background:#fff;border:1.5px solid #6366f1;color:#6366f1;font-size:13px;font-weight:700;padding:4px 8px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0" title="쪽지함"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button>
+      <span id="myPageBadge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;line-height:18px;text-align:center;background:#ef4444;color:#fff;font-size:10px;font-weight:800;border-radius:99px;padding:0 5px;box-sizing:border-box;border:1.5px solid #fff">0</span>
     </span>
+    <button id="myPageBtn" onclick="showMyPage()" style="display:none;background:#6366f1;border:none;color:#fff;font-size:10px;font-weight:700;padding:5px 7px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">마이페이지</button>
     <button id="logoutBtn" onclick="doLogout()" style="display:none;background:#f1f5f9;border:none;color:#64748b;font-size:10px;font-weight:700;padding:5px 7px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">로그아웃</button>
   </div>
 </header>
@@ -1025,12 +1026,6 @@ onAuthStateChanged(auth, function(user) {
     <button id="mySaveBtn" onclick="saveMyPage()" style="display:none;width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">저장</button>
     <div id="myPageResult" style="display:none;text-align:center;margin-top:10px;font-size:12px;font-weight:700;color:#16a34a"></div>
 
-    <!-- 쪽지함 (관리자 답변) -->
-    <div id="myMessageBox" style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:14px;display:none">
-      <div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:8px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> 쪽지함 <span id="myMessageCount" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">0</span></div>
-      <div id="myMessageList" style="display:flex;flex-direction:column;gap:8px"></div>
-    </div>
-
     <!-- 1:1 문의 (로그인 사용자용) -->
     <div style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:14px">
       <div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:8px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 1:1 문의</div>
@@ -1045,6 +1040,19 @@ onAuthStateChanged(auth, function(user) {
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.86 1.9 5.37 4.76 6.78-.21.77-.76 2.8-.87 3.23-.14.54.2.53.42.39.17-.11 2.71-1.84 3.81-2.59.6.09 1.23.13 1.88.13 5.52 0 10-3.58 10-8s-4.48-8-10-8z"/></svg>
       카카오톡 실시간 문의
     </a>
+  </div>
+</div>
+
+<!-- 쪽지함 모달 (독립) -->
+<div id="messageBoxModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:16px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> 쪽지함</div>
+      <button onclick="closeMessageBox()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer">×</button>
+    </div>
+    <div id="msgModalList" style="display:flex;flex-direction:column;gap:10px">
+      <div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">불러오는 중...</div>
+    </div>
   </div>
 </div>
 
@@ -4631,7 +4639,7 @@ function loadInquiries() {
         + '<div style="background:#fff;border-radius:8px;padding:10px 12px;font-size:13px;color:#475569;line-height:1.5;margin-bottom:8px">' + escapeInq(q.message||'') + '</div>'
         // 기존 답변 표시
         + (hasReply
-            ? '<div style="background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;padding:8px 12px;font-size:12px;color:#166534;margin-bottom:8px"><b>답변:</b> ' + escapeInq(q.reply) + '<div style="font-size:10px;color:#94a3b8;margin-top:3px">' + (q.replyAt||'').slice(0,16).replace('T',' ') + (q.replyRead ? ' · 읽음' : ' · 안읽음') + '</div></div>'
+            ? '<div style="background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;padding:8px 12px;font-size:12px;color:#166534;margin-bottom:8px"><b>답변:</b> ' + escapeInq(q.reply) + '<div style="font-size:10px;margin-top:4px">' + (q.replyAt||'').slice(0,16).replace('T',' ') + ' · ' + (q.replyRead ? '<span style="color:#16a34a;font-weight:700">✓ 사용자 읽음</span>' : '<span style="color:#dc2626;font-weight:700">사용자 미확인</span>') + '</div></div>'
             : '')
         // 답변 입력
         + '<div style="display:flex;gap:6px">'
@@ -5696,8 +5704,6 @@ function showMyPage() {
   if (!window.fbDb || !window.fbAuth || !window.fbAuth.currentUser) return;
   var uid = window.fbAuth.currentUser.uid;
 
-  loadMyMessages(); // 쪽지함 로드 (관리자 답변 확인)
-
   window.fbGetDoc(window.fbDoc(window.fbDb, 'users', uid)).then(function(snap) {
     if (!snap.exists()) return;
     var data = snap.data();
@@ -5816,8 +5822,11 @@ function fetchMyRepliedInquiries() {
 // 헤더 뱃지: 안 읽은 답변 개수
 function refreshMyMessageBadge() {
   var badge = document.getElementById('myPageBadge');
+  var btn = document.getElementById('myMsgBtn');
   if (!badge) return;
   fetchMyRepliedInquiries().then(function(list) {
+    // 답변이 하나라도 있으면 쪽지함 버튼 표시
+    if (btn) btn.style.display = list.length > 0 ? 'inline-flex' : 'none';
     var unread = list.filter(function(q){ return !q.replyRead; }).length;
     if (unread > 0) {
       badge.style.display = 'block';
@@ -5828,49 +5837,79 @@ function refreshMyMessageBadge() {
   });
 }
 
-// 마이페이지 쪽지함 렌더링
-function loadMyMessages() {
-  var box = document.getElementById('myMessageBox');
-  var listEl = document.getElementById('myMessageList');
-  var cntEl = document.getElementById('myMessageCount');
-  if (!box || !listEl) return;
+// 쪽지함 모달 열기
+function showMessageBox() {
+  var modal = document.getElementById('messageBoxModal');
+  if (modal) modal.style.display = 'flex';
+  renderMessageList();
+}
+function closeMessageBox() {
+  var modal = document.getElementById('messageBoxModal');
+  if (modal) modal.style.display = 'none';
+  refreshMyMessageBadge();
+}
+
+// 쪽지 목록 렌더링 (자동 읽음 처리 안 함 — 클릭해야 읽음)
+function renderMessageList() {
+  var listEl = document.getElementById('msgModalList');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">불러오는 중...</div>';
 
   fetchMyRepliedInquiries().then(function(list) {
     if (list.length === 0) {
-      box.style.display = 'none';
+      listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">받은 쪽지가 없습니다</div>';
       return;
     }
-    box.style.display = 'block';
-    var unread = list.filter(function(q){ return !q.replyRead; }).length;
-    if (cntEl) {
-      cntEl.style.display = unread > 0 ? 'inline' : 'none';
-      cntEl.textContent = unread;
-    }
-
     listEl.innerHTML = list.map(function(q) {
       var isUnread = !q.replyRead;
       var typeText = q.type === 'renewal' ? '플랜 연장/변경' : '1:1 문의';
-      return '<div style="border:1.5px solid ' + (isUnread ? '#c4b5fd' : '#e2e8f0') + ';border-radius:10px;padding:10px 12px;background:' + (isUnread ? '#faf5ff' : '#f8fafc') + '">'
-        + '<div style="font-size:11px;color:#94a3b8;margin-bottom:4px">'
-        + '<span style="background:#ede9fe;color:#6d28d9;font-weight:700;padding:1px 7px;border-radius:5px">' + typeText + '</span>'
-        + (isUnread ? ' <span style="background:#ef4444;color:#fff;font-weight:700;padding:1px 6px;border-radius:8px;font-size:9px">NEW</span>' : '')
+      // 읽은 쪽지는 흐릿하게(opacity), 미확인은 강조
+      var opacity = isUnread ? '1' : '0.55';
+      var border  = isUnread ? '#c4b5fd' : '#e2e8f0';
+      var bg      = isUnread ? '#faf5ff' : '#f8fafc';
+      return '<div onclick="openMessage(\'' + q.id + '\')" style="position:relative;border:1.5px solid ' + border + ';border-radius:10px;padding:12px;background:' + bg + ';opacity:' + opacity + ';cursor:pointer;transition:opacity .2s">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
+        + '<div style="font-size:11px;color:#94a3b8">'
+        + '<span style="background:#ede9fe;color:#6d28d9;font-weight:700;padding:1px 7px;border-radius:5px">' + typeText + '</span> '
+        + (isUnread
+            ? '<span style="background:#ef4444;color:#fff;font-weight:700;padding:1px 7px;border-radius:8px;font-size:9px">미확인</span>'
+            : '<span style="color:#94a3b8;font-weight:700;font-size:10px">읽음</span>')
+        + '</div>'
+        + '<button onclick="event.stopPropagation();deleteMyMessage(\'' + q.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;font-size:10px;font-weight:700;padding:3px 8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">삭제</button>'
         + '</div>'
         + '<div style="font-size:12px;color:#64748b;margin-bottom:6px"><b>내 문의:</b> ' + escapeMsg(q.message||'') + '</div>'
         + '<div style="background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;padding:8px 10px;font-size:12px;color:#166534"><b>답변:</b> ' + escapeMsg(q.reply||'') + '<div style="font-size:10px;color:#94a3b8;margin-top:3px">' + (q.replyAt||'').slice(0,16).replace('T',' ') + '</div></div>'
+        + (isUnread ? '<div style="font-size:10px;color:#a78bfa;margin-top:6px;text-align:center">탭하면 읽음 처리됩니다</div>' : '')
         + '</div>';
     }).join('');
-
-    // 안 읽은 답변들을 읽음 처리 (배지 제거)
-    var unreadIds = list.filter(function(q){ return !q.replyRead; }).map(function(q){ return q.id; });
-    if (unreadIds.length > 0) {
-      Promise.all(unreadIds.map(function(id) {
-        return window.fbUpdateDoc(window.fbDoc(window.fbDb, 'inquiries', id), { replyRead: true }).catch(function(){});
-      })).then(function() {
-        refreshMyMessageBadge(); // 읽음 처리 후 헤더 뱃지 갱신
-        if (cntEl) cntEl.style.display = 'none';
-      });
-    }
   });
+}
+
+// 쪽지 클릭 → 읽음 처리 (4번)
+function openMessage(id) {
+  window.fbUpdateDoc(window.fbDoc(window.fbDb, 'inquiries', id), { replyRead: true })
+    .then(function() {
+      renderMessageList();      // 흐릿하게 갱신
+      refreshMyMessageBadge();  // 헤더 뱃지 갱신
+    })
+    .catch(function() {
+      // 이미 읽음이거나 권한 이슈여도 UI는 갱신
+      renderMessageList();
+    });
+}
+
+// 사용자 쪽지 삭제 (3번) — replyRead만 못 바꾸므로 본인 문서 삭제는 별도 권한 필요
+function deleteMyMessage(id) {
+  if (!confirm('이 쪽지를 삭제할까요? 되돌릴 수 없습니다.')) return;
+  window.fbDeleteDoc(window.fbDoc(window.fbDb, 'inquiries', id))
+    .then(function() {
+      showToast('쪽지를 삭제했습니다.');
+      renderMessageList();
+      refreshMyMessageBadge();
+    })
+    .catch(function() {
+      showToast('삭제 권한이 없습니다.', 'error');
+    });
 }
 
 function escapeMsg(s) {
