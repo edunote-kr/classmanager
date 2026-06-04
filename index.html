@@ -5816,7 +5816,7 @@ function fetchMyRepliedInquiries() {
     });
     list.sort(function(a,b){ return (b.replyAt||'').localeCompare(a.replyAt||''); });
     return list;
-  }).catch(function(){ return []; });
+  });
 }
 
 // 헤더 뱃지: 안 읽은 답변 개수
@@ -5834,7 +5834,7 @@ function refreshMyMessageBadge() {
     } else {
       badge.style.display = 'none';
     }
-  });
+  }).catch(function(){ /* 뱃지는 조용히 실패 */ });
 }
 
 // 쪽지함 모달 열기
@@ -5882,6 +5882,8 @@ function renderMessageList() {
         + (isUnread ? '<div style="font-size:10px;color:#a78bfa;margin-top:6px;text-align:center">탭하면 읽음 처리됩니다</div>' : '')
         + '</div>';
     }).join('');
+  }).catch(function(err) {
+    listEl.innerHTML = '<div style="text-align:center;color:#dc2626;padding:30px;font-size:13px">쪽지를 불러오지 못했습니다.<br><span style="font-size:11px;color:#94a3b8">' + (err && (err.code||err.message) || '') + '</span></div>';
   });
 }
 
@@ -5892,9 +5894,9 @@ function openMessage(id) {
       renderMessageList();      // 흐릿하게 갱신
       refreshMyMessageBadge();  // 헤더 뱃지 갱신
     })
-    .catch(function() {
-      // 이미 읽음이거나 권한 이슈여도 UI는 갱신
-      renderMessageList();
+    .catch(function(err) {
+      // 업데이트 실패(권한 등) 시에도 목록은 유지, 원인 토스트
+      showToast('읽음 처리 실패: ' + (err && (err.code||err.message) || ''), 'error');
     });
 }
 
