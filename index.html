@@ -1232,6 +1232,7 @@ onAuthStateChanged(auth, function(user) {
 <div class="tabs">
   <button class="tab active" id="tab-input" onclick="switchTab('input')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 수업내용 입력</button>
   <button class="tab"        id="tab-list"  onclick="switchTab('list')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg> 과제 목록 (<span id="listCount">0</span>)</button>
+  <button class="tab"        id="tab-notice"   onclick="switchTab('notice')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> 알림장</button>
   <button class="tab"        id="tab-stats"    onclick="switchTab('stats')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg> 학생 통계</button>
   <button class="tab"        id="tab-students" onclick="switchTab('students')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 원생 목록</button>
 </div>
@@ -1256,6 +1257,9 @@ onAuthStateChanged(auth, function(user) {
     <button class="sidebar-tab" id="stab-list" onclick="switchTab('list')">
       <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg></span> 목록
       <span class="sidebar-count" id="sidebarListCount">0</span>
+    </button>
+    <button class="sidebar-tab" id="stab-notice" onclick="switchTab('notice')">
+      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span> 알림장
     </button>
     <button class="sidebar-tab" id="stab-stats" onclick="switchTab('stats')">
       <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg></span> 학생 통계
@@ -1443,6 +1447,7 @@ onAuthStateChanged(auth, function(user) {
     </div>
 
     <div class="save-row">
+      <button class="btn" id="noticeBtn" onclick="saveNotice()" style="background:#0891b2;color:#fff;flex:1"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> 알림장으로 저장</button>
       <button class="btn btn-indigo btn-full" id="saveBtn" onclick="saveRecord()"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> 저장</button>
       <button class="btn-cancel" id="cancelBtn" style="display:none" onclick="cancelEdit()">취소</button>
     </div>
@@ -1470,6 +1475,21 @@ onAuthStateChanged(auth, function(user) {
       <span id="alertText"></span>
     </div>
     <div id="recordList"></div>
+  </div>
+
+  <!-- NOTICE PANEL (알림장) -->
+  <div class="panel" id="panel-notice">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <select id="noticeFilterClass" onchange="renderNotices()" style="flex:1;min-width:120px;padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;background:#fff">
+        <option value="">전체 반</option>
+      </select>
+      <select id="noticeGroupBy" onchange="renderNotices()" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;background:#fff">
+        <option value="date">날짜별</option>
+        <option value="class">반별</option>
+      </select>
+    </div>
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">반·오늘 과제·특이사항만 담은 알림장입니다. 카드를 이미지로 저장/공유할 수 있어요.</div>
+    <div id="noticeList"></div>
   </div>
 
 
@@ -1668,6 +1688,7 @@ function normalizeRec(r) {
 }
 
 var records = [];
+var notices = []; // 알림장 (반·오늘 과제·특이사항)
 let editId    = null;
 let activeTab = 'input';
 
@@ -2329,14 +2350,17 @@ function persist() {
 
 function switchTab(tab) {
   activeTab = tab;
-  ['input','list','stats','students'].forEach(t => {
-    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  ['input','list','notice','stats','students'].forEach(t => {
+    var panel = document.getElementById('panel-'+t);
+    if (panel) panel.classList.toggle('active', t===tab);
+    var topTab = document.getElementById('tab-'+t);
+    if (topTab) topTab.classList.toggle('active', t===tab);
     // 사이드바 탭도 동기화
     var stab = document.getElementById('stab-'+t);
     if (stab) stab.classList.toggle('active', t===tab);
   });
   if (tab==='list')     { updateStudentFilter(); renderList(); }
+  if (tab==='notice')   renderNotices();
   if (tab==='stats')    renderStats();
   if (tab==='input')    { updateLoadSelect(); renderHomeworks(); renderLastHomeworks(); renderLessonBlocks(); renderTests(); }
   if (tab==='students') renderStudents();
@@ -2344,6 +2368,130 @@ function switchTab(tab) {
 
 function updateAttendance() {}
 function updateAttitude() {}
+
+// ── 알림장 기능 ──────────────────────────────────────────
+function noticeKey() { return 'kms_notices_'+(currentUser||'_'); }
+
+function persistNotices() {
+  localStorage.setItem(noticeKey(), JSON.stringify(notices));
+  if (window.fbDb && currentSchool && currentSchool.length > 10) {
+    var uid = currentSchool;
+    notices.forEach(function(n) {
+      var ref = window.fbDoc(window.fbDb, 'users', uid, 'notices', String(n.id));
+      window.fbSetDoc(ref, n).catch(function(){});
+    });
+  }
+}
+
+// "알림장으로 저장": 입력란에서 반·오늘 과제·특이사항만 추출
+function saveNotice() {
+  var classEl = document.getElementById('f-class');
+  var className = classEl ? (classEl.value||'').trim() : '';
+  // 동적 과제 블록 동기화 후 오늘 과제 수집
+  if (typeof serializeHomeworks === 'function') serializeHomeworks();
+  var homework = (document.getElementById('f-homework')||{value:''}).value.trim();
+  // 추가 과제(homework2~5)도 합침
+  for (var i=2;i<=5;i++){
+    var hv=(document.getElementById('f-homework'+i)||{value:''}).value.trim();
+    if(hv) homework += (homework?'\n':'')+hv;
+  }
+  var memo = (document.getElementById('f-memo')||{value:''}).value.trim();
+  var date = (document.getElementById('f-date')||{value:''}).value || todayStr();
+
+  if (!className) { showToast('반을 선택해주세요.', 'error'); return; }
+  if (!homework && !memo) { showToast('오늘 과제 또는 특이사항을 입력해주세요.', 'error'); return; }
+
+  var notice = {
+    id: 'N' + Date.now(),
+    type: 'notice',
+    className: className,
+    homework: homework,
+    memo: memo,
+    date: date,
+    teacher: currentUser || '',
+    createdAt: new Date().toISOString()
+  };
+  notices.unshift(notice);
+  persistNotices();
+  showToast('알림장에 저장되었습니다!');
+  if (typeof updateNoticeClassFilter === 'function') updateNoticeClassFilter();
+}
+
+// 반 필터 옵션 갱신
+function updateNoticeClassFilter() {
+  var sel = document.getElementById('noticeFilterClass');
+  if (!sel) return;
+  var prev = sel.value;
+  var classes = {};
+  notices.forEach(function(n){ if(n.className) classes[n.className]=true; });
+  var opts = '<option value="">전체 반</option>';
+  Object.keys(classes).sort().forEach(function(c){ opts += '<option value="'+c.replace(/"/g,'&quot;')+'">'+c+'</option>'; });
+  sel.innerHTML = opts;
+  if (prev) sel.value = prev;
+}
+
+function escapeNotice(s){ if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// 알림장 목록 렌더링 (반별/날짜별 그룹)
+function renderNotices() {
+  updateNoticeClassFilter();
+  var el = document.getElementById('noticeList');
+  if (!el) return;
+  var fc = (document.getElementById('noticeFilterClass')||{value:''}).value;
+  var groupBy = (document.getElementById('noticeGroupBy')||{value:'date'}).value;
+
+  var list = notices.filter(function(n){ return !fc || n.className === fc; });
+  if (list.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">저장된 알림장이 없습니다.<br><span style="font-size:11px">입력 탭에서 "알림장으로 저장"을 눌러보세요.</span></div>';
+    return;
+  }
+
+  // 그룹핑
+  var groups = {};
+  list.forEach(function(n){
+    var key = groupBy === 'class' ? (n.className||'반 미지정') : (n.date||'날짜 미상');
+    if(!groups[key]) groups[key]=[];
+    groups[key].push(n);
+  });
+  var keys = Object.keys(groups).sort(function(a,b){ return groupBy==='date' ? b.localeCompare(a) : a.localeCompare(b,'ko'); });
+
+  var html = '';
+  keys.forEach(function(key){
+    html += '<div style="font-size:12px;font-weight:800;color:#0891b2;margin:10px 0 6px">' + escapeNotice(key) + '</div>';
+    groups[key].forEach(function(n){
+      html += makeNoticeCard(n);
+    });
+  });
+  el.innerHTML = html;
+}
+
+function makeNoticeCard(n) {
+  return '<div id="notice-card-' + n.id + '" style="background:#f0fdff;border:1.5px solid #a5f3fc;border-radius:10px;padding:12px;margin-bottom:8px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+    + '<span style="font-size:13px;font-weight:800;color:#0e7490"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0e7490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>' + escapeNotice(n.className) + '</span>'
+    + '<span style="font-size:11px;color:#94a3b8">' + escapeNotice(n.date) + '</span>'
+    + '</div>'
+    + (n.homework ? '<div style="font-size:12px;color:#334155;margin-bottom:6px;white-space:pre-wrap"><b style="color:#0891b2">오늘 과제</b><br>' + escapeNotice(n.homework) + '</div>' : '')
+    + (n.memo ? '<div style="font-size:12px;color:#334155;white-space:pre-wrap"><b style="color:#0891b2">특이사항</b><br>' + escapeNotice(n.memo) + '</div>' : '')
+    + '<div class="notice-btns" style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">'
+    + '<button onclick="saveNoticeCard(\'' + n.id + '\')" style="flex:1 1 auto;min-width:80px;background:#cffafe;border:1px solid #67e8f9;color:#0e7490;border-radius:8px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">이미지 저장</button>'
+    + '<button onclick="saveNoticeCard(\'' + n.id + '\',\'share\')" style="flex:1 1 auto;min-width:80px;background:#fef3c7;border:1px solid #fcd34d;color:#d97706;border-radius:8px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">공유</button>'
+    + '<button onclick="deleteNotice(\'' + n.id + '\')" style="flex:0 0 auto;background:#fee2e2;border:1px solid #fca5a5;color:#dc2626;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">삭제</button>'
+    + '</div>'
+    + '</div>';
+}
+
+function deleteNotice(id) {
+  if (!confirm('이 알림장을 삭제할까요?')) return;
+  notices = notices.filter(function(n){ return n.id !== id; });
+  localStorage.setItem(noticeKey(), JSON.stringify(notices));
+  if (window.fbDb && currentSchool && currentSchool.length > 10) {
+    window.fbDeleteDoc(window.fbDoc(window.fbDb, 'users', currentSchool, 'notices', String(id))).catch(function(){});
+  }
+  renderNotices();
+  showToast('삭제되었습니다.');
+}
+
 
 function toggleRadio(el) {
   if (el._wasChecked) {
@@ -4000,6 +4148,7 @@ function initWithFirebase(uid) {
   if (typeof refreshMyMessageBadge === 'function') refreshMyMessageBadge();
   records  = (JSON.parse(localStorage.getItem(recKey())||'[]')).map(normalizeRec);
   students = JSON.parse(localStorage.getItem(stuKey())||'[]');
+  notices  = JSON.parse(localStorage.getItem(noticeKey())||'[]');
   renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
 
   // 원장이면 소속 학원 전체 데이터 불러오기
@@ -4011,18 +4160,23 @@ function initWithFirebase(uid) {
   // 일반 선생님: 본인 데이터만
   var recRef = window.fbCollection(window.fbDb, 'users', uid, 'records');
   var stuRef = window.fbCollection(window.fbDb, 'users', uid, 'students');
+  var notRef = window.fbCollection(window.fbDb, 'users', uid, 'notices');
 
   Promise.all([
     window.fbGetDocs(recRef),
-    window.fbGetDocs(stuRef)
+    window.fbGetDocs(stuRef),
+    window.fbGetDocs(notRef).catch(function(){ return {forEach:function(){}}; })
   ]).then(function(results) {
     var recSnap = results[0];
     var stuSnap = results[1];
+    var notSnap = results[2];
 
     var fbRecs = [];
     recSnap.forEach(function(d) { fbRecs.push(Object.assign({id: d.id}, d.data())); });
     var fbStus = [];
     stuSnap.forEach(function(d) { fbStus.push(Object.assign({id: d.id}, d.data())); });
+    var fbNots = [];
+    notSnap.forEach(function(d) { fbNots.push(Object.assign({id: d.id}, d.data())); });
 
     if (fbRecs.length > 0 || records.length === 0) {
       records = fbRecs.map(normalizeRec);
@@ -4031,6 +4185,11 @@ function initWithFirebase(uid) {
     if (fbStus.length > 0 || students.length === 0) {
       students = fbStus;
       localStorage.setItem(stuKey(), JSON.stringify(students));
+    }
+    if (fbNots.length > 0 || notices.length === 0) {
+      fbNots.sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+      notices = fbNots;
+      localStorage.setItem(noticeKey(), JSON.stringify(notices));
     }
 
     renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
@@ -7464,6 +7623,87 @@ function saveListCard(id, mode) {
   s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
   s.onload = capture;
   document.head.appendChild(s);
+}
+
+// 알림장 카드 이미지 저장/공유 (제목: "○○반 알림장")
+function saveNoticeCard(id, mode) {
+  mode = mode || 'save';
+  var n = notices.find(function(x){ return String(x.id) === String(id); });
+  if (!n) return;
+  var dateStr = (n.date ? n.date.replace(/-/g,'') : 'date');
+  var fname = (n.className||'반') + '_알림장_' + dateStr + '.png';
+
+  function capture() {
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:480px;background:#fff;padding:20px;box-sizing:border-box;font-family:Noto Sans KR,Apple SD Gothic Neo,sans-serif;';
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex;align-items:center;gap:10px;border-bottom:2px solid #0891b2;padding-bottom:10px;margin-bottom:12px;';
+    var hdrInfo = document.createElement('div');
+    var hdrName = document.createElement('div');
+    hdrName.style.cssText = 'font-size:15px;font-weight:900;color:#0e7490';
+    hdrName.textContent = (currentSchoolProfile && currentSchoolProfile.name) || '';
+    var hdrPhone = document.createElement('div');
+    hdrPhone.style.cssText = 'font-size:11px;color:#64748b;margin-top:2px';
+    hdrPhone.innerHTML = '<strong>상담:</strong> ' + ((currentSchoolProfile && currentSchoolProfile.phone) || '');
+    hdrInfo.appendChild(hdrName); hdrInfo.appendChild(hdrPhone);
+    hdr.appendChild(hdrInfo);
+    wrapper.appendChild(hdr);
+
+    var titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'text-align:center;padding:8px 0 6px;font-size:18px;font-weight:900;color:#0e7490;letter-spacing:1px;';
+    titleDiv.textContent = (n.className || '') + '반 알림장';
+    wrapper.appendChild(titleDiv);
+
+    var dateDiv = document.createElement('div');
+    dateDiv.style.cssText = 'text-align:center;font-size:12px;color:#94a3b8;margin-bottom:14px';
+    dateDiv.textContent = n.date || '';
+    wrapper.appendChild(dateDiv);
+
+    if (n.homework) {
+      var hwBox = document.createElement('div');
+      hwBox.style.cssText = 'background:#f0fdff;border-left:3px solid #0891b2;border-radius:6px;padding:10px 12px;margin-bottom:10px;';
+      var hwT = document.createElement('div'); hwT.style.cssText='font-size:13px;font-weight:800;color:#0891b2;margin-bottom:4px'; hwT.textContent='오늘 과제';
+      var hwC = document.createElement('div'); hwC.style.cssText='font-size:13px;color:#334155;white-space:pre-wrap;line-height:1.5'; hwC.textContent=n.homework;
+      hwBox.appendChild(hwT); hwBox.appendChild(hwC); wrapper.appendChild(hwBox);
+    }
+    if (n.memo) {
+      var mBox = document.createElement('div');
+      mBox.style.cssText = 'background:#fffbeb;border-left:3px solid #f59e0b;border-radius:6px;padding:10px 12px;';
+      var mT = document.createElement('div'); mT.style.cssText='font-size:13px;font-weight:800;color:#d97706;margin-bottom:4px'; mT.textContent='특이사항';
+      var mC = document.createElement('div'); mC.style.cssText='font-size:13px;color:#334155;white-space:pre-wrap;line-height:1.5'; mC.textContent=n.memo;
+      mBox.appendChild(mT); mBox.appendChild(mC); wrapper.appendChild(mBox);
+    }
+
+    document.body.appendChild(wrapper);
+    drawLogoToCanvas(48, function(logoCanvas){
+      logoCanvas.style.cssText = 'width:48px;height:48px;border-radius:10px;border:2px solid #0891b2;flex-shrink:0';
+      hdr.insertBefore(logoCanvas, hdr.firstChild);
+      html2canvas(wrapper, { scale:2, useCORS:true, backgroundColor:'#ffffff', width:480, windowWidth:480 })
+        .then(async function(canvas){
+          document.body.removeChild(wrapper);
+          if (mode === 'share') { shareCanvasImage(canvas, fname); return; }
+          if (window.showSaveFilePicker) {
+            try {
+              var handle = await window.showSaveFilePicker({ suggestedName: fname, startIn:'desktop', types:[{description:'PNG 이미지',accept:{'image/png':['.png']}}] });
+              var writable = await handle.createWritable();
+              canvas.toBlob(async function(blob){ await writable.write(blob); await writable.close(); showToast('저장 완료!'); }, 'image/png');
+              return;
+            } catch(e) { if (e && e.name === 'AbortError') return; }
+          }
+          var link = document.createElement('a');
+          link.download = fname; link.href = canvas.toDataURL('image/png');
+          link.click();
+          showToast('저장 완료!');
+        })
+        .catch(function(){ if(wrapper.parentNode) document.body.removeChild(wrapper); showToast('저장 실패.', 'error'); });
+    });
+  }
+
+  if (window.html2canvas) { capture(); return; }
+  var sc = document.createElement('script');
+  sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  sc.onload = capture;
+  document.head.appendChild(sc);
 }
 
 function copyRecord(id) {
