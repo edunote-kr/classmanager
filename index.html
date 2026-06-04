@@ -4159,6 +4159,11 @@ function checkSchoolAndLogin(fbUser, profile, schoolData) {
     showSubscribeScreen(fbUser, profile, 'expired', schoolData.expiresAt.slice(0,10));
     return;
   }
+  // 원장인데 학원 문서에 ownerUid가 없으면 자동 설정 (학생 저장 권한 보장)
+  if ((profile.role === 'owner') && currentSchoolId &&
+      (!schoolData.ownerUid || schoolData.ownerUid === '')) {
+    window.fbUpdateDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId), { ownerUid: fbUser.uid }).catch(function(){});
+  }
   finishLogin(fbUser, profile);
 }
 
@@ -5193,7 +5198,8 @@ function approveApplication(appId, schoolName, days, teacherCount) {
       maxOwners: 1, maxTeachers: 1 + teacherCount, teacherCount: teacherCount,
       ownerCode: ownerCode, teacherCode: teacherCode,
       expiresAt: expiresAt, status: 'active',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      ownerUid: uid
     }).then(function() {
       writeSchoolNameIndex(schoolName, teacherCode, schoolId);
       var updates = [
@@ -5618,7 +5624,8 @@ function addSchool() {
     teacherCode: teacherCode,
     expiresAt: expiresAt,
     status: 'active',
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    ownerUid: ''
   }).then(function() {
     writeSchoolNameIndex(name, teacherCode, schoolId);
     document.getElementById('newSchoolName').value = '';
