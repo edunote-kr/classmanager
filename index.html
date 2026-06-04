@@ -497,6 +497,7 @@ onAuthStateChanged(auth, function(user) {
   <div style="width:120px;height:3px;background:#ede9fe;border-radius:99px;overflow:hidden">
     <div id="initLoaderBar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#a78bfa);border-radius:99px;animation:loaderSlide 1.4s ease-in-out infinite"></div>
   </div>
+  <div id="initLoaderStatus" style="font-size:12px;color:#6366f1;font-weight:700;margin-top:14px;min-height:16px">불러오는 중...</div>
 
   <style>
     @keyframes loaderSlide {
@@ -3529,6 +3530,7 @@ function readUserDoc(uid, retried) {
 
 function loadUserProfile(fbUser) {
   showLoading(true);
+  setInitStatus('계정 정보를 불러오는 중...');
   return readUserDoc(fbUser.uid)
     .then(function(snap) {
       var profile = snap.exists() ? snap.data() : {};
@@ -3852,6 +3854,7 @@ function clearAutoLogoutTimer() {
 
 function loadOwnerData(ownerUid) {
   showLoading(true);
+  showToast('학원 정보를 불러오는 중입니다...', 'info');
   var expectedUid = ownerUid;
   var _pendingTimers = [];
   var _ownerLoadDone = false;
@@ -5914,6 +5917,11 @@ function updateSidebarCount() {
 function hideInitLoader() {
   var loader = document.getElementById('initLoader');
   if (loader) loader.style.display = 'none';
+}
+// 초기 로딩 화면의 안내 문구 갱신
+function setInitStatus(msg) {
+  var el = document.getElementById('initLoaderStatus');
+  if (el) el.textContent = msg;
 }
 
 // 로그인 확인 fallback — 인증된 사용자는 절대 랜딩으로 보내지 않음
