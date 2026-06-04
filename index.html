@@ -1214,11 +1214,58 @@ onAuthStateChanged(auth, function(user) {
 
     <!-- 신청 폼 -->
     <div style="background:#fff;border-radius:14px;padding:20px;border:1px solid #e2e8f0">
+      <div style="font-size:15px;font-weight:900;color:#1e293b;text-align:center;margin-bottom:4px">에듀노트 정식버전 (연장/변경)신청</div>
+      <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:14px">아래 정보를 입력하고 신청해주세요</div>
+
       <div id="subPlanSelected" style="background:#ede9fe;border-radius:8px;padding:10px;text-align:center;font-size:13px;font-weight:700;color:#6366f1;margin-bottom:14px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg> 무료 체험 (14일) 선택됨</div>
 
+      <!-- 프로그램 이용료 안내 -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:8px">프로그램 이용료 안내</div>
+        <div style="font-size:12px;color:#475569;line-height:1.9">
+          <div style="display:flex;justify-content:space-between"><span>무료 체험 (쿠폰)</span><b style="color:#6366f1">0원 / 14일</b></div>
+          <div style="display:flex;justify-content:space-between"><span>단기 (30일)</span><b>10원</b></div>
+          <div style="display:flex;justify-content:space-between"><span>표준 (90일)</span><b>10원</b></div>
+          <div style="display:flex;justify-content:space-between"><span>연간 (365일)</span><b>10원</b></div>
+        </div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:8px">※ 결제는 계좌입금으로 진행됩니다. 신청 후 안내드립니다.</div>
+      </div>
+
       <div style="margin-bottom:10px">
-        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">선생님 인원수 (본인 제외)</label>
-        <input type="number" id="subTeachers" min="0" max="99" value="2" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">신청자 이름 <span style="color:#ef4444">*</span></label>
+        <input type="text" id="subName" placeholder="실명을 입력하세요" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:10px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">예금주 <span style="font-size:10px;color:#94a3b8;font-weight:500">(신청자와 다를 경우만 입력)</span></label>
+        <input type="text" id="subDepositor" placeholder="입금자명이 다르면 입력" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:10px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">등록한 아이디 <span style="color:#ef4444">*</span> <span style="font-size:10px;color:#94a3b8;font-weight:500">(실명 아님)</span></label>
+        <input type="text" id="subUserId" placeholder="로그인 아이디" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:10px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">휴대폰 번호 <span style="color:#ef4444">*</span></label>
+        <input type="tel" id="subPhone" placeholder="010-0000-0000" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:10px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">강의 형태 <span style="color:#ef4444">*</span></label>
+        <select id="subTeachType" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;background:#fff">
+          <option value="">선택하세요</option>
+          <option value="학교교사">학교교사</option>
+          <option value="학원강사">학원강사</option>
+          <option value="과외선생님">과외선생님</option>
+          <option value="학생">학생</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">선생님 인원수 <span style="font-size:10px;color:#94a3b8;font-weight:500">(본인 제외)</span></label>
+        <input type="number" id="subTeachers" min="0" max="99" value="0" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
       </div>
 
       <button onclick="submitSubscribeApply()" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">신청하기</button>
@@ -4441,7 +4488,17 @@ function submitActivateApply() {
     return;
   }
 
-  // ── 유료 플랜: 신청서 저장 (관리자 승인 방식) ──
+  // ── 유료 플랜: 상세 신청 폼으로 이동 (아이디·강의형태·예금주 등 입력) ──
+  document.getElementById('activateScreen').style.display = 'none';
+  showSubscribeScreen(activateUser.fbUser, profile, 'none');
+  // 선택했던 플랜 유지
+  if (typeof selectSubPlan === 'function') selectSubPlan(selectedActivatePlan);
+  return;
+}
+
+function _unusedActivateApplySave() {
+  var p = {}, profile = {}, teachers = 0, uid = '', resultEl = {style:{}};
+  // (구버전 보존용 — 사용 안 함)
   window.fbAddDoc(window.fbCollection(window.fbDb, 'applications'), {
     schoolName:   profile.schoolName || '',
     name:         profile.name || '',
@@ -4546,7 +4603,17 @@ function showSubscribeScreen(fbUser, profile, reason, expDate) {
   var backBtn = document.getElementById('subBackBtn');
   if (backBtn) backBtn.style.display = (reason === 'extend') ? 'block' : 'none';
 
-  // 학원명/이름 자동 입력
+  // 로그인 정보로 신청 폼 자동 채우기
+  var profile = subscribeUser ? (subscribeUser.profile || {}) : {};
+  var nameEl = document.getElementById('subName');
+  if (nameEl) nameEl.value = profile.name || '';
+  var idEl = document.getElementById('subUserId');
+  if (idEl) idEl.value = profile.userId || '';
+  var phoneEl = document.getElementById('subPhone');
+  if (phoneEl) phoneEl.value = profile.phone || '';
+  var resEl = document.getElementById('subResult');
+  if (resEl) resEl.style.display = 'none';
+
   selectSubPlan('free');
 }
 
@@ -4564,33 +4631,47 @@ function selectSubPlan(plan) {
 
 function submitSubscribeApply() {
   if (!subscribeUser) return;
-  var profile  = subscribeUser.profile;
-  var teachers = parseInt(document.getElementById('subTeachers').value) || 0;
-  var p        = PLANS[selectedSubPlan];
+  var profile  = subscribeUser.profile || {};
   var resultEl = document.getElementById('subResult');
-
   resultEl.style.display = 'none';
 
+  // 입력값 수집
+  var name      = (document.getElementById('subName')||{value:''}).value.trim();
+  var depositor = (document.getElementById('subDepositor')||{value:''}).value.trim();
+  var userId    = (document.getElementById('subUserId')||{value:''}).value.trim();
+  var phone     = (document.getElementById('subPhone')||{value:''}).value.trim();
+  var teachType = (document.getElementById('subTeachType')||{value:''}).value;
+  var teachers  = parseInt((document.getElementById('subTeachers')||{value:'0'}).value) || 0;
+  var p         = PLANS[selectedSubPlan];
+
+  // 필수값 검증
+  function showErr(msg){ resultEl.style.display='block'; resultEl.style.color='#ef4444'; resultEl.textContent=msg; }
+  if (!name)      { showErr('신청자 이름을 입력해주세요.'); return; }
+  if (!userId)    { showErr('등록한 아이디를 입력해주세요.'); return; }
+  if (!phone)     { showErr('휴대폰 번호를 입력해주세요.'); return; }
+  if (!teachType) { showErr('강의 형태를 선택해주세요.'); return; }
+
   window.fbAddDoc(window.fbCollection(window.fbDb, 'applications'), {
-    schoolName:   profile.schoolName || '',
-    name:         profile.name || '',
-    phone:        profile.phone || '',
-    uid:          subscribeUser.fbUser.uid,
-    teacherCount: teachers,
-    plan:         selectedSubPlan,
-    planLabel:    p.label,
-    days:         p.days,
-    price:        p.price,
-    status:       'pending',
-    createdAt:    new Date().toISOString()
+    schoolName:    profile.schoolName || '',
+    name:          name,
+    depositor:     depositor || name,   // 예금주 미입력 시 신청자명
+    userId:        userId,
+    phone:         phone,
+    teachType:     teachType,
+    uid:           subscribeUser.fbUser.uid,
+    teacherCount:  teachers,
+    plan:          selectedSubPlan,
+    planLabel:     p.label,
+    days:          p.days,
+    price:         p.price,
+    status:        'pending',
+    createdAt:     new Date().toISOString()
   }).then(function() {
     resultEl.style.display = 'block';
     resultEl.style.color   = '#16a34a';
     resultEl.textContent   = '신청 완료! 담당자 확인 후 이용 가능합니다.';
   }).catch(function(err) {
-    resultEl.style.display = 'block';
-    resultEl.style.color   = '#ef4444';
-    resultEl.textContent   = '오류: ' + err.message;
+    showErr('오류: ' + (err && err.message || ''));
   });
 }
 
@@ -4775,6 +4856,11 @@ function loadApplications() {
         + '<div>'
         + '<div style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>' + (a.schoolName||'') + '</div>'
         + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + (a.createdAt||'').slice(0,10) + ' · ' + (a.name||'') + ' · ' + (a.phone||'') + '</div>'
+        + ((a.userId||a.teachType||a.depositor) ? '<div style="font-size:11px;color:#64748b;margin-top:3px">'
+            + (a.userId ? '아이디: <b>' + a.userId + '</b>' : '')
+            + (a.teachType ? ' · ' + a.teachType : '')
+            + (a.depositor && a.depositor !== a.name ? ' · 예금주: ' + a.depositor : '')
+            + '</div>' : '')
         + '</div>'
         + '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:' + statusBg + ';color:' + statusColor + ';white-space:nowrap">' + statusText + '</span>'
         + '</div>'
