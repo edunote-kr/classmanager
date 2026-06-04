@@ -98,7 +98,8 @@ textarea { resize:vertical; }
 .rec-row    { font-size:13px; margin-bottom:7px; line-height:1.5; border-top:1.5px solid #e2e8f0; padding-top:7px; margin-top:4px; }
 .rec-label  { font-weight:700; }
 .rec-memo   { font-size:13px; color:#334155; margin-top:4px; border-top:1.5px solid #e2e8f0; padding-top:7px; }
-.rec-btns   { display:flex; gap:8px; margin-top:12px; }
+.rec-btns   { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+.rec-btns .btn-edit { flex:1 1 auto; min-width:72px; white-space:nowrap; }
 
 /* ── Stats ── */
 .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
@@ -2525,17 +2526,17 @@ async function saveRecord() {
   persist(); resetForm(); updateLoadSelect();
   if(rec.student){updateStudentFilter();}
   var _s=document.getElementById('filterStudent');if(_s)_s.value='';
-  switchTab('list');
+  // 저장 후 입력 탭에 그대로 머무름 (목록으로 이동하지 않음)
   showLoading(true);
   // Firestore에 저장
   if (window.fbDb && currentSchool && currentSchool.length > 10) {
     var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(rec.id));
     window.fbSetDoc(ref, rec)
-      .then(function(){ showToast('저장 완료!'); })
+      .then(function(){ showToast('과제목록에 저장되었습니다!'); })
       .catch(function(){ showToast('저장 실패. 다시 시도해주세요.', 'error'); })
       .finally(function(){ showLoading(false); });
   } else {
-    showToast('저장 완료!');
+    showToast('과제목록에 저장되었습니다!');
     showLoading(false);
   }
   } catch(err) { showToast('저장 오류: '+err.message, 'error'); showLoading(false); }
