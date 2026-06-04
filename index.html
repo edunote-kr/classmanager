@@ -707,7 +707,7 @@ onAuthStateChanged(auth, function(user) {
 </div>
 <!-- 로그인 화면 -->
 <div id="loginScreen" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;box-sizing:border-box">
-  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.4);position:relative;box-sizing:border-box;overflow-x:hidden" class="login-modal-box">
+  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.4);position:relative;box-sizing:border-box;overflow-x:hidden;max-height:92vh;overflow-y:auto" class="login-modal-box">
     <!-- 닫기 버튼 -->
     <button onclick="document.getElementById('loginScreen').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer;line-height:1">×</button>
     <!-- 로고 -->
@@ -963,6 +963,7 @@ onAuthStateChanged(auth, function(user) {
             <button onclick="loadAllUsers()" style="padding:6px 14px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">새로고침</button>
           </div>
         </div>
+        <input type="text" id="userListSearch" oninput="filterUserList()" placeholder="이름 · 아이디 · 학원명 검색..." style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px">
         <div id="allUsersList" style="display:flex;flex-direction:column;gap:8px">
           <div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">새로고침 버튼을 눌러주세요</div>
         </div>
@@ -3846,6 +3847,17 @@ function filterSchoolList() {
   });
 }
 
+// 사용자 목록 검색 필터
+function filterUserList() {
+  var q = (document.getElementById('userListSearch')||{value:''}).value.trim().toLowerCase();
+  var list = document.getElementById('allUsersList');
+  if (!list) return;
+  Array.prototype.forEach.call(list.children, function(card){
+    var name = (card.getAttribute('data-user-name')||'').toLowerCase();
+    card.style.display = (!q || name.indexOf(q) !== -1) ? '' : 'none';
+  });
+}
+
 function checkSchoolName() {
   var name = document.getElementById('signupSchool').value.trim();
   var resultEl = document.getElementById('schoolCheckResult');
@@ -3922,13 +3934,18 @@ function sendVerificationCode() {
   var intlPhone = '+82' + cleaned;
 
   try {
-    // 기존 reCAPTCHA 위젯 완전 정리 (재시도 시 "already rendered" 방지)
+    // 기존 reCAPTCHA 위젯 완전 정리
     if (window.recaptchaVerifier) {
       try { window.recaptchaVerifier.clear(); } catch(e) {}
       window.recaptchaVerifier = null;
     }
-    var rcEl = document.getElementById('recaptcha-container');
-    if (rcEl) rcEl.innerHTML = ''; // DOM에 남은 위젯 잔여물 제거
+    // 컨테이너를 통째로 새 요소로 교체 → "already rendered" 상태까지 완전 리셋
+    var oldEl = document.getElementById('recaptcha-container');
+    if (oldEl && oldEl.parentNode) {
+      var fresh = document.createElement('div');
+      fresh.id = 'recaptcha-container';
+      oldEl.parentNode.replaceChild(fresh, oldEl);
+    }
 
     window.recaptchaVerifier = new window.fbRecaptchaVerifier(
       window.fbAuth, 'recaptcha-container', { size: 'invisible' }
@@ -3944,14 +3961,18 @@ function sendVerificationCode() {
       })
       .catch(function(err) {
         showLoading(false);
-        showAuthError('인증번호 발송 실패: ' + err.message);
-        // 실패 시에도 위젯 정리 (다음 시도가 깨끗하게)
+        // billing 에러는 사용자 친화적으로 안내
+        var msg = err.message || '';
+        if (err.code === 'auth/billing-not-enabled') {
+          showAuthError('휴대폰 인증이 일시적으로 불가합니다. (서버 설정 확인 중)');
+        } else {
+          showAuthError('인증번호 발송 실패: ' + msg);
+        }
+        // 실패 시 위젯 정리
         if (window.recaptchaVerifier) {
           try { window.recaptchaVerifier.clear(); } catch(e) {}
           window.recaptchaVerifier = null;
         }
-        var rc = document.getElementById('recaptcha-container');
-        if (rc) rc.innerHTML = '';
       });
   } catch(e) {
     showLoading(false);
@@ -5581,9 +5602,9 @@ function renderAdminSchoolData(schoolName, members, records, schoolNotices) {
   html += '<div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">'
     + '<div onclick="toggleAdminSection(\'admRecordBody\',\'admRecordArrow\')" style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;cursor:pointer">'
     + '<span style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg> 최근 기록 (' + Math.min(totalRecs,50) + '/' + totalRecs + ')</span>'
-    + '<svg id="admRecordArrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>'
+    + '<svg id="admRecordArrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s;transform:rotate(-90deg)"><polyline points="6 9 12 15 18 9"/></svg>'
     + '</div>'
-    + '<div id="admRecordBody" style="padding:12px 16px;display:flex;flex-direction:column;gap:8px">';
+    + '<div id="admRecordBody" style="padding:12px 16px;display:none;flex-direction:column;gap:8px">';
 
   if (recentRecs.length === 0) {
     html += '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">기록이 없습니다</div>';
@@ -5941,7 +5962,7 @@ function loadAllUsers() {
       var statusColor = isActive ? '#16a34a' : '#ef4444';
       var statusBg = isActive ? '#dcfce7' : '#fee2e2';
       var statusText = isActive ? '활성' : '대기/비활성';
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc">'
+      return '<div data-user-name="' + ((u.name||'')+' '+(u.userId||'')+' '+(u.schoolName||'')).replace(/"/g,'&quot;') + '" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc">'
         + '<div>'
         + '<div style="font-size:13px;font-weight:700;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + (u.name||u.userId||'이름없음') + '</div>'
         + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'
