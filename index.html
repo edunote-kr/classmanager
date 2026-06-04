@@ -842,6 +842,17 @@ onAuthStateChanged(auth, function(user) {
           <div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">로딩 중...</div>
         </div>
       </div>
+
+      <!-- 문의 목록 (갱신/1:1) -->
+      <div style="background:#fff;border-radius:12px;padding:20px;border:1px solid #e2e8f0;margin-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-size:15px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 문의 목록</div>
+          <button onclick="loadInquiries()" style="padding:6px 14px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">새로고침</button>
+        </div>
+        <div id="inquiryList" style="display:flex;flex-direction:column;gap:10px">
+          <div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">로딩 중...</div>
+        </div>
+      </div>
     </div>
 
     <!-- ── 탭3: 학원관리 ── -->
@@ -4451,12 +4462,15 @@ function submitInquiry() {
 
   // Firestore에 문의 저장
   if (window.fbDb) {
+    var inqUid = (window.fbAuth && window.fbAuth.currentUser) ? window.fbAuth.currentUser.uid : null;
     window.fbAddDoc(window.fbCollection(window.fbDb, 'inquiries'), {
+      type: 'cs',
       name: name,
       phone: phone,
       message: msg,
+      uid: inqUid,
       createdAt: new Date().toISOString(),
-      status: '접수'
+      status: 'unread'
     }).then(function() {
       document.getElementById('csResult').style.display = 'block';
       document.getElementById('csResult').textContent = '문의가 접수됐습니다. 빠르게 연락드릴게요!';
@@ -4485,7 +4499,7 @@ function switchAdminTab(tab) {
     }
   });
   if (tab === 'overview') loadSchoolStats();
-  if (tab === 'apply')    loadApplications();
+  if (tab === 'apply')    { loadApplications(); loadInquiries(); }
   if (tab === 'data')     populateSchoolSelect();
   if (tab === 'users')    loadAllUsers();
 }
@@ -4547,6 +4561,94 @@ function loadApplications() {
         + (isApproved && a.ownerCode ? '<div style="background:#f0fdf4;border-radius:8px;padding:8px 12px;font-size:12px;color:#16a34a;font-weight:700">발급된 원장코드: ' + a.ownerCode + '</div>' : '')
         + '</div>';
     }).join('');
+  });
+}
+
+// ── 문의 목록 (관리자) ──────────────────────────────────
+function escapeInq(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function loadInquiries() {
+  var el = document.getElementById('inquiryList');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">로딩 중...</div>';
+
+  window.fbGetDocs(window.fbCollection(window.fbDb, 'inquiries')).then(function(snap) {
+    var list = [];
+    snap.forEach(function(d) { list.push(Object.assign({id: d.id}, d.data())); });
+    list.sort(function(a,b) { return (b.createdAt||'').localeCompare(a.createdAt||''); });
+
+    if (list.length === 0) {
+      el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">문의가 없습니다</div>';
+      return;
+    }
+
+    el.innerHTML = list.map(function(q) {
+      var isRenewal = q.type === 'renewal';
+      var typeBg    = isRenewal ? '#ede9fe' : '#e0f2fe';
+      var typeColor = isRenewal ? '#6d28d9' : '#0369a1';
+      var typeText  = isRenewal ? '갱신 문의' : '1:1 문의';
+      var unread    = q.status === 'unread';
+      var hasReply  = q.reply && q.reply.length > 0;
+
+      return '<div style="border:1.5px solid ' + (unread ? '#c4b5fd' : '#e2e8f0') + ';border-radius:12px;padding:14px;background:' + (unread ? '#faf5ff' : '#f8fafc') + '">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px">'
+        + '<div style="min-width:0">'
+        + '<div style="font-size:13px;font-weight:800;color:#1e293b">'
+        + '<span style="background:' + typeBg + ';color:' + typeColor + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;margin-right:6px">' + typeText + '</span>'
+        + escapeInq(q.schoolName || q.name || '문의자')
+        + (unread ? '<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:6px">NEW</span>' : '')
+        + '</div>'
+        + '<div style="font-size:11px;color:#94a3b8;margin-top:3px">' + (q.createdAt||'').slice(0,10) + ' · ' + escapeInq(q.name||'') + ' · ' + escapeInq(q.phone||'') + '</div>'
+        + '</div>'
+        + '<button onclick="deleteInquiry(\'' + q.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;font-size:11px;font-weight:700;padding:4px 10px;cursor:pointer;font-family:inherit;white-space:nowrap">삭제</button>'
+        + '</div>'
+        // 문의 내용
+        + '<div style="background:#fff;border-radius:8px;padding:10px 12px;font-size:13px;color:#475569;line-height:1.5;margin-bottom:8px">' + escapeInq(q.message||'') + '</div>'
+        // 기존 답변 표시
+        + (hasReply
+            ? '<div style="background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;padding:8px 12px;font-size:12px;color:#166534;margin-bottom:8px"><b>답변:</b> ' + escapeInq(q.reply) + '<div style="font-size:10px;color:#94a3b8;margin-top:3px">' + (q.replyAt||'').slice(0,16).replace('T',' ') + (q.replyRead ? ' · 읽음' : ' · 안읽음') + '</div></div>'
+            : '')
+        // 답변 입력
+        + '<div style="display:flex;gap:6px">'
+        + '<input type="text" id="reply-' + q.id + '" placeholder="답변 입력..." style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:inherit;box-sizing:border-box" onkeydown="if(event.key===\'Enter\')replyInquiry(\'' + q.id + '\')">'
+        + '<button onclick="replyInquiry(\'' + q.id + '\')" style="padding:8px 14px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">' + (hasReply ? '답변 수정' : '답변') + '</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }).catch(function() {
+    el.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px;font-size:13px">문의를 불러오지 못했습니다</div>';
+  });
+}
+
+function replyInquiry(id) {
+  var input = document.getElementById('reply-' + id);
+  if (!input) return;
+  var text = input.value.trim();
+  if (!text) { showAdminToast('답변 내용을 입력해주세요.', 'error'); return; }
+
+  window.fbUpdateDoc(window.fbDoc(window.fbDb, 'inquiries', id), {
+    reply: text,
+    replyAt: new Date().toISOString(),
+    replyRead: false,    // 사용자가 아직 안 읽음
+    status: 'read'       // 관리자는 확인 완료 처리
+  }).then(function() {
+    showAdminToast('답변을 전송했습니다.');
+    loadInquiries();
+  }).catch(function(err) {
+    showAdminToast('답변 전송 실패: ' + (err && err.message || ''), 'error');
+  });
+}
+
+function deleteInquiry(id) {
+  if (!confirm('이 문의를 삭제할까요? 되돌릴 수 없습니다.')) return;
+  window.fbDeleteDoc(window.fbDoc(window.fbDb, 'inquiries', id)).then(function() {
+    showAdminToast('문의를 삭제했습니다.');
+    loadInquiries();
+  }).catch(function(err) {
+    showAdminToast('삭제 실패: ' + (err && err.message || ''), 'error');
   });
 }
 
@@ -5453,13 +5555,14 @@ function checkExpiryAlerts() {
       else                  normal.push({ name: s.name, date: s.expiresAt.slice(0,10), diff: diff });
     });
 
-    // 갱신 문의 미확인 건
-    window.fbGetDocs(
-      window.fbQuery(window.fbCollection(window.fbDb, 'inquiries'),
-        window.fbWhere('type', '==', 'renewal'),
-        window.fbWhere('status', '==', 'unread'))
-    ).then(function(iSnap) {
-      var renewalCount = iSnap.size;
+    // 갱신 문의 미확인 건 (복합색인 불필요하도록 전체 조회 후 필터)
+    window.fbGetDocs(window.fbCollection(window.fbDb, 'inquiries'))
+    .then(function(iSnap) {
+      var renewalCount = 0;
+      iSnap.forEach(function(d) {
+        var q = d.data();
+        if (q.type === 'renewal' && q.status === 'unread') renewalCount++;
+      });
 
       var container = document.getElementById('adminDashboard').querySelector('[style*="max-width"]');
       if (!container) return;
