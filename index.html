@@ -3547,11 +3547,17 @@ function sendVerificationCode() {
   var intlPhone = '+82' + cleaned;
 
   try {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new window.fbRecaptchaVerifier(
-        window.fbAuth, 'recaptcha-container', { size: 'invisible' }
-      );
+    // 기존 reCAPTCHA 위젯 완전 정리 (재시도 시 "already rendered" 방지)
+    if (window.recaptchaVerifier) {
+      try { window.recaptchaVerifier.clear(); } catch(e) {}
+      window.recaptchaVerifier = null;
     }
+    var rcEl = document.getElementById('recaptcha-container');
+    if (rcEl) rcEl.innerHTML = ''; // DOM에 남은 위젯 잔여물 제거
+
+    window.recaptchaVerifier = new window.fbRecaptchaVerifier(
+      window.fbAuth, 'recaptcha-container', { size: 'invisible' }
+    );
     showLoading(true);
     window.fbSignInWithPhoneNumber(window.fbAuth, intlPhone, window.recaptchaVerifier)
       .then(function(result) {
@@ -3564,9 +3570,16 @@ function sendVerificationCode() {
       .catch(function(err) {
         showLoading(false);
         showAuthError('인증번호 발송 실패: ' + err.message);
-        window.recaptchaVerifier = null;
+        // 실패 시에도 위젯 정리 (다음 시도가 깨끗하게)
+        if (window.recaptchaVerifier) {
+          try { window.recaptchaVerifier.clear(); } catch(e) {}
+          window.recaptchaVerifier = null;
+        }
+        var rc = document.getElementById('recaptcha-container');
+        if (rc) rc.innerHTML = '';
       });
   } catch(e) {
+    showLoading(false);
     showAuthError('오류: ' + e.message);
   }
 }
