@@ -2549,9 +2549,9 @@ function resetForm() {
   resetLastHomeworks(); // 동적 지난 과제 초기화
   resetTests();        // 동적 TEST 초기화
   // setComp already handles lastCompletion reset above
-  document.getElementById('saveBtn').textContent    = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> 저장';
+  document.getElementById('saveBtn').innerHTML    = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> 저장';
   document.getElementById('cancelBtn').style.display = 'none';
-  document.getElementById('tab-input').textContent   = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 수업내용 입력';
+  document.getElementById('tab-input').innerHTML   = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 수업내용 입력';
   updateRing();
 }
 
@@ -2659,7 +2659,7 @@ function editRecord(id) {
   document.getElementById('f-memo').value            = rec.memo           || '';
   document.getElementById('saveBtn').textContent     = '수정 완료';
   document.getElementById('cancelBtn').style.display = 'inline-block';
-  document.getElementById('tab-input').textContent   = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 수업내용 입력 (수정 중)';
+  document.getElementById('tab-input').innerHTML   = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 수업내용 입력 (수정 중)';
   updateRing();
   updateSubRing('reading');
   updateSubRing('grammar');
@@ -4372,7 +4372,7 @@ function selectSubPlan(plan) {
     el.style.border = p === plan ? '2px solid #6366f1' : '1.5px solid #e2e8f0';
     el.style.background = p === plan ? '#faf9ff' : '#fff';
   });
-  document.getElementById('subPlanSelected').textContent = labels[plan] + ' 선택됨';
+  document.getElementById('subPlanSelected').innerHTML = labels[plan] + ' 선택됨';
 }
 
 function submitSubscribeApply() {
@@ -5796,7 +5796,7 @@ function showMyExpiry(expiresAt) {
   var renewBtn = document.getElementById('myRenewBtn');
 
   if (isExpired) {
-    ddayEl.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> 서비스가 만료됐습니다';
+    ddayEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> 서비스가 만료됐습니다';
     ddayEl.style.color = '#dc2626';
   } else if (diff <= 30) {
     ddayEl.textContent = 'D-' + diff + ' · 갱신이 필요합니다';
