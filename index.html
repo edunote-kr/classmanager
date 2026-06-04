@@ -3762,11 +3762,6 @@ function finishLogin(fbUser, profile) {
   var mb = document.getElementById('myPageBtn');
   if (mb) mb.style.display = 'inline-block';
 
-  // 쪽지함 안읽음 뱃지 갱신 (관리자 답변 알림)
-  if (typeof refreshMyMessageBadge === 'function') {
-    setTimeout(refreshMyMessageBadge, 1500);
-  }
-
   if (currentRole === 'owner' || currentRole === 'superadmin') setupAdminFilter();
 
   // 캐시 확인 후 init
@@ -3975,6 +3970,8 @@ function loadOwnerData(ownerUid) {
 
 function initWithFirebase(uid) {
   showLoading(true);
+  // 쪽지함 뱃지 갱신 (세션 준비 완료 시점 — 지연 타이머 대신)
+  if (typeof refreshMyMessageBadge === 'function') refreshMyMessageBadge();
   records  = (JSON.parse(localStorage.getItem(recKey())||'[]')).map(normalizeRec);
   students = JSON.parse(localStorage.getItem(stuKey())||'[]');
   renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
