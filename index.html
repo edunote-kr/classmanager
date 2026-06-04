@@ -5483,7 +5483,7 @@ function drawLogoToCanvas(size, callback) {
 }
 
 function isOwnerOrAdmin() {
-  return currentRole === 'owner' || currentRole === 'superadmin' || isOwnerOrAdmin();
+  return currentRole === 'owner' || currentRole === 'superadmin';
 }
 
 function getRoleBadge() {
