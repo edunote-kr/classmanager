@@ -2459,13 +2459,29 @@ function renderNotices() {
   var keys = Object.keys(groups).sort(function(a,b){ return groupBy==='date' ? b.localeCompare(a) : a.localeCompare(b,'ko'); });
 
   var html = '';
-  keys.forEach(function(key){
-    html += '<div style="font-size:12px;font-weight:800;color:#0891b2;margin:10px 0 6px">' + escapeNotice(key) + '</div>';
+  keys.forEach(function(key, gi){
+    var gid = 'noticeGrp-' + gi;
+    html += '<div style="margin-bottom:8px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'
+      + '<div onclick="toggleNoticeGroup(\'' + gid + '\')" style="background:#ecfeff;padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
+      + '<span style="font-size:12px;font-weight:800;color:#0891b2">' + escapeNotice(key) + ' <span style="font-weight:600;color:#94a3b8;font-size:11px">' + groups[key].length + '건</span></span>'
+      + '<span id="' + gid + '-arrow" style="color:#0891b2;font-size:11px">▼</span>'
+      + '</div>'
+      + '<div id="' + gid + '" style="padding:10px">';
     groups[key].forEach(function(n){
       html += makeNoticeCard(n);
     });
+    html += '</div></div>';
   });
   el.innerHTML = html;
+}
+
+function toggleNoticeGroup(gid) {
+  var body = document.getElementById(gid);
+  var arrow = document.getElementById(gid + '-arrow');
+  if (!body) return;
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.textContent = open ? '▶' : '▼';
 }
 
 function makeNoticeCard(n) {
@@ -4999,11 +5015,23 @@ function loadSchoolData() {
             return recs;
           });
       });
+      // 모든 사용자의 알림장(notices) 가져오기
+      var noticePromises = members.map(function(m) {
+        return window.fbGetDocs(window.fbCollection(window.fbDb, 'users', m.uid, 'notices'))
+          .then(function(nSnap) {
+            var nts = [];
+            nSnap.forEach(function(nn) { nts.push(Object.assign({_id: nn.id, _teacher: m.name || m.userId}, nn.data())); });
+            return nts;
+          })
+          .catch(function(){ return []; });
+      });
 
-      return Promise.all(recordPromises).then(function(allRecs) {
-        var records = [].concat.apply([], allRecs);
+      return Promise.all([Promise.all(recordPromises), Promise.all(noticePromises)]).then(function(res) {
+        var records = [].concat.apply([], res[0]);
         records.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
-        renderAdminSchoolData(schoolName, members, records);
+        var schoolNotices = [].concat.apply([], res[1]);
+        schoolNotices.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
+        renderAdminSchoolData(schoolName, members, records, schoolNotices);
       });
     });
   });
@@ -5025,8 +5053,9 @@ function toggleAdminRecord(idx) {
   d.style.display = d.style.display === 'none' ? 'block' : 'none';
 }
 
-function renderAdminSchoolData(schoolName, members, records) {
+function renderAdminSchoolData(schoolName, members, records, schoolNotices) {
   var el = document.getElementById('adminSchoolData');
+  schoolNotices = schoolNotices || [];
 
   // 통계 집계
   var totalRecs = records.length;
@@ -5119,6 +5148,31 @@ function renderAdminSchoolData(schoolName, members, records) {
   }
 
   html += '</div></div>';
+
+  // ── 알림장 섹션 (접기/펼치기) ──
+  html += '<div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-top:16px">'
+    + '<div onclick="toggleAdminSection(\'admNoticeBody\',\'admNoticeArrow\')" style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;cursor:pointer">'
+    + '<span style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> 알림장 (' + schoolNotices.length + ')</span>'
+    + '<svg id="admNoticeArrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>'
+    + '</div>'
+    + '<div id="admNoticeBody" style="padding:12px 16px;display:none;flex-direction:column;gap:8px">';
+
+  if (schoolNotices.length === 0) {
+    html += '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">알림장이 없습니다</div>';
+  } else {
+    schoolNotices.slice(0, 50).forEach(function(n) {
+      html += '<div style="background:#f0fdff;border:1px solid #a5f3fc;border-radius:8px;padding:10px 12px">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+        + '<span style="font-size:12px;font-weight:800;color:#0e7490">' + escapeAdmin(n.className||'') + '</span>'
+        + '<span style="font-size:11px;color:#94a3b8">' + escapeAdmin(n.date||'') + ' · ' + escapeAdmin(n._teacher||'') + '</span>'
+        + '</div>'
+        + (n.homework ? '<div style="font-size:11px;color:#475569;white-space:pre-wrap;margin-bottom:3px"><b style="color:#0891b2">과제:</b> ' + escapeAdmin(n.homework) + '</div>' : '')
+        + (n.memo ? '<div style="font-size:11px;color:#475569;white-space:pre-wrap"><b style="color:#d97706">특이사항:</b> ' + escapeAdmin(n.memo) + '</div>' : '')
+        + '</div>';
+    });
+  }
+  html += '</div></div>';
+
   el.innerHTML = html;
 }
 
