@@ -924,7 +924,11 @@ onAuthStateChanged(auth, function(user) {
 
       <!-- 학원 목록 -->
       <div style="background:#fff;border-radius:12px;padding:20px;border:1px solid #e2e8f0">
-        <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:16px"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 학원 목록</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px;flex-wrap:wrap">
+          <div style="font-size:15px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 학원 목록</div>
+          <button onclick="rebuildSchoolNameIndex()" style="font-size:11px;background:#fef3c7;color:#b45309;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-family:inherit;font-weight:700">학원명 인덱스 재생성</button>
+        </div>
+        <input type="text" id="schoolListSearch" oninput="filterSchoolList()" placeholder="학원명 검색..." style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px">
         <div id="schoolList" style="display:flex;flex-direction:column;gap:10px">
           <div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">로딩 중...</div>
         </div>
@@ -3812,6 +3816,36 @@ function writeSchoolNameIndex(name, teacherCode, schoolId) {
   }).catch(function(){ /* 실패해도 학원 생성은 진행 */ });
 }
 
+// 기존 학원 전체의 schoolNames 인덱스 일괄 재생성 (슈퍼관리자)
+function rebuildSchoolNameIndex() {
+  if (!confirm('등록된 모든 학원의 이름 인덱스를 재생성할까요?\n(중복확인이 정상 동작하도록 보정합니다)')) return;
+  var msg = function(t,ty){ (window.showAdminToast||showToast)(t, ty); };
+  msg('인덱스 재생성 중...');
+  window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snap){
+    var jobs = [];
+    snap.forEach(function(d){
+      var s = d.data();
+      if (s.name) jobs.push(writeSchoolNameIndex(s.name, s.teacherCode, d.id));
+    });
+    return Promise.all(jobs).then(function(){
+      msg(jobs.length + '개 학원 인덱스 재생성 완료!');
+    });
+  }).catch(function(err){
+    msg('재생성 실패: ' + (err && (err.code||err.message) || ''), 'error');
+  });
+}
+
+// 학원 목록 검색 필터
+function filterSchoolList() {
+  var q = (document.getElementById('schoolListSearch')||{value:''}).value.trim().toLowerCase();
+  var list = document.getElementById('schoolList');
+  if (!list) return;
+  Array.prototype.forEach.call(list.children, function(card){
+    var name = (card.getAttribute('data-school-name')||'').toLowerCase();
+    card.style.display = (!q || name.indexOf(q) !== -1) ? '' : 'none';
+  });
+}
+
 function checkSchoolName() {
   var name = document.getElementById('signupSchool').value.trim();
   var resultEl = document.getElementById('schoolCheckResult');
@@ -5213,9 +5247,24 @@ function loadApplications() {
           + 'style="padding:8px 14px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> 거절</button>'
           + '</div>' : '')
         + (isApproved && a.ownerCode ? '<div style="background:#f0fdf4;border-radius:8px;padding:8px 12px;font-size:12px;color:#16a34a;font-weight:700">발급된 원장코드: ' + a.ownerCode + '</div>' : '')
+        + '<div style="margin-top:8px;text-align:right"><button onclick="deleteApplication(\'' + a.id + '\')" style="background:none;border:none;color:#cbd5e1;font-size:11px;cursor:pointer;font-family:inherit;text-decoration:underline">신청 삭제</button></div>'
         + '</div>';
     }).join('');
   });
+}
+
+// 신청 삭제 (슈퍼관리자)
+function deleteApplication(appId) {
+  if (!confirm('이 신청을 목록에서 삭제할까요?\n되돌릴 수 없습니다.')) return;
+  window.fbDeleteDoc(window.fbDoc(window.fbDb, 'applications', appId))
+    .then(function(){
+      showAdminToast ? showAdminToast('신청을 삭제했습니다.') : showToast('신청을 삭제했습니다.');
+      loadApplications();
+    })
+    .catch(function(err){
+      var msg = '삭제 실패: ' + (err && (err.code||err.message) || '');
+      showAdminToast ? showAdminToast(msg, 'error') : showToast(msg, 'error');
+    });
 }
 
 // ── 문의 목록 (관리자) ──────────────────────────────────
@@ -5798,7 +5847,7 @@ function loadSchools() {
       var tCount      = s.teacherCount !== undefined ? s.teacherCount : (s.maxTeachers ? s.maxTeachers - 1 : 0);
       var expStr      = s.expiresAt ? s.expiresAt.slice(0,10) : '미설정';
       var isExpired   = s.expiresAt && new Date() > new Date(s.expiresAt);
-      return '<div style="border:1.5px solid ' + (isExpired ? '#fca5a5' : '#e2e8f0') + ';border-radius:10px;padding:14px;background:' + (isExpired ? '#fff5f5' : '#f8fafc') + '">'
+      return '<div data-school-name="' + (s.name||'').replace(/"/g,'&quot;') + '" style="border:1.5px solid ' + (isExpired ? '#fca5a5' : '#e2e8f0') + ';border-radius:10px;padding:14px;background:' + (isExpired ? '#fff5f5' : '#f8fafc') + '">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
         + '<span style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>' + s.name + '</span>'
         + '<div style="display:flex;gap:6px;align-items:center">'
