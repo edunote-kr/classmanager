@@ -1199,7 +1199,7 @@ onAuthStateChanged(auth, function(user) {
     </div>
 
     <!-- 신청 폼 -->
-    <div style="background:#fff;border-radius:14px;padding:20px;border:1px solid #e2e8f0">
+    <div id="subscribeFormBox" style="background:#fff;border-radius:14px;padding:20px;border:1px solid #e2e8f0">
       <div style="font-size:15px;font-weight:900;color:#1e293b;text-align:center;margin-bottom:4px">에듀노트 정식버전 (연장/변경)신청</div>
       <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:14px">아래 정보를 입력하고 신청해주세요</div>
 
@@ -4131,7 +4131,9 @@ function doFirebaseSignup() {
       showLoading(false);
       showAuthError('');
       document.getElementById('loginScreen').style.display = 'none';
-      // 바로 로그인 처리
+      window._freshLogin = true; // 가입 직후 바로 비활성 계정 안내 화면 표시
+      showToast('회원가입이 완료되었습니다!');
+      // 바로 로그인 처리 → 비활성 안내(showActivateScreen) 표시
       if (window.fbAuth.currentUser) loadUserProfile(window.fbAuth.currentUser);
     })
     .catch(function(err) {
@@ -5035,6 +5037,7 @@ function submitSubscribeApply() {
   var teachType = (document.getElementById('subTeachType')||{value:''}).value;
   var teachers  = parseInt((document.getElementById('subTeachers')||{value:'0'}).value) || 0;
   var p         = PLANS[selectedSubPlan];
+  var school    = profile.schoolName || '';
 
   // 필수값 검증
   function showErr(msg){ resultEl.style.display='block'; resultEl.style.color='#ef4444'; resultEl.textContent=msg; }
@@ -5043,14 +5046,45 @@ function submitSubscribeApply() {
   if (!phone)     { showErr('휴대폰 번호를 입력해주세요.'); return; }
   if (!teachType) { showErr('강의 형태를 선택해주세요.'); return; }
 
+  var btn = document.querySelector('#subscribeScreen button[onclick="submitSubscribeApply()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '처리 중...'; btn.style.opacity = '0.6'; }
+
+  var uid = subscribeUser.fbUser.uid;
+
+  // ── 무료 플랜: 자동 활성화 (관리자 승인 불필요) ──
+  if (selectedSubPlan === 'free' || p.price === 0) {
+    autoActivateFreeTrial(uid, { schoolName: profile.schoolName || school, name: name }, teachers, p)
+      .then(function() {
+        showToast('무료 체험이 시작되었습니다!');
+        var box = document.getElementById('subscribeFormBox');
+        if (box) {
+          box.innerHTML =
+            '<div style="text-align:center;padding:20px 10px">'
+            + '<div style="width:64px;height:64px;margin:0 auto 16px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center">'
+            + '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+            + '</div>'
+            + '<div style="font-size:18px;font-weight:900;color:#1e293b;margin-bottom:8px">무료 체험이 시작되었습니다!</div>'
+            + '<div style="font-size:13px;color:#475569;line-height:1.6;margin-bottom:20px">14일간 모든 기능을 이용하실 수 있어요.<br>지금 바로 시작해보세요.</div>'
+            + '<button onclick="location.reload()" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">시작하기</button>'
+            + '</div>';
+        }
+      })
+      .catch(function(err) {
+        if (btn) { btn.disabled = false; btn.textContent = '신청하기'; btn.style.opacity = '1'; }
+        showErr('활성화 오류: ' + (err && (err.code||err.message) || ''));
+      });
+    return;
+  }
+
+  // ── 유료 플랜: 신청 저장 + 입금 안내 ──
   window.fbAddDoc(window.fbCollection(window.fbDb, 'applications'), {
-    schoolName:    profile.schoolName || '',
+    schoolName:    profile.schoolName || school || '',
     name:          name,
     depositor:     depositor || name,   // 예금주 미입력 시 신청자명
     userId:        userId,
     phone:         phone,
     teachType:     teachType,
-    uid:           subscribeUser.fbUser.uid,
+    uid:           uid,
     teacherCount:  teachers,
     plan:          selectedSubPlan,
     planLabel:     p.label,
@@ -5059,10 +5093,43 @@ function submitSubscribeApply() {
     status:        'pending',
     createdAt:     new Date().toISOString()
   }).then(function() {
-    resultEl.style.display = 'block';
-    resultEl.style.color   = '#16a34a';
-    resultEl.textContent   = '신청 완료! 담당자 확인 후 이용 가능합니다.';
+    showToast('신청이 완료되었습니다!');
+    var priceText = (p.price === 0 ? '무료' : (p.price||0).toLocaleString() + '원');
+    var planClean = (p.label || '').replace(/<[^>]*>/g, '').trim(); // 라벨에서 SVG 제거
+    var box = document.getElementById('subscribeFormBox');
+    if (box) {
+      box.innerHTML =
+        '<div style="text-align:center;padding:14px 6px">'
+        + '<div style="width:60px;height:60px;margin:0 auto 14px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center">'
+        + '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+        + '</div>'
+        + '<div style="font-size:18px;font-weight:900;color:#1e293b;margin-bottom:6px">신청이 완료되었습니다!</div>'
+        + '<div style="font-size:13px;color:#475569;line-height:1.6;margin-bottom:16px">아래 계좌로 입금해주시면<br>확인 후 계정이 활성화됩니다.</div>'
+        // 입금 안내 박스
+        + '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:16px;text-align:left;margin-bottom:14px">'
+        + '<div style="display:flex;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed #e2e8f0">'
+        + '<span style="font-size:13px;color:#64748b">선택 플랜</span>'
+        + '<span style="font-size:13px;font-weight:800;color:#1e293b">' + planClean + '</span></div>'
+        + '<div style="display:flex;justify-content:space-between;margin-bottom:14px">'
+        + '<span style="font-size:13px;color:#64748b">입금 금액</span>'
+        + '<span style="font-size:16px;font-weight:900;color:#6366f1">' + priceText + '</span></div>'
+        + '<div style="background:#fff;border-radius:8px;padding:12px;text-align:center">'
+        + '<div style="font-size:11px;color:#94a3b8;margin-bottom:4px">입금 계좌</div>'
+        + '<div style="font-size:15px;font-weight:900;color:#1e293b;letter-spacing:0.5px">국민은행 00-000-000</div>'
+        + '<div style="font-size:13px;color:#475569;margin-top:2px">예금주: 김민석</div>'
+        + '</div>'
+        + '</div>'
+        + '<div style="font-size:12px;color:#b45309;background:#fffbeb;border-radius:8px;padding:10px;margin-bottom:16px;line-height:1.5">입금자명은 신청 시 입력한 <b>' + (depositor||name) + '</b> 님으로 부탁드립니다.</div>'
+        + '<div style="font-size:12px;color:#6366f1;font-weight:700;margin-bottom:16px">현재 관리자 승인 대기중입니다</div>'
+        + '<button onclick="doLogout()" style="width:100%;padding:13px;background:#f1f5f9;color:#475569;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">확인</button>'
+        + '</div>';
+    } else {
+      resultEl.style.display = 'block';
+      resultEl.style.color   = '#16a34a';
+      resultEl.textContent   = '신청 완료! 국민은행 00-000-000 김민석으로 입금해주세요.';
+    }
   }).catch(function(err) {
+    if (btn) { btn.disabled = false; btn.textContent = '신청하기'; btn.style.opacity = '1'; }
     showErr('오류: ' + (err && err.message || ''));
   });
 }
