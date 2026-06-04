@@ -1526,6 +1526,8 @@ onAuthStateChanged(auth, function(user) {
   <!-- STUDENTS PANEL -->
   <div class="panel" id="panel-students">
     <div class="card">
+      <!-- 원장 전용: 학생 등록/엑셀 (선생님은 숨김) -->
+      <div id="studentAdminControls">
       <div style="margin-bottom:12px">
         <div class="card-title" style="color:#6366f1;margin:0 0 8px 0;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 학생 등록</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1546,6 +1548,8 @@ onAuthStateChanged(auth, function(user) {
         <input type="tel" id="newParentPhone"   placeholder="학부모 번호" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;flex:1;font-family:inherit">
         <button onclick="addStudent()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:8px;padding:7px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">+ 학생 등록</button>
       </div>
+      </div><!-- /studentAdminControls -->
+      <div id="studentTeacherNote" style="display:none;font-size:11px;color:#0891b2;background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:8px 10px;margin-bottom:10px">원장이 배정한 학생만 표시됩니다. 학생 정보 수정은 원장에게 문의하세요.</div>
       <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;display:flex;align-items:center;gap:4px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg> 출/결/지는 매월 자동 갱신됩니다 (이번 달 기준)</div>
       <div id="studentList">
         <!-- 컬럼 헤더 -->
@@ -1553,6 +1557,19 @@ onAuthStateChanged(auth, function(user) {
           <div>이름 / 학년</div><div>수강반</div><div>학생 번호</div><div>학부모 번호</div><div>출결 현황</div><div></div><div></div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- 학생 배정 모달 (원장 전용) -->
+  <div id="assignStudentModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9200;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+    <div style="background:#fff;border-radius:16px;padding:22px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:15px;font-weight:800;color:#1e293b">선생님 배정</div>
+        <button onclick="closeAssignStudent()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer">×</button>
+      </div>
+      <div id="assignStudentName" style="font-size:12px;color:#64748b;margin-bottom:12px"></div>
+      <div id="assignTeacherList" style="display:flex;flex-direction:column;gap:6px"></div>
+      <button onclick="saveAssignStudent()" style="width:100%;margin-top:14px;padding:12px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">배정 저장</button>
     </div>
   </div>
 
@@ -1807,36 +1824,55 @@ function importData(e) {
 // ── 학생 관리 ──
 var students = [];
 
+// 학생 저장: 학원 공유 풀 schools/{schoolId}/students (원장만 쓰기 가능)
 function persistStudents(){
   localStorage.setItem(stuKey(),JSON.stringify(students));
-  // Firestore에 저장
-  if (window.fbDb && currentSchool && currentSchool.length > 10) {
-    var uid = currentSchool;
-    // 기존 학생 모두 삭제 후 재저장
-    var myStudents = students.filter(function(s){ return s.teacher === currentUser; });
-    myStudents.forEach(function(s) {
-      var ref = window.fbDoc(window.fbDb, 'users', uid, 'students', String(s.id));
+  if (window.fbDb && currentSchoolId && currentRole === 'owner') {
+    students.forEach(function(s) {
+      var ref = window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'students', String(s.id));
       window.fbSetDoc(ref, s).catch(function(){});
     });
   }
   updateClassSelect();
 }
 
+// 학원 공유 학생 풀 로드 (원장=전체, 선생님=배정된 것만)
+function loadSchoolStudents() {
+  if (!window.fbDb || !currentSchoolId) return Promise.resolve();
+  return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools', currentSchoolId, 'students'))
+    .then(function(snap) {
+      var all = [];
+      snap.forEach(function(d){ all.push(Object.assign({id: d.id}, d.data())); });
+      if (currentRole === 'owner' || currentRole === 'superadmin') {
+        students = all; // 원장은 전체
+      } else {
+        // 선생님: 자기 uid가 assignedTo에 포함된 학생만
+        var myUid = currentSchool;
+        students = all.filter(function(s){
+          return Array.isArray(s.assignedTo) && s.assignedTo.indexOf(myUid) !== -1;
+        });
+      }
+      localStorage.setItem(stuKey(), JSON.stringify(students));
+      renderStudents(); updateStudentFilter(); updateClassSelect();
+    }).catch(function(){});
+}
+
 function exportStudents() {
-  var myStudents = students.filter(function(s){ return s.teacher === currentUser; });
-  if (myStudents.length === 0) { showToast('저장할 학생이 없습니다.', 'error'); return; }
-  var json = JSON.stringify(myStudents, null, 2);
+  if (currentRole !== 'owner' && currentRole !== 'superadmin') { showToast('원장만 사용할 수 있습니다.', 'error'); return; }
+  if (students.length === 0) { showToast('저장할 학생이 없습니다.', 'error'); return; }
+  var json = JSON.stringify(students, null, 2);
   var blob = new Blob([json], {type:'application/json'});
   var url  = URL.createObjectURL(blob);
   var a    = document.createElement('a');
   a.href   = url;
-  a.download = currentUser + '_학생목록.json';
+  a.download = (currentSchoolProfile && currentSchoolProfile.name || '학원') + '_학생목록.json';
   a.click();
   URL.revokeObjectURL(url);
   showToast('학생목록 저장 완료!');
 }
 
 function importStudents(e) {
+  if (currentRole !== 'owner' && currentRole !== 'superadmin') { showToast('원장만 사용할 수 있습니다.', 'error'); e.target.value=''; return; }
   var file = e.target.files[0];
   if (!file) return;
   var reader = new FileReader();
@@ -1850,9 +1886,13 @@ function importStudents(e) {
         if (students.find(function(ex){ return ex.name === s.name && ex.className === (s.className||''); })) return;
         students.push({
           id: Date.now() + '_' + Math.random().toString(36).slice(2,8),
-          teacher: currentUser,
           className: s.className || '',
-          name: s.name
+          name: s.name,
+          grade: s.grade || '',
+          phone: s.phone || '',
+          parent: s.parent || '',
+          assignedTo: [],
+          createdAt: new Date().toISOString()
         });
         added++;
       });
@@ -1873,14 +1913,17 @@ function importStudents(e) {
 }
 
 function deleteAllStudents() {
-  var myStudents = students.filter(function(s){ return s.teacher === currentUser; });
-  if (myStudents.length === 0) { showToast('삭제할 내 학생이 없습니다.', 'error'); return; }
-  if (!confirm('내(' + currentUser + ') 학생 ' + myStudents.length + '명을 전체 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
-  // 본인 학생만 제거
-  students = students.filter(function(s){ return s.teacher !== currentUser; });
-  // GAS에 본인 teacher 빈 목록 저장 (본인 행만 삭제됨)
+  if (currentRole !== 'owner' && currentRole !== 'superadmin') { showToast('원장만 사용할 수 있습니다.', 'error'); return; }
+  if (students.length === 0) { showToast('삭제할 학생이 없습니다.', 'error'); return; }
+  if (!confirm('학원 전체 학생 ' + students.length + '명을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+  // Firestore에서도 전부 삭제
+  if (window.fbDb && currentSchoolId) {
+    students.forEach(function(s){
+      window.fbDeleteDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'students', String(s.id))).catch(function(){});
+    });
+  }
+  students = [];
   localStorage.setItem(stuKey(), JSON.stringify(students));
-  gasPost({action:'saveStudents', data:[], teacher:currentUser}).catch(function(){});
   renderStudents();
   updateClassSelect();
   showToast('학생 목록 전체 삭제 완료!');
@@ -2058,7 +2101,8 @@ function importDataXlsx(e) {
 
 // ── 학생 엑셀 저장 ─────────────────────────────────────────
 function exportStudentsXlsx() {
-  var myStudents = students.filter(function(s){ return s.teacher === currentUser; });
+  if (currentRole !== 'owner' && currentRole !== 'superadmin') { showToast('원장만 사용할 수 있습니다.', 'error'); return; }
+  var myStudents = students;
   if (myStudents.length === 0) { showToast('저장할 학생이 없습니다.', 'error'); return; }
   loadSheetJS(function() {
     var rows = myStudents.map(function(s) {
@@ -2081,6 +2125,7 @@ function exportStudentsXlsx() {
 
 // ── 학생 엑셀 불러오기 ─────────────────────────────────────
 function importStudentsXlsx(e) {
+  if (currentRole !== 'owner' && currentRole !== 'superadmin') { showToast('원장만 사용할 수 있습니다.', 'error'); e.target.value=''; return; }
   var file = e.target.files[0];
   if (!file) return;
   loadSheetJS(function() {
@@ -2098,12 +2143,13 @@ function importStudentsXlsx(e) {
           if (students.find(function(ex){ return ex.name === name && ex.className === cls; })) return;
           students.push({
             id:        Date.now() + '_' + Math.random().toString(36).slice(2,8),
-            teacher:   currentUser,
             className: cls,
             name:      name,
             grade:     String(row['학년']     || '').trim(),
             phone:     String(row['학생번호'] || '').trim(),
             parent:    String(row['학부모번호'] || '').trim(),
+            assignedTo: [],
+            createdAt: new Date().toISOString()
           });
           added++;
         });
@@ -2123,6 +2169,7 @@ function importStudentsXlsx(e) {
 }
 
 function addStudent() {
+  if (currentRole !== 'owner') { showToast('학생 등록은 원장만 가능합니다.', 'error'); return; }
   const cls    = document.getElementById('newStudentClass').value.trim();
   const name   = document.getElementById('newStudentName').value.trim();
   const grade  = document.getElementById('newStudentGrade') ? document.getElementById('newStudentGrade').value.trim() : '';
@@ -2132,7 +2179,7 @@ function addStudent() {
   if (students.find(s => s.name === name && s.className === cls)) {
     showToast('이미 등록된 학생입니다.', 'error'); return;
   }
-  students.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2,8), teacher: currentUser, className: cls, name, grade, phone, parent });
+  students.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2,8), className: cls, name, grade, phone, parent, assignedTo: [], createdAt: new Date().toISOString() });
   persistStudents();
   document.getElementById('newStudentName').value  = '';
   if (document.getElementById('newStudentPhone')) document.getElementById('newStudentPhone').value = '';
@@ -2143,8 +2190,13 @@ function addStudent() {
 }
 
 function deleteStudent(id) {
+  if (currentRole !== 'owner') { showToast('학생 삭제는 원장만 가능합니다.', 'error'); return; }
+  // Firestore에서도 삭제
+  if (window.fbDb && currentSchoolId) {
+    window.fbDeleteDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'students', String(id))).catch(function(){});
+  }
   students = students.filter(s => String(s.id) !== String(id));
-  persistStudents();
+  localStorage.setItem(stuKey(), JSON.stringify(students));
   renderStudents();
   updateStudentFilter();
 }
@@ -2152,56 +2204,35 @@ function deleteStudent(id) {
 function renderStudents() {
   const el = document.getElementById('studentList');
   if (!el) return;
+
+  // 역할별 UI 토글: 등록/엑셀은 원장만, 선생님은 안내문
+  var isOwner = (currentRole === 'owner' || currentRole === 'superadmin');
+  var ctrl = document.getElementById('studentAdminControls');
+  if (ctrl) ctrl.style.display = isOwner ? 'block' : 'none';
+  var note = document.getElementById('studentTeacherNote');
+  if (note) note.style.display = isOwner ? 'none' : 'block';
+
   if (students.length === 0) {
-    el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">등록된 학생이 없습니다</div>';
+    el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">' + (isOwner ? '등록된 학생이 없습니다' : '배정된 학생이 없습니다') + '</div>';
     return;
   }
 
   let html = '';
-
-  if (isOwnerOrAdmin()) {
-    // 관리자: 선생님별 → 반별 그룹핑
-    const teacherGroups = {};
-    students.forEach(s => {
-      const t = s.teacher || '미지정';
-      if (!teacherGroups[t]) teacherGroups[t] = {};
-      const g = s.className || '반 미지정';
-      if (!teacherGroups[t][g]) teacherGroups[t][g] = [];
-      teacherGroups[t][g].push(s);
+  // 반별 그룹핑 (원장/선생님 동일)
+  const groups = {};
+  students.forEach(s => {
+    const g = s.className || '반 미지정';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(s);
+  });
+  Object.keys(groups).sort().forEach(g => {
+    html += '<div style="margin-bottom:12px">';
+    html += '<div style="font-size:11px;font-weight:800;color:#6366f1;margin-bottom:6px">' + g + '</div>';
+    groups[g].sort(function(a,b){ return a.name.localeCompare(b.name, 'ko'); }).forEach(s => {
+      html += makeStudentRow(s);
     });
-    Object.keys(teacherGroups).sort().forEach(teacher => {
-      const tid = 'teacher-stu-' + teacher.replace(/\s/g,'_');
-      html += '<div style="margin-bottom:10px;border:1.5px solid #e2e8f0;border-radius:10px;overflow:hidden">';
-      html += '<div onclick="toggleStuGroup(\'' + tid + '\')" style="background:linear-gradient(135deg,#6366f1,#4f46e5);padding:8px 12px;font-size:12px;font-weight:800;color:#fff;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
-            + '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M15 14l2 2 4-4"/></svg>' + teacher + ' 선생님</span>'
-            + '<span id="' + tid + '-arrow">▼</span></div>';
-      html += '<div id="' + tid + '" style="padding:10px">';
-      const groups = teacherGroups[teacher];
-      Object.keys(groups).sort().forEach(g => {
-        html += '<div style="font-size:11px;font-weight:800;color:#6366f1;margin-bottom:4px;margin-top:6px">' + g + '</div>';
-        groups[g].sort(function(a,b){ return a.name.localeCompare(b.name, 'ko'); }).forEach(s => {
-          html += makeStudentRow(s);
-        });
-      });
-      html += '</div></div>';
-    });
-  } else {
-    // 일반 선생님: 반별 그룹핑
-    const groups = {};
-    students.forEach(s => {
-      const g = s.className || '반 미지정';
-      if (!groups[g]) groups[g] = [];
-      groups[g].push(s);
-    });
-    Object.keys(groups).sort().forEach(g => {
-      html += '<div style="margin-bottom:12px">';
-      html += '<div style="font-size:11px;font-weight:800;color:#6366f1;margin-bottom:6px">' + g + '</div>';
-      groups[g].sort(function(a,b){ return a.name.localeCompare(b.name, 'ko'); }).forEach(s => {
-        html += makeStudentRow(s);
-      });
-      html += '</div>';
-    });
-  }
+    html += '</div>';
+  });
 
   el.innerHTML = html;
 }
@@ -2213,6 +2244,75 @@ function toggleStuGroup(tid) {
   var isOpen = body.style.display !== 'none';
   body.style.display = isOpen ? 'none' : 'block';
   if (arrow) arrow.textContent = isOpen ? '▶' : '▼';
+}
+
+// ── 학생 배정 (원장 전용) ──────────────────────────────
+var _assignStudentId = null;
+var _schoolTeachers = []; // 학원 소속 선생님 목록 캐시
+
+function openAssignStudent(studentId) {
+  if (currentRole !== 'owner' && currentRole !== 'superadmin') return;
+  _assignStudentId = studentId;
+  var s = students.find(function(x){ return String(x.id) === String(studentId); });
+  if (!s) return;
+  document.getElementById('assignStudentName').textContent = s.name + (s.className ? ' · ' + s.className : '');
+  var listEl = document.getElementById('assignTeacherList');
+  listEl.innerHTML = '<div style="color:#94a3b8;font-size:12px;text-align:center;padding:14px">선생님 목록 불러오는 중...</div>';
+  document.getElementById('assignStudentModal').style.display = 'flex';
+
+  // 같은 학원 선생님 조회 (schoolId 일치, role teacher)
+  window.fbGetDocs(window.fbQuery(
+    window.fbCollection(window.fbDb, 'users'),
+    window.fbWhere('schoolId', '==', currentSchoolId)
+  )).then(function(snap){
+    _schoolTeachers = [];
+    snap.forEach(function(d){
+      var u = d.data();
+      if (u.role === 'teacher') _schoolTeachers.push({ uid: d.id, name: u.name || u.userId, userId: u.userId });
+    });
+    drawAssignTeacherList(s);
+  }).catch(function(err){
+    listEl.innerHTML = '<div style="color:#dc2626;font-size:12px;text-align:center;padding:14px">선생님 목록을 불러오지 못했습니다.<br><span style="font-size:11px;color:#94a3b8">' + (err && (err.code||err.message) || '') + '</span></div>';
+  });
+}
+
+function drawAssignTeacherList(s) {
+  var listEl = document.getElementById('assignTeacherList');
+  var assigned = Array.isArray(s.assignedTo) ? s.assignedTo : [];
+  if (_schoolTeachers.length === 0) {
+    listEl.innerHTML = '<div style="color:#94a3b8;font-size:12px;text-align:center;padding:14px">소속 선생님이 없습니다.<br><span style="font-size:11px">선생님이 같은 학원 코드로 가입하면 여기에 표시됩니다.</span></div>';
+    return;
+  }
+  listEl.innerHTML = _schoolTeachers.map(function(t){
+    var checked = assigned.indexOf(t.uid) !== -1 ? 'checked' : '';
+    return '<label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:13px">'
+      + '<input type="checkbox" class="assign-teacher-cb" value="' + t.uid + '" ' + checked + ' style="width:16px;height:16px;accent-color:#0891b2">'
+      + '<span style="font-weight:700;color:#1e293b">' + (t.name||'') + '</span>'
+      + '<span style="font-size:11px;color:#94a3b8">' + (t.userId||'') + '</span>'
+      + '</label>';
+  }).join('');
+}
+
+function closeAssignStudent() {
+  document.getElementById('assignStudentModal').style.display = 'none';
+  _assignStudentId = null;
+}
+
+function saveAssignStudent() {
+  if (!_assignStudentId) return;
+  var s = students.find(function(x){ return String(x.id) === String(_assignStudentId); });
+  if (!s) return;
+  var checked = [];
+  document.querySelectorAll('.assign-teacher-cb:checked').forEach(function(cb){ checked.push(cb.value); });
+  s.assignedTo = checked;
+  // Firestore 저장
+  if (window.fbDb && currentSchoolId) {
+    window.fbSetDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'students', String(s.id)), s).catch(function(){});
+  }
+  localStorage.setItem(stuKey(), JSON.stringify(students));
+  closeAssignStudent();
+  renderStudents();
+  showToast(s.name + ' 학생 배정이 저장되었습니다 (' + checked.length + '명)');
 }
 
 function makeStudentRow(s) {
@@ -2240,8 +2340,15 @@ function makeStudentRow(s) {
     + '<span style="background:#fef9c3;color:#92400e;padding:2px 5px;border-radius:4px;white-space:nowrap">지 ' + late + '</span>'
     + '<span style="background:#fee2e2;color:#dc2626;padding:2px 5px;border-radius:4px;white-space:nowrap">결 ' + absent + '</span>'
     + '</div>'
-    + '<button onclick="startEditStudent(\'' + s.id + '\')" style="background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">수정</button>'
-    + '<button onclick="deleteStudent(\'' + s.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">삭제</button>'
+    + '</div>'
+    + (function(){
+        var isOwner = (currentRole === 'owner' || currentRole === 'superadmin');
+        if (!isOwner) return ''; // 선생님: 읽기 전용 (버튼 없음)
+        var cnt = Array.isArray(s.assignedTo) ? s.assignedTo.length : 0;
+        return '<button onclick="openAssignStudent(\'' + s.id + '\')" style="background:#cffafe;color:#0e7490;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">배정' + (cnt>0 ? ' ('+cnt+')' : '') + '</button>'
+          + '<button onclick="startEditStudent(\'' + s.id + '\')" style="background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">수정</button>'
+          + '<button onclick="deleteStudent(\'' + s.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">삭제</button>';
+      })()
     + '</div></div>'
     // 둘째 줄: 반 / 전화번호
     + '<div style="display:flex;gap:8px;margin-top:5px;font-size:11px;color:#64748b;flex-wrap:wrap">'
@@ -2276,6 +2383,7 @@ function cancelEditStudent(id) {
 }
 
 function saveEditStudent(id) {
+  if (currentRole !== 'owner' && currentRole !== 'superadmin') { showToast('수정은 원장만 가능합니다.', 'error'); return; }
   const newClass  = document.getElementById('edit-class-'  + id).value.trim();
   const newName   = document.getElementById('edit-name-'   + id).value.trim();
   const newGrade  = document.getElementById('edit-grade-'  + id) ? document.getElementById('edit-grade-'  + id).value.trim() : '';
@@ -2709,11 +2817,11 @@ async function saveRecord() {
     records.unshift(rec); showToast('저장 완료!');
   }
 
-  // 학생 이름이 있으면 학생 목록에 자동 등록
-  if (rec.student) {
+  // 학생 이름이 있으면 학생 목록에 자동 등록 (원장만 — 선생님은 학원 풀 쓰기 권한 없음)
+  if (rec.student && (currentRole === 'owner' || currentRole === 'superadmin')) {
     const exists = students.find(s => s.name === rec.student && s.className === rec.className);
     if (!exists) {
-      students.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2,8), teacher: currentUser, className: rec.className, name: rec.student });
+      students.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2,8), className: rec.className, name: rec.student, assignedTo: [], createdAt: new Date().toISOString() });
       persistStudents();
     }
     updateStudentFilter();
@@ -4273,15 +4381,12 @@ function loadOwnerData(ownerUid) {
         .catch(function(){ clearTimeout(timer); return _emptySnap; });
     }
 
-    // 모든 멤버 데이터 병렬 로드 (각 요청 개별 타임아웃)
+    // 모든 멤버 records 병렬 로드 (학생은 학원 공유 풀에서 별도 로드)
     var recPromises = memberUids.map(function(uid) {
       return getDocsTO(window.fbCollection(window.fbDb, 'users', uid, 'records'));
     });
-    var stuPromises = memberUids.map(function(uid) {
-      return getDocsTO(window.fbCollection(window.fbDb, 'users', uid, 'students'));
-    });
 
-    return Promise.all([Promise.all(recPromises), Promise.all(stuPromises)]);
+    return Promise.all([Promise.all(recPromises)]);
   }).then(function(results) {
     if (!results) { finishOwnerLoad(); return; }
     if (!window.currentUser) { finishOwnerLoad(); return; }
@@ -4289,18 +4394,13 @@ function loadOwnerData(ownerUid) {
       finishOwnerLoad(); return;
     }
     var allRecs = [];
-    var allStus = [];
     results[0].forEach(function(snap) {
       snap.forEach(function(d) { allRecs.push(Object.assign({id: d.id}, d.data())); });
     });
-    results[1].forEach(function(snap) {
-      snap.forEach(function(d) { allStus.push(Object.assign({id: d.id}, d.data())); });
-    });
 
     records = allRecs.map(normalizeRec);
-    students = allStus;
     persist();
-    localStorage.setItem(stuKey(), JSON.stringify(students));
+    loadSchoolStudents(); // 학원 공유 학생 풀 로드 (원장=전체)
     setupAdminFilter(); // 원장도 선생님 필터 사용
     renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
     showToast('학원 전체 데이터 불러오기 완료!');
@@ -4325,24 +4425,19 @@ function initWithFirebase(uid) {
     return;
   }
 
-  // 일반 선생님: 본인 데이터만
+  // 일반 선생님: records/notices는 본인 것, 학생은 학원 공유 풀(배정된 것만)
   var recRef = window.fbCollection(window.fbDb, 'users', uid, 'records');
-  var stuRef = window.fbCollection(window.fbDb, 'users', uid, 'students');
   var notRef = window.fbCollection(window.fbDb, 'users', uid, 'notices');
 
   Promise.all([
     window.fbGetDocs(recRef),
-    window.fbGetDocs(stuRef),
     window.fbGetDocs(notRef).catch(function(){ return {forEach:function(){}}; })
   ]).then(function(results) {
     var recSnap = results[0];
-    var stuSnap = results[1];
-    var notSnap = results[2];
+    var notSnap = results[1];
 
     var fbRecs = [];
     recSnap.forEach(function(d) { fbRecs.push(Object.assign({id: d.id}, d.data())); });
-    var fbStus = [];
-    stuSnap.forEach(function(d) { fbStus.push(Object.assign({id: d.id}, d.data())); });
     var fbNots = [];
     notSnap.forEach(function(d) { fbNots.push(Object.assign({id: d.id}, d.data())); });
 
@@ -4350,16 +4445,13 @@ function initWithFirebase(uid) {
       records = fbRecs.map(normalizeRec);
       persist();
     }
-    if (fbStus.length > 0 || students.length === 0) {
-      students = fbStus;
-      localStorage.setItem(stuKey(), JSON.stringify(students));
-    }
     if (fbNots.length > 0 || notices.length === 0) {
       fbNots.sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
       notices = fbNots;
       localStorage.setItem(noticeKey(), JSON.stringify(notices));
     }
 
+    loadSchoolStudents(); // 배정된 학생만 로드
     renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
     showToast('불러오기 완료!');
   }).catch(function() {
