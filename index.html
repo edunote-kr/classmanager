@@ -1827,22 +1827,44 @@ var students = [];
 // 학생 저장: 학원 공유 풀 schools/{schoolId}/students (원장만 쓰기 가능)
 function persistStudents(){
   localStorage.setItem(stuKey(),JSON.stringify(students));
-  if (window.fbDb && currentSchoolId && currentRole === 'owner') {
-    students.forEach(function(s) {
-      var ref = window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'students', String(s.id));
-      window.fbSetDoc(ref, s).catch(function(){});
-    });
+  // 진단: 저장 조건 확인
+  if (!window.fbDb) { console.warn('[학생저장] fbDb 없음'); updateClassSelect(); return; }
+  if (currentRole !== 'owner' && currentRole !== 'superadmin') {
+    console.warn('[학생저장] 권한 아님. currentRole=', currentRole);
+    updateClassSelect(); return;
   }
+  if (!currentSchoolId) {
+    console.warn('[학생저장] currentSchoolId 없음');
+    showToast('학원 ID가 없어 저장 못 했습니다. (콘솔 확인)', 'error');
+    updateClassSelect(); return;
+  }
+  console.log('[학생저장] 시작. schoolId=', currentSchoolId, 'role=', currentRole, '학생수=', students.length);
+  var saved = 0, failed = 0;
+  students.forEach(function(s) {
+    var ref = window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'students', String(s.id));
+    window.fbSetDoc(ref, s).then(function(){
+      saved++;
+    }).catch(function(err){
+      failed++;
+      console.error('[학생저장 실패]', s.name, err && err.code, err && err.message);
+      showToast('저장 실패: ' + (err && (err.code||err.message) || '알 수 없음'), 'error');
+    });
+  });
   updateClassSelect();
 }
 
 // 학원 공유 학생 풀 로드 (원장=전체, 선생님=배정된 것만)
 function loadSchoolStudents() {
-  if (!window.fbDb || !currentSchoolId) return Promise.resolve();
+  if (!window.fbDb || !currentSchoolId) {
+    console.warn('[학생로드] 조건 안 맞음. fbDb=', !!window.fbDb, 'schoolId=', currentSchoolId);
+    return Promise.resolve();
+  }
+  console.log('[학생로드] 시작. schoolId=', currentSchoolId, 'role=', currentRole);
   return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools', currentSchoolId, 'students'))
     .then(function(snap) {
       var all = [];
       snap.forEach(function(d){ all.push(Object.assign({id: d.id}, d.data())); });
+      console.log('[학생로드] 가져온 학생 수=', all.length);
       if (currentRole === 'owner' || currentRole === 'superadmin') {
         students = all; // 원장은 전체
       } else {
@@ -1854,7 +1876,10 @@ function loadSchoolStudents() {
       }
       localStorage.setItem(stuKey(), JSON.stringify(students));
       renderStudents(); updateStudentFilter(); updateClassSelect();
-    }).catch(function(){});
+    }).catch(function(err){
+      console.error('[학생로드 실패]', err && err.code, err && err.message);
+      showToast('학생 불러오기 실패: ' + (err && (err.code||err.message) || ''), 'error');
+    });
 }
 
 function exportStudents() {
