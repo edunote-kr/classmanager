@@ -389,6 +389,8 @@ textarea { resize:vertical; }
 #kakaoFab .kakaoFabShort { display:none; }
 #kakaoFab svg { width:26px; height:26px; flex-shrink:0; }
 @media (max-width: 640px) {
+  /* 작은 화면: 로그인/가입 모달 패딩 축소 (인증 영역 가로 넘침 방지) */
+  .login-modal-box { padding:24px 16px !important; }
   /* 모바일: 헤더의 학원 로고+학원명 숨김 (공간 부족, 로고/EduNote와 겹침 방지) */
   .header-school-pc { display:none !important; }
   #kakaoFab { right:12px; bottom:40px; height:48px; width:48px; padding:0; border-radius:50%; justify-content:center; gap:0; overflow:visible; }
@@ -682,7 +684,7 @@ onAuthStateChanged(auth, function(user) {
 </div>
 <!-- 로그인 화면 -->
 <div id="loginScreen" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;box-sizing:border-box">
-  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.4);position:relative">
+  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.4);position:relative;box-sizing:border-box;overflow-x:hidden" class="login-modal-box">
     <!-- 닫기 버튼 -->
     <button onclick="document.getElementById('loginScreen').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer;line-height:1">×</button>
     <!-- 로고 -->
@@ -750,16 +752,16 @@ onAuthStateChanged(auth, function(user) {
       </div>
       <div style="margin-bottom:12px">
         <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">휴대폰 번호</label>
-        <div style="display:flex;gap:8px">
-          <input type="tel" id="signupPhone" placeholder="010-0000-0000" style="flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
-          <button onclick="sendVerificationCode()" style="padding:10px 14px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">인증번호</button>
+        <div style="display:flex;gap:6px;width:100%;box-sizing:border-box">
+          <input type="tel" id="signupPhone" placeholder="010-0000-0000" style="flex:1 1 auto;min-width:0;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+          <button onclick="sendVerificationCode()" style="flex:0 0 auto;width:90px;padding:10px 0;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">인증요청</button>
         </div>
       </div>
       <div id="verificationSection" style="display:none;margin-bottom:12px">
         <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">인증번호</label>
-        <div style="display:flex;gap:8px">
-          <input type="number" id="verificationCode" placeholder="6자리 입력" style="flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
-          <button onclick="verifyCode()" style="padding:10px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">확인</button>
+        <div style="display:flex;gap:6px;width:100%;box-sizing:border-box">
+          <input type="tel" inputmode="numeric" id="verificationCode" placeholder="6자리 입력" style="flex:1 1 auto;min-width:0;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+          <button onclick="verifyCode()" style="flex:0 0 auto;width:90px;padding:10px 0;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">인증확인</button>
         </div>
       </div>
       <div id="phoneVerified" style="display:none;color:#16a34a;font-size:12px;font-weight:700;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> 휴대폰 인증 완료!</div>
