@@ -1198,8 +1198,12 @@ onAuthStateChanged(auth, function(user) {
       </div>
     </div>
 
-    <!-- 신청 폼 -->
-    <div id="subscribeFormBox" style="background:#fff;border-radius:14px;padding:20px;border:1px solid #e2e8f0">
+    <!-- 1단계: 요금제 선택 후 다음 버튼 -->
+    <button id="subNextBtn" onclick="proceedToApplyForm()" style="width:100%;padding:15px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:8px">선택한 요금제로 신청하기 →</button>
+    <div id="subNextHint" style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:8px">요금제를 먼저 선택해주세요</div>
+
+    <!-- 신청 폼 (2단계, 무료는 건너뜀) -->
+    <div id="subscribeFormBox" style="display:none;background:#fff;border-radius:14px;padding:20px;border:1px solid #e2e8f0">
       <div style="font-size:15px;font-weight:900;color:#1e293b;text-align:center;margin-bottom:4px">에듀노트 정식버전 (연장/변경)신청</div>
       <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:14px">아래 정보를 입력하고 신청해주세요</div>
 
@@ -5016,6 +5020,16 @@ function showSubscribeScreen(fbUser, profile, reason, expDate) {
   });
   var selEl = document.getElementById('subPlanSelected');
   if (selEl) selEl.innerHTML = '<span style="color:#94a3b8">플랜을 선택해주세요</span>';
+
+  // 1단계(요금제 선택) 화면으로 초기화
+  var cards = document.querySelector('#subscribeScreen [style*="grid-template-columns:1fr 1fr"]');
+  if (cards) cards.style.display = 'grid';
+  var nextBtn = document.getElementById('subNextBtn');
+  if (nextBtn) { nextBtn.style.display = 'block'; nextBtn.disabled = false; nextBtn.textContent = '선택한 요금제로 신청하기 →'; nextBtn.style.opacity = '1'; }
+  var nextHint = document.getElementById('subNextHint');
+  if (nextHint) { nextHint.style.display = 'block'; nextHint.textContent = '요금제를 먼저 선택해주세요'; nextHint.style.color = '#94a3b8'; }
+  var box = document.getElementById('subscribeFormBox');
+  if (box) box.style.display = 'none';
 }
 
 function selectSubPlan(plan) {
@@ -5027,7 +5041,63 @@ function selectSubPlan(plan) {
     el.style.border = p === plan ? '2px solid #6366f1' : '1.5px solid #e2e8f0';
     el.style.background = p === plan ? '#faf9ff' : '#fff';
   });
-  document.getElementById('subPlanSelected').innerHTML = labels[plan] + ' 선택됨';
+  var selEl = document.getElementById('subPlanSelected');
+  if (selEl) selEl.innerHTML = labels[plan] + ' 선택됨';
+  // 다음 버튼 힌트 갱신
+  var hint = document.getElementById('subNextHint');
+  if (hint) {
+    hint.textContent = (plan === 'free')
+      ? '무료 체험은 바로 시작됩니다 (선생님 20명 기본)'
+      : '신청서 작성 후 입금 안내를 받으실 수 있어요';
+    hint.style.color = '#6366f1';
+  }
+}
+
+// 1단계 → 2단계: 무료는 즉시 활성화, 유료는 신청 폼 표시
+function proceedToApplyForm() {
+  if (!selectedSubPlan) {
+    var hint = document.getElementById('subNextHint');
+    if (hint) { hint.textContent = '요금제를 먼저 선택해주세요'; hint.style.color = '#ef4444'; }
+    return;
+  }
+  var profile = subscribeUser ? (subscribeUser.profile || {}) : {};
+
+  // ── 무료 플랜: 신청 폼·계좌 건너뛰고 즉시 활성화 (선생님 20명 기본) ──
+  if (selectedSubPlan === 'free') {
+    if (!subscribeUser || !subscribeUser.fbUser) { showToast('로그인이 필요합니다.', 'error'); return; }
+    if (profile.freeTrialUsed) {
+      var hint2 = document.getElementById('subNextHint');
+      if (hint2) { hint2.textContent = '이미 무료 체험을 사용하셨습니다. 유료 플랜을 선택해주세요.'; hint2.style.color = '#ef4444'; }
+      return;
+    }
+    var btn = document.getElementById('subNextBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '시작 중...'; btn.style.opacity = '0.6'; }
+    var uid = subscribeUser.fbUser.uid;
+    var p = PLANS['free'];
+    autoActivateFreeTrial(uid, { schoolName: profile.schoolName || '', name: profile.name || '' }, 20, p)
+      .then(function() {
+        showToast('무료 체험이 시작되었습니다!');
+        setTimeout(function(){ location.reload(); }, 800);
+      })
+      .catch(function(err) {
+        if (btn) { btn.disabled = false; btn.textContent = '선택한 요금제로 신청하기 →'; btn.style.opacity = '1'; }
+        showToast('활성화 오류: ' + (err && (err.code||err.message) || ''), 'error');
+      });
+    return;
+  }
+
+  // ── 유료 플랜: 신청 폼 표시 (요금제 카드/버튼 숨김) ──
+  var cards = document.querySelector('#subscribeScreen [style*="grid-template-columns:1fr 1fr"]');
+  if (cards) cards.style.display = 'none';
+  var nextBtn = document.getElementById('subNextBtn');
+  if (nextBtn) nextBtn.style.display = 'none';
+  var nextHint = document.getElementById('subNextHint');
+  if (nextHint) nextHint.style.display = 'none';
+  var box = document.getElementById('subscribeFormBox');
+  if (box) {
+    box.style.display = 'block';
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function submitSubscribeApply() {
