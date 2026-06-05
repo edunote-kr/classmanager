@@ -3017,6 +3017,7 @@ async function saveRecord() {
     supplement5Comp: parseInt((document.getElementById('f-supplement5Comp')||{value:'0'}).value)||0,
 
   };
+  var wasEdit = (editId !== null);
   if (editId!==null) {
     records = records.map(r=>String(r.id)===String(editId) ? rec : r);
     editId = null; showToast('수정 완료!');
@@ -3039,7 +3040,11 @@ async function saveRecord() {
   if(rec.student){updateStudentFilter();}
   var _s=document.getElementById('filterStudent');if(_s)_s.value='';
   renderList(); // 저장/수정 즉시 목록 갱신
-  // 저장 후 입력 탭에 그대로 머무름 (목록으로 이동하지 않음)
+  // 수정한 경우: 폼 정리 후 과제목록 탭으로 이동. 신규 저장은 입력 탭에 머무름.
+  if (wasEdit) {
+    resetForm();
+    switchTab('list');
+  }
   showLoading(true);
   // Firestore에 저장
   if (window.fbDb && currentSchool && currentSchool.length > 10) {
@@ -3695,6 +3700,15 @@ function setLessonComp(bi, ii, val) {
 
 // 블록 데이터 → 기존 hidden 필드로 직렬화 (저장 전 호출)
 function serializeLessonBlocks() {
+  // 먼저 모든 동적 수업 필드를 비운다 (항목 삭제 시 옛 값이 남는 버그 방지)
+  ['reading','grammar','exam','etc','supplement'].forEach(function(base){
+    for (var n = 1; n <= 5; n++) {
+      var el  = document.getElementById('f-'+base+n);
+      var elC = document.getElementById('f-'+base+n+'Comp');
+      if (el)  el.value  = '';
+      if (elC) elC.value = 0;
+    }
+  });
   var counters = { reading:0, grammar:0, exam:0, etc:0, today:0, supplement:0 };
   _lessonBlocks.forEach(function(block) {
     block.items.forEach(function(item) {
@@ -7281,6 +7295,27 @@ function refreshSchoolLogo() {
   if (headerSchoolName && currentSchoolProfile && currentSchoolProfile.name) {
     headerSchoolName.textContent = currentSchoolProfile.name;
   }
+  // 브라우저 탭 파비콘을 학원 로고로 교체 (없으면 기본 EduNote 로고 유지)
+  applyFavicon(hasLogo ? currentSchoolProfile.logo : null);
+}
+
+// 브라우저 탭 파비콘 적용 (logoDataUrl 없으면 기본 E 로고)
+var DEFAULT_FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366f1'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='22' font-weight='900' fill='white' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E";
+function applyFavicon(logoDataUrl) {
+  var href = logoDataUrl || DEFAULT_FAVICON;
+  // 기존 icon 링크 제거 후 새로 추가 (브라우저가 즉시 갱신하도록)
+  var heads = document.querySelectorAll("link[rel~='icon']");
+  heads.forEach(function(el){ el.parentNode.removeChild(el); });
+  var link = document.createElement('link');
+  link.rel = 'icon';
+  // base64 png/jpeg면 type 지정, 아니면 svg
+  if (logoDataUrl && /^data:image\/(png|jpe?g|webp)/.test(logoDataUrl)) {
+    link.type = logoDataUrl.slice(5, logoDataUrl.indexOf(';'));
+  } else if (!logoDataUrl) {
+    link.type = 'image/svg+xml';
+  }
+  link.href = href;
+  document.head.appendChild(link);
 }
 
 function initSidebar(profile) {
@@ -8738,6 +8773,14 @@ function loadRecord() {
     ['homework','homework2','homework3','homework4','homework5'].forEach(function(f) {
       var val = rec[f] || '';
       if (val) _lastHomeworks.push({text: val, comp: -1});
+    });
+    // 오늘 수업내용(내용추가/수업내용추가로 입력된 모든 항목) → 지난 과제로 함께 이동
+    // today→reading, 그리고 문법/내신대비/기타/보충 순서대로 1~5번 수집
+    ['reading','grammar','exam','etc','supplement'].forEach(function(base) {
+      for (var n = 1; n <= 5; n++) {
+        var v = (rec[base + n] || '').trim();
+        if (v) _lastHomeworks.push({text: v, comp: -1});
+      }
     });
     if (_lastHomeworks.length === 0) {
     [['lastHomework','lastCompletion'],
