@@ -5008,7 +5008,14 @@ function showSubscribeScreen(fbUser, profile, reason, expDate) {
   var resEl = document.getElementById('subResult');
   if (resEl) resEl.style.display = 'none';
 
-  selectSubPlan('free');
+  // 플랜 미선택 상태로 시작 (사용자가 직접 선택해야 함 — 무료 자동선택 방지)
+  selectedSubPlan = '';
+  ['free','30','90','365'].forEach(function(p) {
+    var el = document.getElementById('subplan-' + p);
+    if (el) { el.style.border = '1.5px solid #e2e8f0'; el.style.background = '#fff'; }
+  });
+  var selEl = document.getElementById('subPlanSelected');
+  if (selEl) selEl.innerHTML = '<span style="color:#94a3b8">플랜을 선택해주세요</span>';
 }
 
 function selectSubPlan(plan) {
@@ -5041,6 +5048,7 @@ function submitSubscribeApply() {
 
   // 필수값 검증
   function showErr(msg){ resultEl.style.display='block'; resultEl.style.color='#ef4444'; resultEl.textContent=msg; }
+  if (!selectedSubPlan || !p) { showErr('요금제를 선택해주세요.'); return; }
   if (!name)      { showErr('신청자 이름을 입력해주세요.'); return; }
   if (!userId)    { showErr('등록한 아이디를 입력해주세요.'); return; }
   if (!phone)     { showErr('휴대폰 번호를 입력해주세요.'); return; }
@@ -5053,6 +5061,12 @@ function submitSubscribeApply() {
 
   // ── 무료 플랜: 자동 활성화 (관리자 승인 불필요) ──
   if (selectedSubPlan === 'free' || p.price === 0) {
+    // 이미 무료체험을 사용한 계정은 차단
+    if (profile.freeTrialUsed || (subscribeUser.profile && subscribeUser.profile.freeTrialUsed)) {
+      if (btn) { btn.disabled = false; btn.textContent = '신청하기'; btn.style.opacity = '1'; }
+      showErr('이미 무료 체험을 사용하셨습니다. 유료 플랜을 선택해주세요.');
+      return;
+    }
     autoActivateFreeTrial(uid, { schoolName: profile.schoolName || school, name: name }, teachers, p)
       .then(function() {
         showToast('무료 체험이 시작되었습니다!');
