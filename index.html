@@ -6122,7 +6122,7 @@ function loadAllUsers() {
         + '</div>'
         + '<div style="display:flex;gap:6px;align-items:center">'
         + '<span style="background:' + statusBg + ';color:' + statusColor + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">' + statusText + '</span>'
-        + '<button onclick="toggleUserStatusDirect(\'' + u.uid + '\',\'' + (u.status||'inactive') + '\')" '
+        + '<button id="aubtn-' + u.uid + '" onclick="toggleUserStatusDirect(\'' + u.uid + '\',\'' + (u.status||'inactive') + '\')" '
         + 'style="font-size:11px;background:' + (isActive ? '#fee2e2' : '#dcfce7') + ';color:' + (isActive ? '#dc2626' : '#16a34a') + ';border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-family:inherit">'
         + (isActive ? '비활성화' : '활성화') + '</button>'
         + '</div>'
@@ -6133,13 +6133,26 @@ function loadAllUsers() {
 
 function toggleUserStatusDirect(uid, currentStatus) {
   var newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  var btn = document.getElementById('aubtn-' + uid);
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
   // setDoc merge: 문서 없어도 생성, 있으면 status만 업데이트
   window.fbSetDocMerge(window.fbDoc(window.fbDb, 'users', uid), { status: newStatus })
     .then(function() {
       showAdminToast('' + (newStatus === 'active' ? '활성화' : '비활성화') + ' 완료!');
-      loadAllUsers();
+      // 버튼만 즉시 갱신 (재조회 안 함 — 지연/한박자 문제 해결)
+      if (btn) {
+        var isActive = (newStatus === 'active');
+        btn.disabled = false; btn.style.opacity = '1';
+        btn.style.background = isActive ? '#fee2e2' : '#dcfce7';
+        btn.style.color      = isActive ? '#dc2626' : '#16a34a';
+        btn.textContent      = isActive ? '비활성화' : '활성화';
+        btn.setAttribute('onclick', "toggleUserStatusDirect('" + uid + "','" + newStatus + "')");
+      }
     })
-    .catch(function(err) { showAdminToast('오류: ' + err.message, 'error'); });
+    .catch(function(err) {
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      showAdminToast('오류: ' + err.message, 'error');
+    });
 }
 
 // 수동 계정 생성 모달
@@ -6250,13 +6263,38 @@ function showSchoolUsers(schoolId, schoolName) {
           + '<div style="font-size:13px;font-weight:700;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + (u.name||u.userId||'이름없음') + '</div>'
           + '<div style="font-size:11px;color:#94a3b8">' + (u.role||'teacher') + ' · ' + (u.userId||'') + '</div>'
           + '</div>'
-          + '<button onclick="toggleUserStatusDirect(\'' + u.uid + '\',\'' + (u.status||'inactive') + '\')" '
+          + '<button id="umbtn-' + u.uid + '" onclick="toggleUserStatusInModal(\'' + u.uid + '\',\'' + (u.status||'inactive') + '\')" '
           + 'style="font-size:11px;background:' + (isInactive ? '#dcfce7' : '#fee2e2') + ';color:' + (isInactive ? '#16a34a' : '#dc2626') + ';border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-family:inherit;white-space:nowrap">'
           + (isInactive ? '활성화' : '비활성화') + '</button>'
           + '</div>';
       }).join('');
     });
   });
+}
+
+// 모달 안에서 사용자 활성/비활성 토글 — 재조회 없이 버튼만 즉시 갱신
+function toggleUserStatusInModal(uid, currentStatus) {
+  var newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  var btn = document.getElementById('umbtn-' + uid);
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+  window.fbSetDocMerge(window.fbDoc(window.fbDb, 'users', uid), { status: newStatus })
+    .then(function() {
+      showAdminToast('' + (newStatus === 'active' ? '활성화' : '비활성화') + ' 완료!');
+      // 버튼을 새 상태로 즉시 갱신 (재조회 안 함)
+      if (btn) {
+        var willInactive = (newStatus !== 'active');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.background = willInactive ? '#dcfce7' : '#fee2e2';
+        btn.style.color      = willInactive ? '#16a34a' : '#dc2626';
+        btn.textContent      = willInactive ? '활성화' : '비활성화';
+        btn.setAttribute('onclick', "toggleUserStatusInModal('" + uid + "','" + newStatus + "')");
+      }
+    })
+    .catch(function(err) {
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      showAdminToast('오류: ' + err.message, 'error');
+    });
 }
 
 function toggleUserStatus(uid, currentStatus, schoolId, schoolName) {
