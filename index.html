@@ -1292,7 +1292,7 @@ onAuthStateChanged(auth, function(user) {
       <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></span> 수업내용 입력
     </button>
     <button class="sidebar-tab" id="stab-list" onclick="switchTab('list')">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg></span> 목록
+      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg></span> 과제 목록
       <span class="sidebar-count" id="sidebarListCount">0</span>
     </button>
     <button class="sidebar-tab" id="stab-notice" onclick="switchTab('notice')">
@@ -1328,6 +1328,7 @@ onAuthStateChanged(auth, function(user) {
     </div>
     <div class="card">
       <div class="card-title" style="color:#6366f1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>기본 정보</div>
+      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 10px;line-height:1.45">비어 있는 칸은 과제 카드에 표시되지 않습니다.</div>
       <div style="margin-bottom:10px">
         <label class="field-label">날짜</label>
         <input type="date" id="f-date" style="padding:11px 14px;font-size:14px;width:100%;height:42px;box-sizing:border-box;border-radius:8px;border:1.5px solid #e2e8f0;font-family:inherit;-webkit-appearance:none;appearance:none;line-height:normal">
@@ -1354,6 +1355,7 @@ onAuthStateChanged(auth, function(user) {
 
     <div class="card">
       <div class="card-title" style="color:#e11d48"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>지각 정도</div>
+      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 10px;line-height:1.45">선택한 항목을 한 번 더 누르면 해제됩니다.</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
           <input type="radio" name="attendance" onclick="toggleRadio(this)" id="att-ontime" value="정시도착" onchange="updateAttendance()">
@@ -1376,6 +1378,7 @@ onAuthStateChanged(auth, function(user) {
 
     <div class="card">
       <div class="card-title" style="color:#16a34a"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>학습 태도</div>
+      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 10px;line-height:1.45">선택한 항목을 한 번 더 누르면 해제됩니다.</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600">
           <input type="radio" name="attitude" onclick="toggleRadio(this)" id="att2-good" value="상" onchange="updateAttitude()">
@@ -1425,6 +1428,7 @@ onAuthStateChanged(auth, function(user) {
     </div>
     <div class="card">
       <div class="card-title" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>오늘 수업내용 및 이행도</div>
+      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 10px;line-height:1.45">전체 수업내용을 먼저 입력한 뒤, 항목별 이행도를 표시하려면 아래에 복사해서 각 항목의 이행도를 체크하세요.</div>
       <label class="field-label">전체 수업 요약</label>
       <textarea id="f-todayContent" rows="2" placeholder="전체 수업 내용을 입력하세요..."></textarea>
 
@@ -1469,6 +1473,7 @@ onAuthStateChanged(auth, function(user) {
 
     <div class="card">
       <div class="card-title" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>오늘의 과제</div>
+      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 10px;line-height:1.45">학생이 집에서 해올 과제를 적어주세요. 다음 수업에 이 학생 기록을 불러오면 '지난 과제 이행도'로 자동 이동합니다.</div>
       <!-- 동적 과제 목록 -->
       <div id="homeworkWrap" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
       <button type="button" onclick="addHomework()" style="width:100%;padding:8px;background:#f3e8ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ 과제 추가</button>
@@ -2688,7 +2693,11 @@ async function init(){
     showToast('오프라인 모드 - 캐시 사용중','info');
   }).then(function(){showLoading(false);});
 }
-function todayStr() { return new Date().toISOString().slice(0,10); }
+function todayStr() {
+  // 로컬(예: KST) 기준 날짜. toISOString은 UTC라 새벽 시간대에 하루 어긋나므로 보정.
+  var d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
 function formatDate(d) { return d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}); }
 function recKey() { return 'kms_records_'+(currentUser||'_'); }
 function stuKey() { return 'kms_students_'+(currentUser||'_'); }
