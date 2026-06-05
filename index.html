@@ -11,6 +11,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>에듀노트 · 학원 과제관리</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366f1'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='22' font-weight='900' fill='white' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366f1'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='22' font-weight='900' fill='white' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%236366f1'/%3E%3Ctext x='90' y='133' font-family='Georgia,serif' font-size='130' font-weight='900' fill='white' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E">
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
@@ -770,11 +773,12 @@ onAuthStateChanged(auth, function(user) {
         <input type="text" id="signupName" placeholder="실명 입력" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
       </div>
       <div style="margin-bottom:12px">
-        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">학원명</label>
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">학원명 또는 선생님 코드 <span style="font-size:10px;color:#94a3b8;font-weight:500">(선생님은 코드 바로 입력 가능)</span></label>
         <div style="display:flex;gap:6px;width:100%;box-sizing:border-box">
-          <input type="text" id="signupSchool" placeholder="학원명 입력" oninput="resetSchoolCheck()" style="flex:1 1 auto;min-width:0;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
-          <button onclick="checkSchoolName()" style="flex:0 0 auto;width:90px;padding:10px 0;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">중복확인</button>
+          <input type="text" id="signupSchool" placeholder="학원명 또는 선생님 코드 입력" oninput="resetSchoolCheck()" style="flex:1 1 auto;min-width:0;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+          <button onclick="checkSchoolOrCode()" style="flex:0 0 auto;width:90px;padding:10px 0;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">확인</button>
         </div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:3px">선생님이라면 원장님께 받은 코드를 바로 입력하세요</div>
         <div id="schoolCheckResult" style="display:none;font-size:11px;font-weight:700;margin-top:5px"></div>
         <!-- 중복 시: 선생님 코드 입력 -->
         <div id="schoolCodeBox" style="display:none;margin-top:8px;background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px">
@@ -1213,10 +1217,10 @@ onAuthStateChanged(auth, function(user) {
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:16px">
         <div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:8px">프로그램 이용료 안내</div>
         <div style="font-size:12px;color:#475569;line-height:1.9">
-          <div style="display:flex;justify-content:space-between"><span>무료 체험 (쿠폰)</span><b style="color:#6366f1">0원 / 14일</b></div>
-          <div style="display:flex;justify-content:space-between"><span>단기 (30일)</span><b>10원</b></div>
-          <div style="display:flex;justify-content:space-between"><span>표준 (90일)</span><b>10원</b></div>
-          <div style="display:flex;justify-content:space-between"><span>연간 (365일)</span><b>10원</b></div>
+          <div id="feerow-free" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>무료 체험 (쿠폰)</span><b style="color:#6366f1">0원 / 14일</b></div>
+          <div id="feerow-30"   style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>단기 (30일)</span><b>10원</b></div>
+          <div id="feerow-90"   style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>표준 (90일)</span><b>10원</b></div>
+          <div id="feerow-365"  style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>연간 (365일)</span><b>10원</b></div>
         </div>
         <div style="font-size:10px;color:#94a3b8;margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:8px">※ 결제는 계좌입금으로 진행됩니다. 신청 후 안내드립니다.</div>
       </div>
@@ -1251,11 +1255,6 @@ onAuthStateChanged(auth, function(user) {
           <option value="학생">학생</option>
           <option value="기타">기타</option>
         </select>
-      </div>
-
-      <div style="margin-bottom:16px">
-        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">선생님 인원수 <span style="font-size:10px;color:#94a3b8;font-weight:500">(본인 제외)</span></label>
-        <input type="number" id="subTeachers" min="0" max="99" value="0" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
       </div>
 
       <button onclick="submitSubscribeApply()" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">신청하기</button>
@@ -1544,6 +1543,7 @@ onAuthStateChanged(auth, function(user) {
           <label style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#dcfce7;color:#16a34a;margin:0;white-space:nowrap">
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg> 엑셀 불러오기<input type="file" id="importStudentFile" accept=".xlsx,.xls" onchange="importStudentsXlsx(event)" style="display:none">
           </label>
+          <button onclick="downloadStudentTemplate()" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fef3c7;color:#b45309;white-space:nowrap">📋 양식 받기</button>
           <button onclick="deleteAllStudents()" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fee2e2;color:#dc2626;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> 전체삭제</button>
         </div>
       </div>
@@ -1559,6 +1559,7 @@ onAuthStateChanged(auth, function(user) {
       </div>
       </div><!-- /studentAdminControls -->
       <div id="studentTeacherNote" style="display:none;font-size:11px;color:#0891b2;background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:8px 10px;margin-bottom:10px">원장이 배정한 학생만 표시됩니다. 학생 정보 수정은 원장에게 문의하세요.</div>
+      <input type="text" id="studentSearch" oninput="filterStudentList()" placeholder="학생 검색 (이름, 반, 학년, 번호...)" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:10px">
       <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;display:flex;align-items:center;gap:4px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg> 출/결/지는 매월 자동 갱신됩니다 (이번 달 기준)</div>
       <div id="studentList">
         <!-- 컬럼 헤더 -->
@@ -2207,7 +2208,22 @@ function exportStudentsXlsx() {
   });
 }
 
-// ── 학생 엑셀 불러오기 ─────────────────────────────────────
+// ── 학생 엑셀 양식 다운로드 (C) ─────────────────────────────
+function downloadStudentTemplate() {
+  loadSheetJS(function() {
+    var ws = XLSX.utils.aoa_to_sheet([
+      ['반','이름','학년','학생번호','학부모번호'],
+      ['중1A','홍길동','중1','010-0000-0001','010-1111-1111'],
+      ['중1A','이영희','중1','010-0000-0002','010-2222-2222'],
+    ]);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '학생목록');
+    XLSX.writeFile(wb, '에듀노트_학생목록_양식.xlsx');
+    showToast('양식 다운로드 완료! 이 형식에 맞게 입력 후 업로드하세요.');
+  });
+}
+
+// ── 학생 엑셀 불러오기 (A+C: 스마트 열 인식) ──────────────────
 function importStudentsXlsx(e) {
   if (currentRole !== 'owner' && currentRole !== 'superadmin') { showToast('원장만 사용할 수 있습니다.', 'error'); e.target.value=''; return; }
   var file = e.target.files[0];
@@ -2219,29 +2235,65 @@ function importStudentsXlsx(e) {
         var wb = XLSX.read(ev.target.result, { type: 'array' });
         var ws = wb.Sheets[wb.SheetNames[0]];
         var rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        if (rows.length === 0) { showToast('데이터가 없습니다.', 'error'); e.target.value=''; return; }
+
+        // ── A: 스마트 열 매칭 ──
+        // 각 필드의 가능한 열 제목 변형들
+        var colMap = {
+          name:   ['이름','학생명','성명','name','학생 이름','학생이름'],
+          cls:    ['반','클래스','class','반이름','반 이름','학급'],
+          grade:  ['학년','grade','학년도'],
+          phone:  ['학생번호','학생전화','학생 전화','학생연락처','학생 연락처','전화','연락처','phone','학생phone'],
+          parent: ['학부모번호','부모전화','학부모전화','학부모 전화','학부모연락처','학부모 연락처','부모번호','parent','보호자연락처','보호자 연락처'],
+        };
+        var headers = Object.keys(rows[0]);
+        function findCol(candidates) {
+          for (var i=0; i<candidates.length; i++) {
+            for (var j=0; j<headers.length; j++) {
+              if (headers[j].trim() === candidates[i]) return headers[j];
+            }
+          }
+          // 부분일치도 시도 (예: "학생 전화번호" → "학생전화" 포함)
+          for (var i=0; i<candidates.length; i++) {
+            for (var j=0; j<headers.length; j++) {
+              if (headers[j].includes(candidates[i]) || candidates[i].includes(headers[j].trim())) return headers[j];
+            }
+          }
+          return null;
+        }
+        var colName   = findCol(colMap.name);
+        var colCls    = findCol(colMap.cls);
+        var colGrade  = findCol(colMap.grade);
+        var colPhone  = findCol(colMap.phone);
+        var colParent = findCol(colMap.parent);
+
+        if (!colName) {
+          showToast('이름 열을 찾을 수 없습니다. 양식을 다운받아 사용해 주세요.', 'error');
+          e.target.value=''; return;
+        }
+
         var added = 0;
         rows.forEach(function(row) {
-          var name = String(row['이름'] || '').trim();
-          var cls  = String(row['반']   || '').trim();
+          var name = String(row[colName] || '').trim();
+          var cls  = colCls    ? String(row[colCls]    || '').trim() : '';
+          var grade= colGrade  ? String(row[colGrade]  || '').trim() : '';
+          var phone= colPhone  ? String(row[colPhone]  || '').trim() : '';
+          var par  = colParent ? String(row[colParent] || '').trim() : '';
           if (!name) return;
           if (students.find(function(ex){ return ex.name === name && ex.className === cls; })) return;
           students.push({
             id:        Date.now() + '_' + Math.random().toString(36).slice(2,8),
-            className: cls,
-            name:      name,
-            grade:     String(row['학년']     || '').trim(),
-            phone:     String(row['학생번호'] || '').trim(),
-            parent:    String(row['학부모번호'] || '').trim(),
-            assignedTo: [],
-            createdAt: new Date().toISOString()
+            className: cls, name: name, grade: grade,
+            phone: phone, parent: par,
+            assignedTo: [], createdAt: new Date().toISOString()
           });
           added++;
         });
         if (added > 0) {
           persistStudents(); renderStudents(); updateStudentFilter();
-          showToast('' + added + '명 불러오기 완료!');
+          showToast(added + '명 불러오기 완료! (인식된 열: 이름=' + colName + (colCls?'/반='+colCls:'') + ')');
         } else {
-          showToast('이미 등록된 학생들입니다.', 'info');
+          showToast('이미 등록된 학생들이거나 이름 데이터가 없습니다.', 'info');
         }
       } catch(err) {
         showToast('파일을 읽을 수 없습니다: ' + err.message, 'error');
@@ -2425,6 +2477,24 @@ function toggleAssignSummary() {
   if (arrow) arrow.textContent = open ? '▶' : '▼';
 }
 
+// 원생목록 검색: 이름·반·학년·번호로 필터
+function filterStudentList() {
+  var q = (document.getElementById('studentSearch')||{value:''}).value.trim().toLowerCase();
+  var list = document.getElementById('studentList');
+  if (!list) return;
+  if (!q) {
+    // 검색어 없으면 전체 표시
+    Array.prototype.forEach.call(list.querySelectorAll('[data-stu-id]'), function(el){
+      el.style.display = '';
+    });
+    return;
+  }
+  Array.prototype.forEach.call(list.querySelectorAll('[data-stu-id]'), function(el){
+    var txt = (el.getAttribute('data-stu-search')||'').toLowerCase();
+    el.style.display = txt.indexOf(q) !== -1 ? '' : 'none';
+  });
+}
+
 function saveAssignStudent() {
   if (!_assignStudentId) return;
   var s = students.find(function(x){ return String(x.id) === String(_assignStudentId); });
@@ -2443,6 +2513,8 @@ function saveAssignStudent() {
 }
 
 function makeStudentRow(s) {
+  // 검색용 통합 텍스트
+  var stuSearchText = [s.name||'', s.className||'', s.grade||'', s.phone||'', s.parent||''].join(' ').toLowerCase();
   // 출결 현황: 해당 학생 records에서 지각 정도 집계 (이번 달 기준으로 월별 갱신)
   var nowYM = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
   const stuRecs = records.filter(r => r.student === s.name && (r.date||'').slice(0,7) === nowYM);
@@ -2451,7 +2523,7 @@ function makeStudentRow(s) {
   const absent  = stuRecs.filter(r => r.attendance === '결석').length;
   const ontime  = total - late - absent;
 
-  return '<div id="student-row-' + s.id + '" style="background:#f8fafc;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0">'
+  return '<div id="student-row-' + s.id + '" data-stu-id="' + s.id + '" data-stu-search="' + stuSearchText.replace(/"/g,'') + '" style="background:#f8fafc;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0">'
     // 메인 행
     + '<div style="padding:8px 10px">'
     // 첫째 줄: 이름+학년 / 출결 / 버튼
@@ -2573,7 +2645,7 @@ async function init(){
   updateRing();
   records=(JSON.parse(localStorage.getItem(recKey())||'[]')).map(normalizeRec);
   students=JSON.parse(localStorage.getItem(stuKey())||'[]');
-  renderAll();updateLoadSelect();updateStudentFilter();renderStudents();
+  renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
   showLoading(true);
   Promise.all([gasGet('getRecords'),gasGet('getStudents')]).then(function(res){
     var rR=res[0],sR=res[1];
@@ -2963,20 +3035,21 @@ async function saveRecord() {
     renderStudents();
   }
 
-  persist(); resetForm(); updateLoadSelect();
+  persist(); updateLoadSelect();
   if(rec.student){updateStudentFilter();}
   var _s=document.getElementById('filterStudent');if(_s)_s.value='';
+  renderList(); // 저장/수정 즉시 목록 갱신
   // 저장 후 입력 탭에 그대로 머무름 (목록으로 이동하지 않음)
   showLoading(true);
   // Firestore에 저장
   if (window.fbDb && currentSchool && currentSchool.length > 10) {
     var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(rec.id));
     window.fbSetDoc(ref, rec)
-      .then(function(){ showToast('과제목록에 저장되었습니다!'); })
+      .then(function(){ showToast('저장 완료!'); })
       .catch(function(){ showToast('저장 실패. 다시 시도해주세요.', 'error'); })
       .finally(function(){ showLoading(false); });
   } else {
-    showToast('과제목록에 저장되었습니다!');
+    showToast('저장 완료!');
     showLoading(false);
   }
   } catch(err) { showToast('저장 오류: '+err.message, 'error'); showLoading(false); }
@@ -3860,6 +3933,57 @@ function filterUserList() {
     var name = (card.getAttribute('data-user-name')||'').toLowerCase();
     card.style.display = (!q || name.indexOf(q) !== -1) ? '' : 'none';
   });
+}
+
+// 학원명 or 코드 통합 확인: 코드 형식(5~8자 영문+숫자)이면 바로 코드 조회, 아니면 학원명 중복확인
+function checkSchoolOrCode() {
+  var val = (document.getElementById('signupSchool').value || '').trim();
+  if (!val) {
+    var r = document.getElementById('schoolCheckResult');
+    r.style.display='block'; r.style.color='#ef4444'; r.textContent='학원명 또는 코드를 입력해주세요.';
+    return;
+  }
+  // 코드 형식 판별: 영문+숫자만으로 5~8자
+  var isCodeFormat = /^[A-Za-z0-9]{5,8}$/.test(val);
+  if (isCodeFormat) {
+    // 코드로 바로 조회
+    var resultEl = document.getElementById('schoolCheckResult');
+    var box = document.getElementById('schoolCodeBox');
+    resultEl.style.display='block'; resultEl.style.color='#94a3b8'; resultEl.textContent='코드 확인 중...';
+    if (box) box.style.display='none';
+    var code = val.toUpperCase();
+    // schoolNames 전체에서 teacherCode가 일치하는 것 찾기
+    window.fbGetDocs(window.fbQuery(
+      window.fbCollection(window.fbDb, 'schoolNames'),
+      window.fbWhere('teacherCode', '==', code)
+    )).then(function(snap){
+      if (!snap.empty) {
+        var data = snap.docs[0].data();
+        var realName = data.name || '';
+        // 실제 학원명으로 입력란 자동 채우기
+        document.getElementById('signupSchool').value = realName;
+        // signupSchoolCode에도 코드 자동 입력
+        var codeEl = document.getElementById('signupSchoolCode');
+        if (codeEl) codeEl.value = code;
+        // 코드 검증까지 한 번에 처리
+        schoolChecked = true;
+        schoolJoinMode = 'join';
+        schoolJoinInfo = Object.assign({ schoolKey: normalizeSchoolKey(realName) }, data);
+        resultEl.style.color='#16a34a';
+        resultEl.textContent='✓ ' + realName + ' — 선생님 코드 확인됩니다. 이 학원 소속으로 가입됩니다.';
+      } else {
+        // 코드가 없음 → 학원명으로 재시도
+        document.getElementById('signupSchool').value = val;
+        checkSchoolName();
+      }
+    }).catch(function(){
+      // 쿼리 실패 시 학원명으로 fallback
+      checkSchoolName();
+    });
+  } else {
+    // 학원명으로 처리
+    checkSchoolName();
+  }
 }
 
 function checkSchoolName() {
@@ -5051,6 +5175,20 @@ function selectSubPlan(plan) {
       : '신청서 작성 후 입금 안내를 받으실 수 있어요';
     hint.style.color = '#6366f1';
   }
+  // 요금표 안내 카드에서 선택한 플랜 행 강조
+  ['free','30','90','365'].forEach(function(p) {
+    var row = document.getElementById('feerow-' + p);
+    if (!row) return;
+    if (p === plan) {
+      row.style.background = '#ede9fe';
+      row.style.fontWeight = '800';
+      row.style.color = '#4f46e5';
+    } else {
+      row.style.background = '';
+      row.style.fontWeight = '';
+      row.style.color = '';
+    }
+  });
 }
 
 // 1단계 → 2단계: 무료는 즉시 활성화, 유료는 신청 폼 표시
@@ -8590,18 +8728,18 @@ function loadRecord() {
   document.getElementById('f-wordScore').value = rec.wordScore || '';
   deserializeTests(rec.wordTest||'', rec.wordScore||'', rec.testsJson||'');
 
-  // 불러오기: 항상 날짜를 오늘로 → 기존 과제를 지난 과제로 이동
-  // isNewDay 개념 제거 - 불러오기는 항상 homework → lastHomework
-  var isNewDay = true; // 불러오기는 항상 새날 처리 (날짜를 오늘로 바꾸므로)
+  // 불러오기: 오늘 날짜 기록이면 과제를 그대로 유지, 과거 날짜 기록이면 지난 과제로 이동
+  var recDate = (rec.date || '').slice(0, 10);
+  var isNewDay = recDate < todayStr(); // 과거 날짜만 지난 과제로 이동
 
-  // 동적 지난 과제: rec.homework → 지난 과제로 (없으면 rec.lastHomework fallback)
-  _lastHomeworks = [];
-  ['homework','homework2','homework3','homework4','homework5'].forEach(function(f) {
-    var val = rec[f] || '';
-    if (val) _lastHomeworks.push({text: val, comp: -1});
-  });
-  // homework가 없으면 기존 lastHomework 데이터 사용
-  if (_lastHomeworks.length === 0) {
+  if (isNewDay) {
+    // 과거 기록: rec.homework → 지난 과제로 이동
+    _lastHomeworks = [];
+    ['homework','homework2','homework3','homework4','homework5'].forEach(function(f) {
+      var val = rec[f] || '';
+      if (val) _lastHomeworks.push({text: val, comp: -1});
+    });
+    if (_lastHomeworks.length === 0) {
     [['lastHomework','lastCompletion'],
      ['lastHomework2','lastCompletion2'],
      ['lastHomework3','lastCompletion3'],
@@ -8610,6 +8748,14 @@ function loadRecord() {
       var t = rec[p[0]] || '';
       var c = rec[p[1]] !== undefined ? rec[p[1]] : -1;
       if (t) _lastHomeworks.push({text: t, comp: c});
+    });
+    }
+  } else {
+    // 오늘 날짜: 지난 과제는 기존 lastHomework, 오늘 과제도 그대로 유지
+    _lastHomeworks = [];
+    [['lastHomework','lastCompletion'],['lastHomework2','lastCompletion2'],['lastHomework3','lastCompletion3'],['lastHomework4','lastCompletion4'],['lastHomework5','lastCompletion5']].forEach(function(p) {
+      var t = rec[p[0]]||''; var c = rec[p[1]] !== undefined ? rec[p[1]] : -1;
+      if (t) _lastHomeworks.push({text:t, comp:c});
     });
   }
   if (_lastHomeworks.length === 0) _lastHomeworks = [{text:'', comp:-1}];
