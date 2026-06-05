@@ -1669,6 +1669,7 @@ function normalizeRec(r) {
     wordTest:       r.wordTest       || '',
     wordScore:      r.wordScore      || '',
     testsJson:      r.testsJson      || '',
+    lastHomeworksJson: r.lastHomeworksJson || '',
     lastHomework:   r.lastHomework   || '',
     lastCompletion: (Number(r.lastCompletion)||0),
     lastHomework2:  r.lastHomework2  || '',
@@ -2941,6 +2942,9 @@ async function saveRecord() {
     className:      className,
     student:        student,
     lastHomework:   document.getElementById('f-lastHomework').value.trim(),
+    lastHomeworksJson: JSON.stringify(_lastHomeworks
+      .map(function(it){ return {text:(it.text||'').trim(), comp:(typeof it.comp==='number'?it.comp:-1)}; })
+      .filter(function(it){ return it.text !== ''; })),
     lastHomework2:  (document.getElementById('f-lastHomework2')||{value:''}).value.trim(),
     lastCompletion2: parseInt((document.getElementById('f-lastCompletion2')||{value:'-1'}).value),
     lastHomework3:  (document.getElementById('f-lastHomework3')||{value:''}).value.trim(),
@@ -3293,6 +3297,32 @@ function updateStudentSelect() {
 // ── 동적 지난 과제 이행도 시스템 ─────────────────────────────
 var _lastHomeworks = [{text:'', comp:-1}];
 
+// 레코드에서 지난 과제 배열을 추출 (lastHomeworksJson 우선, 없으면 레거시 5필드)
+function getLastHomeworks(rec) {
+  if (rec && rec.lastHomeworksJson) {
+    try {
+      var parsed = JSON.parse(rec.lastHomeworksJson);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map(function(it){ return {text:(it && it.text)||'', comp:(it && typeof it.comp==='number')?it.comp:-1}; })
+          .filter(function(it){ return (it.text||'').trim() !== ''; });
+      }
+    } catch(e) {}
+  }
+  // 레거시: lastHomework ~ lastHomework5
+  var out = [];
+  [['lastHomework','lastCompletion'],
+   ['lastHomework2','lastCompletion2'],
+   ['lastHomework3','lastCompletion3'],
+   ['lastHomework4','lastCompletion4'],
+   ['lastHomework5','lastCompletion5']].forEach(function(p){
+    var t = rec[p[0]] || '';
+    var c = rec[p[1]] !== undefined ? rec[p[1]] : -1;
+    if (t) out.push({text:t, comp:c});
+  });
+  return out;
+}
+
 function renderLastHomeworks() {
   var wrap = document.getElementById('lastHomeworkWrap');
   if (!wrap) return;
@@ -3391,18 +3421,7 @@ function deserializeLastHomeworks(rec, isNewDay) {
       });
     }
   } else {
-    var pairs = [
-      ['lastHomework','lastCompletion'],
-      ['lastHomework2','lastCompletion2'],
-      ['lastHomework3','lastCompletion3'],
-      ['lastHomework4','lastCompletion4'],
-      ['lastHomework5','lastCompletion5'],
-    ];
-    pairs.forEach(function(p) {
-      var t = rec[p[0]] || '';
-      var c = rec[p[1]] !== undefined ? rec[p[1]] : -1;
-      if (t) _lastHomeworks.push({text:t, comp:c});
-    });
+    _lastHomeworks = getLastHomeworks(rec);
   }
   if (_lastHomeworks.length === 0) _lastHomeworks = [{text:'', comp:-1}];
   renderLastHomeworks();
@@ -7477,13 +7496,10 @@ function makeCard(rec) {
   const lv = levelOf(rec.lastCompletion||0);
     const lastHW = (() => {
       var rows = '';
-      for (var li = 1; li <= 5; li++) {
-        var hw = li === 1 ? rec.lastHomework : rec['lastHomework'+li];
-        var comp = li === 1 ? (rec.lastCompletion||0) : (rec['lastCompletion'+li]||0);
-        if (!hw) continue;
-        var llv = levelOf(comp);
-        rows += `<div style="margin-bottom:6px"><span style="white-space:pre-wrap">${esc(hw)}</span><br>${compBadgeHTML(comp)}</div>`;
-      }
+      var items = getLastHomeworks(rec);
+      items.forEach(function(it){
+        rows += `<div style="margin-bottom:6px"><span style="white-space:pre-wrap">${esc(it.text)}</span><br>${compBadgeHTML(it.comp>=0?it.comp:0)}</div>`;
+      });
       return rows ? `<div class="rec-row"><span class="po-section" style="color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 지난 과제 이행도</span><br>${rows}</div>` : '';
     })();
     const todayC = (rec.todayContent||rec.reading||rec.grammar||rec.reading1||rec.grammar1||rec.exam1||rec.supplement1) ? (() => {
@@ -8282,12 +8298,18 @@ function openPrint() {
 
   document.getElementById('printGrid').innerHTML = records.map(rec => {
     const lv = levelOf(rec.lastCompletion||0);
-    const lastHW = rec.lastHomework ? `
+    const lastHW = (() => {
+      var items = getLastHomeworks(rec);
+      if (!items.length) return '';
+      var rows = items.map(function(it){
+        return `<div style="font-size:12px;color:#334155;line-height:1.5">${esc(it.text)}</div>${compBadgeHTML(it.comp>=0?it.comp:0)}`;
+      }).join('');
+      return `
       <div style="margin-bottom:6px">
         <div class="po-section" style="color:#000;font-weight:800">지난 과제</div>
-        <div style="font-size:12px;color:#334155;line-height:1.5">${esc(rec.lastHomework)}</div>
-        ${compBadgeHTML(rec.lastCompletion||0)}
-      </div>` : '';
+        ${rows}
+      </div>`;
+    })();
     const todayC = (rec.todayContent||rec.reading||rec.grammar) ? (() => {
       const lR = LEVELS.find(l=>l.value===(rec.readingComp||0))||LEVELS[0];
       const lG = LEVELS.find(l=>l.value===(rec.grammarComp||0))||LEVELS[0];
@@ -8652,8 +8674,12 @@ function copyRecord(id) {
   if (rec.wordTest || rec.wordScore) {
     lines.push(`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 단어 시험: ${rec.wordTest||''}${rec.wordScore ? '  '+rec.wordScore : ''}`);
   }
-  if (rec.lastHomework) {
-    lines.push(`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 지난 과제 이행도: ${rec.lastHomework}  [${COMP[rec.lastCompletion]||'미완료'}]`);
+  var _lhItems = getLastHomeworks(rec);
+  if (_lhItems.length) {
+    lines.push(`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 지난 과제 이행도:`);
+    _lhItems.forEach(function(it){
+      lines.push(`  ${it.text}  [${COMP[it.comp]||'미완료'}]`);
+    });
   }
   if (rec.todayContent || rec.reading || rec.grammar) {
     lines.push(`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 오늘 수업내용:`);
@@ -8794,12 +8820,8 @@ function loadRecord() {
     });
     }
   } else {
-    // 오늘 날짜: 지난 과제는 기존 lastHomework, 오늘 과제도 그대로 유지
-    _lastHomeworks = [];
-    [['lastHomework','lastCompletion'],['lastHomework2','lastCompletion2'],['lastHomework3','lastCompletion3'],['lastHomework4','lastCompletion4'],['lastHomework5','lastCompletion5']].forEach(function(p) {
-      var t = rec[p[0]]||''; var c = rec[p[1]] !== undefined ? rec[p[1]] : -1;
-      if (t) _lastHomeworks.push({text:t, comp:c});
-    });
+    // 오늘 날짜: 지난 과제는 기존 값(JSON 우선), 오늘 과제도 그대로 유지
+    _lastHomeworks = getLastHomeworks(rec);
   }
   if (_lastHomeworks.length === 0) _lastHomeworks = [{text:'', comp:-1}];
   renderLastHomeworks();
