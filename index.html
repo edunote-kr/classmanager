@@ -1792,6 +1792,7 @@ function normalizeRec(r) {
     date:           rawDate,
     className:      r.className      || '',
     student:        r.student        || '',
+    studentId:      r.studentId      || '',
     attendance:     r.attendance     || '',
     wordTest:       r.wordTest       || '',
     wordScore:      r.wordScore      || '',
@@ -3108,7 +3109,15 @@ async function saveRecord() {
   const grammar1     = (document.getElementById('f-grammar1')||{value:''}).value.trim();
   const exam1        = (document.getElementById('f-exam1')||{value:''}).value.trim();
   const studentEl    = document.getElementById('f-student');
-  const student      = studentEl ? (studentEl.value||'').trim() : '';
+  var selStuVal      = studentEl ? (studentEl.value||'').trim() : '';
+  var stuObj         = students.find(function(s){ return String(s.id) === selStuVal; });
+  var studentId      = stuObj ? stuObj.id : '';
+  var student        = stuObj ? stuObj.name : '';
+  if (!stuObj && selStuVal && studentEl) {
+    // 매칭 보류/삭제된 학생: 선택된 옵션 텍스트에서 이름 복원 ("이름 (반)" → "이름")
+    var selOpt = studentEl.options[studentEl.selectedIndex];
+    if (selOpt) student = (selOpt.textContent||'').replace(/\s*\([^)]*\)\s*$/,'').trim();
+  }
   const classEl      = document.getElementById('f-class');
   const className    = classEl ? (classEl.value||'').trim() : '';
 
@@ -3121,6 +3130,7 @@ async function saveRecord() {
     date:           document.getElementById('f-date').value,
     className:      className,
     student:        student,
+    studentId:      studentId,
     lastHomework:   document.getElementById('f-lastHomework').value.trim(),
     lastHomeworksJson: JSON.stringify(_lastHomeworks
       .map(function(it){ return {text:(it.text||'').trim(), comp:(typeof it.comp==='number'?it.comp:-1)}; })
@@ -3283,16 +3293,8 @@ function editRecord(id) {
     updateStudentSelect();
   }
 
-  // 학생 select - 없으면 옵션 추가
-  const stuSel = document.getElementById('f-student');
-  if (stuSel) {
-    if (rec.student && !Array.from(stuSel.options).find(o=>o.value===rec.student)) {
-      const opt = document.createElement('option');
-      opt.value = rec.student; opt.textContent = rec.student;
-      stuSel.appendChild(opt);
-    }
-    stuSel.value = rec.student || '';
-  }
+  // 학생 select - id 기준으로 설정 (없으면 임시 옵션)
+  setStudentSelectFromRec(rec);
   document.querySelectorAll('input[name=attendance]').forEach(r=>{r.checked=(r.value===(rec.attendance||''));});
   document.querySelectorAll('input[name=attitude]').forEach(r=>{r.checked=(r.value===(rec.attitude||''));});
   updateAttendance(); updateAttitude();
@@ -3468,10 +3470,41 @@ function updateStudentSelect() {
   students.filter(function(s){ return !cls || s.className === cls; })
     .forEach(function(s) {
       var opt = document.createElement('option');
-      opt.value = s.name; opt.textContent = s.name;
+      opt.value = s.id;                                   // 값 = 학생 고유 id (연동 키)
+      opt.textContent = s.name + (s.className ? ' (' + s.className + ')' : '');  // 표시 = 이름 (반)
       stuSel.appendChild(opt);
     });
   stuSel.value = cur;
+}
+
+// 기록 → 학생 고유 id 즉석 매칭 (studentId 있으면 그대로, 없으면 이름+반으로 유일 매칭)
+function resolveStudentId(rec) {
+  if (rec && rec.studentId) return rec.studentId;
+  if (!rec || !rec.student) return '';
+  var matches = students.filter(function(s){
+    return s.name === rec.student && (s.className||'') === (rec.className||'');
+  });
+  return matches.length === 1 ? matches[0].id : '';  // 같은 반 동명이인이 둘이면 보류
+}
+
+// 기록 기준으로 f-student select 값 설정 (없는 학생/보류는 임시 옵션)
+function setStudentSelectFromRec(rec) {
+  var stuSel = document.getElementById('f-student');
+  if (!stuSel) return;
+  var sid = resolveStudentId(rec);
+  if (sid && Array.from(stuSel.options).some(function(o){ return o.value === sid; })) {
+    stuSel.value = sid;
+    return;
+  }
+  if (rec.student) {
+    var opt = document.createElement('option');
+    opt.value = sid || rec.student;  // 매칭 보류 시 이름을 값으로(구호환); 저장 시 텍스트에서 이름 복원
+    opt.textContent = rec.student + (rec.className ? ' (' + rec.className + ')' : '');
+    stuSel.appendChild(opt);
+    stuSel.value = opt.value;
+  } else {
+    stuSel.value = '';
+  }
 }
 
 
@@ -9065,14 +9098,14 @@ function updateLoadSelect() {
 }
 
 function rebuildLoadFilters() {
-  var myRecords = myLoadRecords();
+  // 반 목록은 원생부(현재 반) 기준 → 반을 옮긴 학생이 옛 반에 중복으로 안 나타남
   var clsSel = document.getElementById('loadClassFilter');
   if (clsSel) {
     var curCls = clsSel.value;
     var classes = [];
     var seenC = {};
-    myRecords.forEach(function(r){
-      var c = r.className || '';
+    students.forEach(function(s){
+      var c = s.className || '';
       if (c && !seenC[c]) { seenC[c] = true; classes.push(c); }
     });
     classes.sort(function(a,b){ return a.localeCompare(b); });
@@ -9085,31 +9118,28 @@ function rebuildLoadFilters() {
   updateLoadStudents();
 }
 
-// 2) 선택된 반 + 검색어로 학생 드롭다운 채우기 → 기록 갱신
+// 2) 선택된 반 + 검색어로 학생 드롭다운 채우기(원생부 기준, 한 학생당 하나, 값=id) → 기록 갱신
 function updateLoadStudents() {
-  var myRecords = myLoadRecords();
   var cls = (document.getElementById('loadClassFilter')||{value:''}).value;
   var kw = ((document.getElementById('loadStudentSearch')||{value:''}).value || '').trim().toLowerCase();
   var stuSel = document.getElementById('loadStudentFilter');
   if (stuSel) {
     var curStu = stuSel.value;
-    var seen = {};
-    var students = [];
-    myRecords.forEach(function(r){
-      if (cls && r.className !== cls) return;
-      var nm = r.student || '';
-      if (!nm) return;
-      if (kw && nm.toLowerCase().indexOf(kw) === -1) return;
-      var key = (r.className ? '['+r.className+'] ' : '') + nm;
-      if (!seen[key]) { seen[key] = true; students.push({ value: nm, label: key }); }
+    var list = students.filter(function(s){
+      if (cls && s.className !== cls) return false;
+      if (kw && (s.name||'').toLowerCase().indexOf(kw) === -1) return false;
+      return true;
+    }).slice().sort(function(a,b){
+      return (a.name||'').localeCompare(b.name||'', 'ko') || (a.className||'').localeCompare(b.className||'');
     });
-    students.sort(function(a,b){ return a.label.localeCompare(b.label); });
     stuSel.innerHTML = '<option value=""> 전체 학생</option>';
-    students.forEach(function(s){
-      var o = document.createElement('option'); o.value = s.value; o.textContent = s.label; stuSel.appendChild(o);
+    list.forEach(function(s){
+      var o = document.createElement('option');
+      o.value = s.id;
+      o.textContent = s.name + (s.className ? ' (' + s.className + ')' : '');
+      stuSel.appendChild(o);
     });
-    // 이전 선택 유지(목록에 있으면)
-    var still = students.some(function(s){ return s.value === curStu; });
+    var still = list.some(function(s){ return s.id === curStu; });
     stuSel.value = still ? curStu : '';
   }
   refreshLoadRecordList();
@@ -9119,19 +9149,27 @@ function updateLoadStudents() {
 function refreshLoadRecordList() {
   var myRecords = myLoadRecords();
   var cls = (document.getElementById('loadClassFilter')||{value:''}).value;
-  var filterStu = (document.getElementById('loadStudentFilter')||{value:''}).value;
+  var stuId = (document.getElementById('loadStudentFilter')||{value:''}).value;
+  var selName = '';
+  if (stuId) { var so = students.find(function(s){ return s.id === stuId; }); selName = so ? so.name : ''; }
   var sel = document.getElementById('loadSelect');
   if (!sel) return;
   sel.innerHTML = '<option value="">— 불러올 기록 선택 —</option>';
   var sorted = myRecords.filter(function(rec){
-    if (cls && rec.className !== cls) return false;
-    if (filterStu && rec.student !== filterStu) return false;
+    if (stuId) {
+      // 학생 선택: 반이 바뀌어도 그 학생의 모든 기록. (신규기록은 studentId로 정확히, 옛 기록은 이름으로 보완)
+      if (resolveStudentId(rec) === stuId) return true;
+      if (!rec.studentId && selName && rec.student === selName) return true;
+      return false;
+    }
+    if (cls) return rec.className === cls; // 반만 선택: 해당 반 기록
     return true;
   }).slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
   sorted.forEach(function(rec) {
     var opt = document.createElement('option');
     opt.value = String(rec.id);
-    var label = [rec.date, rec.className ? '['+rec.className+']' : '', rec.student].filter(Boolean).join(' ');
+    var nm = rec.student ? rec.student + (rec.className ? ' (' + rec.className + ')' : '') : '';
+    var label = [rec.date, nm].filter(Boolean).join(' ');
     opt.textContent = label || '(날짜/이름 없음)';
     sel.appendChild(opt);
   });
@@ -9162,16 +9200,8 @@ function loadRecord() {
     updateStudentSelect();
   }
 
-  // 학생 select
-  const stuSel = document.getElementById('f-student');
-  if (stuSel) {
-    if (rec.student && !Array.from(stuSel.options).find(o=>o.value===rec.student)) {
-      const opt = document.createElement('option');
-      opt.value = rec.student; opt.textContent = rec.student;
-      stuSel.appendChild(opt);
-    }
-    stuSel.value = rec.student || '';
-  }
+  // 학생 select - id 기준으로 설정 (없으면 임시 옵션)
+  setStudentSelectFromRec(rec);
 
   // 지각정도 · 수업태도
   document.querySelectorAll('input[name=attendance]').forEach(r => { r.checked = r.value === rec.attendance; });
