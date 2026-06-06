@@ -14,10 +14,15 @@
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABcElEQVR42u2bPUvDUBSG33v9QLHSQUG3/g+d9ReIq4iig+AiLqIOKkUQl6JLoX8q/g0d2mqhUKybtJKkSZB+3POcrZBbeJ/7nJMmaZxy1NFJs68ZqEa97LIe60IJXRSGDzl8lgwu1OBZbfBWwidl81bCJ2X0Ml7e0u7HZfXWwv+FQAtYB+As6o8BAADAb83/x5c83JW0uTF+lrXXjqKohwEAmHQLXN9+Dn3e31vS7s5i6pqLy7aarfxn4JurFVUqcxgAAAAAYHqG4DjrvvqFASYMWF/zeqyWJEndbl9n521mAAAAENAMeH5axQAAWG6BUVeDg6dBDAAAAOz9FH7/+NbxaQsDAAAAANgcgkm1vbWgw4NlSVL01lPtpYMBAAAAACY7BIs8HueGCC0wHcW/xGgBABgHkOcFo9CqUS87DACA8r1nF5L+QwZYgjCYlRZIImNh92MNCBlCXLbUsKFcJ6Rtqi+6MITwIw2YVSPybNwPE61v3Kici6AAAAAASUVORK5CYII=">
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAADNUlEQVR42u3dsWqTURjH4XM+GwpKk2vQVcfkGkQRFL2EQkcRQRAXcS4UcTOSVVzaqXTUC9BRL0H3oqhRsU6uIWm+JOe83/PMHULy8+9b/ao5FWJ37/QsUa3JeJBLeB1ZwEQKPIuYSHFnERMp7ixkIoWdhUyksBsxs0ltN5OFTKS1bsRMpLVuxEykqLOQiXSCNGIm0lo3YiZS1I2YiRR14+0ikqbtXyGwyZVuxEykqBsxEylqNzTduKGtMzWudCNmIkXt5CD2yWGdqXmlLTRxF9o6U/tKW2hi39AQImjnBhHODguNkwOKDtq5QZSzw0Lj5ABBwxpk9zMWGgQNggZBI2gQNAgaVmir5hd/sL+T+v3sU2zR8xff08dPfyw0CBoEDYJG0CBoEDS0peo/h3746OtCX//k8aV05fIFn7qgmcf7D7/Ty1c/in19t25upzu3t50cIGgQNAgaBI2gQdAgaBA0CBpBg6BB0LAoT9t1yPHJNB2fTC00CBoEDW7oTrl3dzvduD77p06ePvuWPn/5a6FB0CBoEDQIGkGDoEHQIGgQNIKG+niWo0WjYS+Nhj1vhIUGQYOgETQIGgQNggZBE5S/WGnROv5bt3l+SNZCg6BB0CBoEDSCBkGDoEHQIGgEDdXyLEdlDo+m6fBo6o2w0AgaBA2CBkGDoBE0CBoEDYIGQROTZzk65trVrfTg/sWZX/P6zc/09t0vCw2CBkGDoBE0CBoEDYIGQSNoEDQIGgQN/3narkWjYS+Nhj1vhKDP52B/J/X72aeIkwNBg6BB0CBoEDSChnLl3b3TM28DFhoEDYIGQSNoEDQIGgQNcwQ9GQ88IU8Ik/EgW2icHCBoWFfQ7mgi3M8WGicHVBG0s4Pazw0LjZMDqgna2UHN54aFJv7JYaWpdZ0tNN34ptBKU+M6z1xoUVNbzE4OunFyWGlqXOe5FlrU1BLz3CeHqKkhZjc03bqhrTQ1rfPCCy1qSo75XCeHqCk15pRSWipO/1g6pYTcyjeF1pqSYl46aFFTUsxLnxxOEEoJubWFttaU1MzKArTWbGL8Vr6owmadv4uv9UQQt4hXbWM3r7hFHCpogQt4Ff4BDSfq9BcP45wAAAAASUVORK5CYII=">
 <script>
+  // 이전 서비스워커가 옛 페이지를 캐시해 새 배포(파비콘 등)가 안 보이는 문제 방지:
+  // 등록된 서비스워커를 해제하고 캐시를 정리한다. (Firestore 기반이라 오프라인 캐시 불필요)
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('sw.js').catch(function(){});
-    });
+    navigator.serviceWorker.getRegistrations()
+      .then(function(regs){ regs.forEach(function(r){ r.unregister(); }); })
+      .catch(function(){});
+  }
+  if (window.caches && caches.keys) {
+    caches.keys().then(function(keys){ keys.forEach(function(k){ caches.delete(k); }); }).catch(function(){});
   }
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -417,8 +422,9 @@ textarea { resize:vertical; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-import { getAuth, setPersistence, browserSessionPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+import { getAuth, setPersistence, browserSessionPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 import { getFirestore, initializeFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, addDoc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAgSVfgqsbYwjLQI_yMv6-iA7DEfXjLaBE",
@@ -441,12 +447,25 @@ try {
 }
 const googleProvider = new GoogleAuthProvider();
 
+// 비밀번호 재설정 전용 보조 앱 (메인 로그인 세션을 건드리지 않도록 분리)
+const pwResetApp = initializeApp(firebaseConfig, 'pwReset');
+const pwResetAuth = getAuth(pwResetApp);
+const pwResetFunctions = getFunctions(pwResetApp, 'asia-northeast3');
+window.fbPwResetAuth = pwResetAuth;
+window.fbPwResetSignInPhone = signInWithPhoneNumber;
+window.fbPwResetSignOut = signOut;
+window.fbPwResetCallable = function(name){ return httpsCallable(pwResetFunctions, name); };
+
 // 전역으로 노출
 window.fbAuth = auth;
 window.fbDb = db;
 window.fbCreateUser = createUserWithEmailAndPassword;
 window.fbSignIn = signInWithEmailAndPassword;
 window.fbSignOut = signOut;
+window.fbUpdatePassword = updatePassword;
+window.fbReauth = reauthenticateWithCredential;
+window.fbEmailAuthProvider = EmailAuthProvider;
+window.fbSendPasswordReset = sendPasswordResetEmail;
 window.fbOnAuthStateChanged = onAuthStateChanged;
 window.fbDoc = doc;
 window.fbSetDoc = setDoc;
@@ -735,6 +754,9 @@ onAuthStateChanged(auth, function(user) {
         <input type="password" id="loginPassword" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doFirebaseLogin()" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
       </div>
       <button onclick="doFirebaseLogin()" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px">로그인</button>
+      <div style="text-align:center;margin-bottom:10px">
+        <button onclick="loginResetHelp()" style="background:none;border:none;font-size:12px;color:#6366f1;cursor:pointer;font-family:inherit;text-decoration:underline">비밀번호를 잊으셨나요?</button>
+      </div>
       <!-- 구분선 (구글 로그인 임시 숨김) -->
       <div style="display:none;align-items:center;gap:8px;margin-bottom:10px">
         <div style="flex:1;height:1px;background:#e2e8f0"></div>
@@ -1003,6 +1025,31 @@ onAuthStateChanged(auth, function(user) {
   </div>
 </header>
 
+<!-- 비밀번호 재설정 모달 (로그인 화면) -->
+<div id="pwResetModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9500;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:16px;font-weight:800;color:#1e293b">비밀번호 재설정</div>
+      <button onclick="closePwReset()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer">×</button>
+    </div>
+    <div style="font-size:11px;color:#64748b;margin-bottom:14px;line-height:1.5">가입 시 인증한 <b>아이디</b>와 <b>휴대폰 번호</b>로 본인 확인 후 새 비밀번호를 설정합니다.</div>
+    <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">아이디</label>
+    <input type="text" id="pwResetId" placeholder="아이디" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:10px">
+    <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">휴대폰 번호</label>
+    <input type="tel" id="pwResetPhone" placeholder="010-0000-0000" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:10px">
+    <div id="pwResetRecaptcha"></div>
+    <button onclick="pwResetSendCode()" style="width:100%;padding:11px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">인증번호 받기</button>
+    <div id="pwResetStep2" style="display:none">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">인증번호</label>
+      <input type="text" id="pwResetCode" inputmode="numeric" placeholder="문자로 받은 인증번호" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:10px">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">새 비밀번호 (6자 이상)</label>
+      <input type="password" id="pwResetNewPw" autocomplete="new-password" placeholder="새 비밀번호" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:12px">
+      <button onclick="pwResetConfirm()" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">비밀번호 재설정</button>
+    </div>
+    <div id="pwResetResult" style="display:none;text-align:center;margin-top:10px;font-size:12px;font-weight:700"></div>
+  </div>
+</div>
+
 <!-- 마이페이지 모달 -->
 <div id="myPageModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
   <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
@@ -1040,6 +1087,20 @@ onAuthStateChanged(auth, function(user) {
       <input type="tel" id="myPhone" placeholder="010-0000-0000" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
     </div>
 
+    <!-- 비밀번호 변경 (로그인 사용자 전체) -->
+    <div id="myPwSection" style="margin-bottom:14px;border-top:1px solid #e2e8f0;padding-top:14px">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">비밀번호 변경</label>
+      <input type="password" id="myCurrentPw" placeholder="현재 비밀번호" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:8px">
+      <input type="password" id="myNewPw" placeholder="새 비밀번호 (6자 이상)" autocomplete="new-password" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:8px">
+      <input type="password" id="myNewPw2" placeholder="새 비밀번호 확인" autocomplete="new-password" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:8px">
+      <button onclick="changeMyPassword()" style="width:100%;padding:10px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">비밀번호 변경</button>
+      <div id="myPwResult" style="display:none;text-align:center;margin-top:8px;font-size:12px;font-weight:700"></div>
+    </div>
+
+    <!-- 저장 버튼 (원장만) -->
+    <button id="mySaveBtn" onclick="saveMyPage()" style="display:none;width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">저장</button>
+    <div id="myPageResult" style="display:none;text-align:center;margin-top:10px;font-size:12px;font-weight:700;color:#16a34a"></div>
+
     <!-- 학원 코드 (원장만) -->
     <div id="mySchoolCodeSection" style="display:none;margin-bottom:14px">
       <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:8px">학원 코드</label>
@@ -1069,10 +1130,6 @@ onAuthStateChanged(auth, function(user) {
         <button id="myRenewBtn" onclick="openPlanExtend()" style="margin-top:8px;width:100%;padding:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:none"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> 플랜 연장/변경하기</button>
       </div>
     </div>
-
-    <!-- 저장 버튼 (원장만) -->
-    <button id="mySaveBtn" onclick="saveMyPage()" style="display:none;width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">저장</button>
-    <div id="myPageResult" style="display:none;text-align:center;margin-top:10px;font-size:12px;font-weight:700;color:#16a34a"></div>
 
     <!-- 1:1 문의 (로그인 사용자용) -->
     <div style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:14px">
@@ -1473,7 +1530,7 @@ onAuthStateChanged(auth, function(user) {
 
     <div class="card">
       <div class="card-title" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>오늘의 과제</div>
-      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 10px;line-height:1.45">학생이 집에서 해올 과제를 적어주세요. 다음 수업에 이 학생 기록을 불러오면 '지난 과제 이행도'로 자동 이동합니다.</div>
+      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 10px;line-height:1.45">학생이 해올 과제를 적어주세요. 다음 수업에 이 학생 기록을 불러오면 '지난 과제 이행도'로 자동 이동합니다.</div>
       <!-- 동적 과제 목록 -->
       <div id="homeworkWrap" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
       <button type="button" onclick="addHomework()" style="width:100%;padding:8px;background:#f3e8ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ 과제 추가</button>
@@ -1492,6 +1549,10 @@ onAuthStateChanged(auth, function(user) {
       <textarea id="f-memo" rows="2" placeholder="특이사항을 입력하세요..."></textarea>
     </div>
 
+    <div style="font-size:11px;color:#0e7490;background:#ecfeff;border:1px solid #cffafe;border-radius:8px;padding:6px 8px;margin-bottom:8px;line-height:1.45;display:flex;gap:5px;align-items:flex-start">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+      <span><strong>알림장으로 저장</strong>은 반 · 오늘의 과제 · 특이사항만 저장됩니다.</span>
+    </div>
     <div class="save-row">
       <button class="btn" id="noticeBtn" onclick="saveNotice()" style="background:#0891b2;color:#fff;flex:1"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> 알림장으로 저장</button>
       <button class="btn btn-indigo btn-full" id="saveBtn" onclick="saveRecord()"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> 저장</button>
@@ -3855,6 +3916,96 @@ function showAuthError(msg) {
   var el = document.getElementById('authError');
   el.textContent = msg;
   el.style.display = 'block';
+}
+
+var pwResetConfirmation = null;
+var pwResetVerifier = null;
+
+function loginResetHelp() {
+  var m = document.getElementById('pwResetModal');
+  if (m) m.style.display = 'flex';
+  var idv = (document.getElementById('loginId').value || '').trim();
+  if (idv) document.getElementById('pwResetId').value = idv;
+}
+
+function closePwReset() {
+  var m = document.getElementById('pwResetModal');
+  if (m) m.style.display = 'none';
+  pwResetConfirmation = null;
+  if (pwResetVerifier) { try { pwResetVerifier.clear(); } catch(e) {} pwResetVerifier = null; }
+  ['pwResetId','pwResetPhone','pwResetCode','pwResetNewPw'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  var s2 = document.getElementById('pwResetStep2'); if (s2) s2.style.display = 'none';
+  var r = document.getElementById('pwResetResult'); if (r) r.style.display = 'none';
+}
+
+function pwResetMsg(msg, ok) {
+  var r = document.getElementById('pwResetResult');
+  if (!r) return;
+  r.style.display = 'block';
+  r.style.color = ok ? '#16a34a' : '#ef4444';
+  r.textContent = msg;
+}
+
+function pwResetSendCode() {
+  var id = (document.getElementById('pwResetId').value || '').trim().toLowerCase();
+  var phone = (document.getElementById('pwResetPhone').value || '').trim();
+  if (!id) { pwResetMsg('아이디를 입력해주세요.', false); return; }
+  if (!phone) { pwResetMsg('휴대폰 번호를 입력해주세요.', false); return; }
+  var cleaned = phone.replace(/[^0-9]/g, '');
+  if (cleaned.startsWith('0')) cleaned = cleaned.substring(1);
+  var intlPhone = '+82' + cleaned;
+  try {
+    if (pwResetVerifier) { try { pwResetVerifier.clear(); } catch(e) {} pwResetVerifier = null; }
+    var oldEl = document.getElementById('pwResetRecaptcha');
+    if (oldEl && oldEl.parentNode) {
+      var fresh = document.createElement('div'); fresh.id = 'pwResetRecaptcha';
+      oldEl.parentNode.replaceChild(fresh, oldEl);
+    }
+    pwResetVerifier = new window.fbRecaptchaVerifier(window.fbPwResetAuth, 'pwResetRecaptcha', { size: 'invisible' });
+    pwResetMsg('인증번호 발송 중...', true);
+    window.fbPwResetSignInPhone(window.fbPwResetAuth, intlPhone, pwResetVerifier)
+      .then(function(result) {
+        pwResetConfirmation = result;
+        document.getElementById('pwResetStep2').style.display = 'block';
+        pwResetMsg('인증번호가 발송됐습니다. 문자를 확인해주세요.', true);
+      })
+      .catch(function(err) {
+        if (err.code === 'auth/billing-not-enabled') pwResetMsg('휴대폰 인증이 일시적으로 불가합니다.', false);
+        else pwResetMsg('발송 실패: ' + (err.message || ''), false);
+        if (pwResetVerifier) { try { pwResetVerifier.clear(); } catch(e) {} pwResetVerifier = null; }
+      });
+  } catch(e) {
+    pwResetMsg('오류: ' + e.message, false);
+  }
+}
+
+function pwResetConfirm() {
+  var code = (document.getElementById('pwResetCode').value || '').trim();
+  var newPw = (document.getElementById('pwResetNewPw').value || '');
+  var id = (document.getElementById('pwResetId').value || '').trim().toLowerCase();
+  if (!pwResetConfirmation) { pwResetMsg('먼저 인증번호를 받아주세요.', false); return; }
+  if (!code) { pwResetMsg('인증번호를 입력해주세요.', false); return; }
+  if (newPw.length < 6) { pwResetMsg('새 비밀번호는 6자 이상이어야 합니다.', false); return; }
+  pwResetMsg('확인 중...', true);
+  pwResetConfirmation.confirm(code)
+    .then(function() {
+      var fn = window.fbPwResetCallable('resetPasswordByPhone');
+      return fn({ userId: id, newPassword: newPw });
+    })
+    .then(function() {
+      pwResetMsg('비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해주세요.', true);
+      try { window.fbPwResetSignOut(window.fbPwResetAuth); } catch(e) {}
+      setTimeout(closePwReset, 2500);
+    })
+    .catch(function(err) {
+      var c = (err && err.code) || '';
+      if (c === 'auth/invalid-verification-code') pwResetMsg('인증번호가 올바르지 않습니다.', false);
+      else if (c.indexOf('not-found') >= 0) pwResetMsg('해당 아이디의 계정을 찾을 수 없습니다.', false);
+      else if (c.indexOf('permission-denied') >= 0) pwResetMsg('이 계정에 등록된 휴대폰 번호가 아닙니다.', false);
+      else if (c.indexOf('invalid-argument') >= 0) pwResetMsg((err.message || '입력값을 확인해주세요.'), false);
+      else pwResetMsg('재설정 실패: ' + ((err && err.message) || ''), false);
+      try { window.fbPwResetSignOut(window.fbPwResetAuth); } catch(e) {}
+    });
 }
 
 function doFirebaseLogin() {
@@ -7338,6 +7489,42 @@ function saveMyPage() {
 function closeMyPage() {
   document.getElementById('myPageModal').style.display = 'none';
   myLogoBase64 = null;
+  ['myCurrentPw','myNewPw','myNewPw2'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  var pr=document.getElementById('myPwResult'); if(pr) pr.style.display='none';
+}
+
+// 마이페이지: 비밀번호 변경 (현재 비밀번호로 재인증 후 변경)
+function changeMyPassword() {
+  var res = document.getElementById('myPwResult');
+  function show(msg, ok) {
+    if (!res) return;
+    res.style.display = 'block';
+    res.style.color = ok ? '#16a34a' : '#ef4444';
+    res.textContent = msg;
+  }
+  var cur = (document.getElementById('myCurrentPw')||{value:''}).value;
+  var np  = (document.getElementById('myNewPw')||{value:''}).value;
+  var np2 = (document.getElementById('myNewPw2')||{value:''}).value;
+  if (!cur || !np) { show('현재 비밀번호와 새 비밀번호를 입력해주세요.', false); return; }
+  if (np.length < 6) { show('새 비밀번호는 6자 이상이어야 합니다.', false); return; }
+  if (np !== np2) { show('새 비밀번호가 일치하지 않습니다.', false); return; }
+  var user = window.fbAuth && window.fbAuth.currentUser;
+  if (!user) { show('로그인이 필요합니다.', false); return; }
+  show('변경 중...', true);
+  var cred = window.fbEmailAuthProvider.credential(user.email, cur);
+  window.fbReauth(user, cred)
+    .then(function(){ return window.fbUpdatePassword(user, np); })
+    .then(function(){
+      show('비밀번호가 변경되었습니다.', true);
+      ['myCurrentPw','myNewPw','myNewPw2'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    })
+    .catch(function(err){
+      var c = err && err.code;
+      if (c === 'auth/wrong-password' || c === 'auth/invalid-credential') show('현재 비밀번호가 올바르지 않습니다.', false);
+      else if (c === 'auth/weak-password') show('새 비밀번호가 너무 약합니다 (6자 이상).', false);
+      else if (c === 'auth/requires-recent-login') show('보안을 위해 다시 로그인한 뒤 시도해주세요.', false);
+      else show('변경 실패: ' + (err && err.message || ''), false);
+    });
 }
 
 // 학원 로고를 사이드바/헤더에 반영 (학원 로고 없으면 기본 EduNote 로고 유지)
@@ -8843,14 +9030,25 @@ function loadRecord() {
   document.querySelectorAll('input[name=attendance]').forEach(r => { r.checked = r.value === rec.attendance; });
   document.querySelectorAll('input[name=attitude]').forEach(r => { r.checked = r.value === rec.attitude; });
 
-  // 단어 시험
-  document.getElementById('f-wordTest').value  = rec.wordTest  || '';
-  document.getElementById('f-wordScore').value = rec.wordScore || '';
-  deserializeTests(rec.wordTest||'', rec.wordScore||'', rec.testsJson||'');
-
-  // 불러오기: 오늘 날짜 기록이면 과제를 그대로 유지, 과거 날짜 기록이면 지난 과제로 이동
+  // 불러오기: 오늘 날짜 기록이면 그대로 유지, 과거 날짜 기록이면 새 기록으로 작성(지난 과제 이동 등)
   var recDate = (rec.date || '').slice(0, 10);
-  var isNewDay = recDate < todayStr(); // 과거 날짜만 지난 과제로 이동
+  var isNewDay = recDate < todayStr(); // 과거 날짜만 새 날로 처리
+
+  // 단어 시험
+  // - 같은 날 불러오기: 시험 전체(점수 포함) 그대로 유지
+  // - 과거→오늘 불러오기: 대표 시험(TEST1)의 시험범위/내용만 남기고 점수·나머지 TEST는 초기화
+  if (isNewDay) {
+    var _ft = (typeof extractTests === 'function') ? extractTests(rec)[0] : null;
+    var _ftRange = (_ft && _ft.range) ? _ft.range : (rec.wordTest || '');
+    _tests = [{ range: _ftRange, score: '' }];
+    document.getElementById('f-wordTest').value  = _ftRange;
+    document.getElementById('f-wordScore').value = '';
+    renderTests();
+  } else {
+    document.getElementById('f-wordTest').value  = rec.wordTest  || '';
+    document.getElementById('f-wordScore').value = rec.wordScore || '';
+    deserializeTests(rec.wordTest||'', rec.wordScore||'', rec.testsJson||'');
+  }
 
   if (isNewDay) {
     // 과거 기록: rec의 오늘의 과제(무제한) → 지난 과제로 이동
