@@ -7878,41 +7878,41 @@ function makeCard(rec) {
         var rv=rec['reading'+ri], rc=rec['reading'+ri+'Comp']||0;
         if(!rv) continue;
         var lRi=LEVELS.find(function(l){return l.value===rc;})||LEVELS[0];
-        readingRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 독해${ri}</strong> ${esc(rv)}<br>${compBadgeHTML(rc)}</div>`;
+        readingRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 독해${ri}</strong><br>${esc(rv)}<br>${compBadgeHTML(rc)}</div>`;
       }
       var grammarRows = '';
       for(var gi=1;gi<=5;gi++){
         var gv=rec['grammar'+gi], gc=rec['grammar'+gi+'Comp']||0;
         if(!gv) continue;
         var lGi=LEVELS.find(function(l){return l.value===gc;})||LEVELS[0];
-        grammarRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 문법${gi}</strong> ${esc(gv)}<br>${compBadgeHTML(gc)}</div>`;
+        grammarRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 문법${gi}</strong><br>${esc(gv)}<br>${compBadgeHTML(gc)}</div>`;
       }
       var examRows = '';
       for(var ei=1;ei<=5;ei++){
         var ev=rec['exam'+ei], ec=rec['exam'+ei+'Comp']||0;
         if(!ev) continue;
         var lEi=LEVELS.find(function(l){return l.value===ec;})||LEVELS[0];
-        examRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 내신대비${ei}</strong> ${esc(ev)}<br>${compBadgeHTML(ec)}</div>`;
+        examRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 내신대비${ei}</strong><br>${esc(ev)}<br>${compBadgeHTML(ec)}</div>`;
       }
       var etcRows = '';
       for(var eti=1;eti<=5;eti++){
         var etv=rec['etc'+eti], etc=rec['etc'+eti+'Comp']||0;
         if(!etv) continue;
         var lEti=LEVELS.find(function(l){return l.value===etc;})||LEVELS[0];
-        etcRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 기타${eti}</strong> ${esc(etv)}<br>${compBadgeHTML(etc)}</div>`;
+        etcRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 기타${eti}</strong><br>${esc(etv)}<br>${compBadgeHTML(etc)}</div>`;
       }
       var supplementRows = '';
       for(var si=1;si<=5;si++){
         var sv=rec['supplement'+si], sc=rec['supplement'+si+'Comp']||0;
         if(!sv) continue;
-        supplementRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:#db2777"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M12 2v20M2 12h20"/></svg> 보충${si}</strong> ${esc(sv)}<br>${compBadgeHTML(sc)}</div>`;
+        supplementRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:#db2777"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M12 2v20M2 12h20"/></svg> 보충${si}</strong><br>${esc(sv)}<br>${compBadgeHTML(sc)}</div>`;
       }
       return `<div class="rec-row">
         <span class="po-section" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 오늘 수업내용</span><br>
 ${[rec.todayContent,rec.todayContent1,rec.todayContent2,rec.todayContent3,rec.todayContent4,rec.todayContent5].filter(Boolean).map(function(t,i){return `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:#4f46e5">${i===0&&rec.todayContent?'':'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> '+(i+(rec.todayContent?0:-1)+1)+'번 </strong>'}</strong>${esc(t)}</div>`;}).join('')}
         ${(rec.reading||rec.grammar) ? '<div style="border-top:1.5px solid #cbd5e1;margin:6px 0 6px;"></div>' : ''}
-        ${rec.reading ? `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 독해</strong> ${esc(rec.reading.replace(/^독해\s*/,''))}<br>${compBadgeHTML(rec.readingComp||0)}</div>` : ''}
-        ${rec.grammar ? `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 문법</strong> ${esc(rec.grammar.replace(/^문법\s*/,''))}<br>${compBadgeHTML(rec.grammarComp||0)}</div>` : ''}
+        ${rec.reading ? `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 독해</strong><br>${esc(rec.reading.replace(/^독해\s*/,''))}<br>${compBadgeHTML(rec.readingComp||0)}</div>` : ''}
+        ${rec.grammar ? `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 문법</strong><br>${esc(rec.grammar.replace(/^문법\s*/,''))}<br>${compBadgeHTML(rec.grammarComp||0)}</div>` : ''}
         ${readingRows}${grammarRows}
         ${examRows ? '<div style="border-top:1.5px solid #cbd5e1;margin:6px 0 4px;"></div>' + examRows : ''}
         ${etcRows ? '<div style="border-top:1.5px solid #cbd5e1;margin:6px 0 4px;"></div>' + etcRows : ''}
@@ -7924,7 +7924,7 @@ ${[rec.todayContent,rec.todayContent1,rec.todayContent2,rec.todayContent3,rec.to
       var hwList = getHomeworks(rec);
       hwList.forEach(function(h, idx) {
         if (!h) return;
-        hwRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:#7c3aed">${idx+1}번</strong> ${esc(h)}</div>`;
+        hwRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:#7c3aed">${idx+1}번</strong><br>${esc(h)}</div>`;
       });
       return hwRows ? `<div class="rec-row"><span class="po-section" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 오늘 과제</span><br>${hwRows}</div>` : '';
     })();
