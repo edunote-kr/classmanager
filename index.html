@@ -3307,7 +3307,11 @@ function switchTab(tab) {
   if (tab==='input')    { updateLoadSelect(); renderHomeworks(); renderLastHomeworks(); renderLessonBlocks(); renderTests(); }
   if (tab==='students') renderStudents();
   if (tab==='teachers') renderTeacherAssign();
-  if (tab==='attendance') renderAttendance();
+  if (tab==='attendance') {
+    var _am=document.getElementById('attMonth'); if(_am) _am.value=String(new Date().getMonth()+1);
+    var _ay=document.getElementById('attYear');  if(_ay) _ay.value=String(new Date().getFullYear());
+    renderAttendance();
+  }
 }
 
 function updateAttendance() {}
