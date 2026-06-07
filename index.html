@@ -1673,23 +1673,9 @@ onAuthStateChanged(auth, function(user) {
   </div>
 
   <!-- 학생 배정 모달 (원장 전용) -->
-  <!-- 출결 체크 모드 설정 모달 -->
-  <div id="kioskSetupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10800;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
-    <div style="background:#fff;border-radius:16px;padding:22px;width:100%;max-width:320px">
-      <div style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:6px">출결 체크 모드</div>
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;line-height:1.55">학생이 출결코드로 등·하원을 직접 체크합니다. 모드를 나가려면 아래에서 정한 해제 코드가 필요합니다.</div>
-      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">잠금 해제 코드 (4자리)</label>
-      <input id="kioskPinInput" inputmode="numeric" maxlength="4" placeholder="예: 1234" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:16px;font-family:inherit;box-sizing:border-box;letter-spacing:6px;text-align:center">
-      <div style="display:flex;gap:8px;margin-top:16px">
-        <button onclick="closeKioskSetup()" style="flex:1;padding:11px;background:#f1f5f9;color:#64748b;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
-        <button onclick="startKioskFromSetup()" style="flex:2;padding:11px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">시작</button>
-      </div>
-    </div>
-  </div>
-
   <!-- 출결 체크 잠금 화면 -->
   <div id="kioskOverlay" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#0f172a,#1e293b);z-index:11000;flex-direction:column;align-items:center;justify-content:flex-start;padding:26px 16px;box-sizing:border-box;overflow-y:auto">
-    <button onclick="kioskExitPrompt()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.1);color:#cbd5e1;border:none;border-radius:8px;padding:8px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">나가기</button>
+    <button onclick="kioskExitPrompt()" style="position:fixed;top:14px;right:14px;z-index:11050;background:rgba(255,255,255,0.1);color:#cbd5e1;border:none;border-radius:8px;padding:8px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">나가기</button>
     <div style="color:#fff;font-size:20px;font-weight:800;margin-top:6px">출결 체크</div>
     <div id="kioskSchoolName" style="color:#94a3b8;font-size:13px;margin-bottom:12px"></div>
     <div id="kioskResult" style="min-height:64px;display:flex;align-items:center;justify-content:center"></div>
@@ -1702,11 +1688,12 @@ onAuthStateChanged(auth, function(user) {
   <!-- 출결 모드 나가기 확인 -->
   <div id="kioskExitModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:11200;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
     <div style="background:#fff;border-radius:16px;padding:22px;width:100%;max-width:300px">
-      <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:12px">잠금 해제 코드 입력</div>
-      <input id="kioskExitInput" inputmode="numeric" maxlength="4" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:16px;font-family:inherit;box-sizing:border-box;letter-spacing:6px;text-align:center">
+      <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:6px">나가기 — 비밀번호 확인</div>
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:12px;line-height:1.55">로그인한 본인의 비밀번호를 입력하면 출결 모드를 종료합니다.</div>
+      <input id="kioskExitInput" type="password" autocomplete="current-password" placeholder="비밀번호" onkeydown="if(event.key==='Enter')confirmKioskExit()" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:15px;font-family:inherit;box-sizing:border-box">
       <div style="display:flex;gap:8px;margin-top:14px">
         <button onclick="closeKioskExit()" style="flex:1;padding:10px;background:#f1f5f9;color:#64748b;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
-        <button onclick="confirmKioskExit()" style="flex:1;padding:10px;background:#0891b2;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">나가기</button>
+        <button id="kioskExitConfirmBtn" onclick="confirmKioskExit()" style="flex:1;padding:10px;background:#0891b2;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">나가기</button>
       </div>
     </div>
   </div>
@@ -1784,7 +1771,7 @@ onAuthStateChanged(auth, function(user) {
     <div class="card">
       <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 출결 현황</div>
       <div style="font-size:11px;color:#94a3b8;margin:-4px 0 12px;line-height:1.5">수업내용 입력의 지각 정도·보충 기준입니다. 학생을 눌러 달력으로 볼 수 있어요.</div>
-      <button onclick="openKioskSetup()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:14px"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg> 출결 체크 모드 시작 (학생 코드 입력)</button>
+      <button onclick="startKiosk()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:14px"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg> 출결 체크 모드 시작 (학생 코드 입력)</button>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <select id="attYear" onchange="renderAttendance()" style="flex:1;min-width:90px;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit"></select>
         <select id="attMonth" onchange="renderAttendance()" style="flex:1;min-width:90px;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit"><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select>
@@ -3254,9 +3241,23 @@ function kioskExitPrompt(){
 }
 function closeKioskExit(){ var m=document.getElementById('kioskExitModal'); if(m) m.style.display='none'; }
 function confirmKioskExit(){
-  var v=((document.getElementById('kioskExitInput')||{value:''}).value||'');
-  if(v===_kioskExitPin){ closeKioskExit(); closeKiosk(); }
-  else { showToast('해제 코드가 일치하지 않습니다.','error'); }
+  var pw=((document.getElementById('kioskExitInput')||{value:''}).value||'');
+  if(!pw){ showToast('비밀번호를 입력하세요.','error'); return; }
+  var user=window.fbAuth && window.fbAuth.currentUser;
+  if(!user || !user.email || !window.fbReauth || !window.fbEmailAuthProvider){ showToast('로그인 상태가 아니어서 확인할 수 없습니다.','error'); return; }
+  var btn=document.getElementById('kioskExitConfirmBtn');
+  if(btn){ btn.disabled=true; btn.textContent='확인 중...'; }
+  function _restore(){ if(btn){ btn.disabled=false; btn.textContent='나가기'; } }
+  var cred=window.fbEmailAuthProvider.credential(user.email, pw);
+  window.fbReauth(user, cred).then(function(){
+    _restore(); closeKioskExit(); closeKiosk();
+  }).catch(function(err){
+    _restore();
+    var c=err && err.code;
+    if(c==='auth/wrong-password'||c==='auth/invalid-credential') showToast('비밀번호가 올바르지 않습니다.','error');
+    else if(c==='auth/too-many-requests') showToast('시도가 많습니다. 잠시 후 다시 시도하세요.','error');
+    else showToast('확인 실패: '+(err&&err.message||''),'error');
+  });
 }
 function closeKiosk(){
   _kioskOn=false; _kioskInput='';
