@@ -1459,7 +1459,7 @@ onAuthStateChanged(auth, function(user) {
       </div>
       <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #fbcfe8">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:700;color:#7c3aed">
-          <input type="checkbox" id="makeup-check" onchange="updateAttendance()" style="width:16px;height:16px;accent-color:#7c3aed"> 보충 진행
+          <input type="checkbox" id="makeup-check" autocomplete="off" onchange="updateAttendance()" style="width:16px;height:16px;accent-color:#7c3aed"> 보충 진행
         </label>
         <div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.45">지각 정도와 별개로, 보충수업을 진행한 경우 선택하세요.</div>
       </div>
@@ -2996,7 +2996,7 @@ function _drawTeacherAssign() {
     var checked = (Array.isArray(s.assignedTo) && s.assignedTo.indexOf(uid)!==-1) ? 'checked' : '';
     var search = (((s.name||'')+' '+(s.className||'')+' '+(s.grade||'')).toLowerCase()).replace(/"/g,'');
     return '<label data-assign-row data-search="'+search+'" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer">'
-      + '<input type="checkbox" class="assign-stu-cb" value="'+s.id+'" '+checked+' onchange="updateAssignCount()" style="width:16px;height:16px;accent-color:#0891b2;flex-shrink:0">'
+      + '<input type="checkbox" class="assign-stu-cb" autocomplete="off" value="'+s.id+'" '+checked+' onchange="updateAssignCount()" style="width:16px;height:16px;accent-color:#0891b2;flex-shrink:0">'
       + '<span style="font-weight:700;color:#1e293b;font-size:13px">'+escapeNotice(s.name||'')+'</span>'
       + (s.className?'<span style="font-size:11px;color:#64748b;background:#f1f5f9;padding:1px 7px;border-radius:4px">'+escapeNotice(s.className)+'</span>':'')
       + (s.grade?'<span style="font-size:10px;color:#6366f1;background:#ede9fe;padding:1px 6px;border-radius:4px;font-weight:700">'+escapeNotice(s.grade)+'</span>':'')
@@ -5640,6 +5640,7 @@ function doLogout() {
   window.currentUser = null;
   window._loadedUid = null; // 재로그인 시 loadUserProfile 재실행 허용
   _navOverlays.length = 0;
+  var _ag=document.getElementById('assignStudentGrid'); if(_ag) _ag.innerHTML='';
   window._loginInProgress = false;
   localStorage.removeItem('kms_cache_user');
   localStorage.removeItem('kms_cache_school');
