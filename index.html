@@ -8593,12 +8593,16 @@ function renderStats() {
   const _vr=records.filter(b=>b.lastCompletion!==undefined&&b.lastCompletion>=0); const avg=_vr.length?Math.round(_vr.reduce((a,b)=>a+b.lastCompletion,0)/_vr.length):0;
 
   // ── 학생별 통계 (월별 → 학생별, 반 이동 통합: studentId 기준) ──
+  // 이름 → studentId 매핑 (studentId 있는 기록/학생목록 기준) — 동일 학생 카드 분리 방지
+  var nameToId = {};
+  (window.records||[]).forEach(function(r){ if(r.studentId && r.student && !nameToId[r.student]) nameToId[r.student]=r.studentId; });
+  if (typeof students!=='undefined' && students && students.forEach) students.forEach(function(st){ if(st && st.name && !nameToId[st.name]) nameToId[st.name]=st.id; });
   var monMap = {};
   records.forEach(function(rec) {
     var mon = (rec.date||'').slice(0,7);
     if (!mon) return;
     var sname = rec.student || '이름 없음';
-    var sk = rec.studentId ? ('id:'+rec.studentId) : ('nm:'+sname);
+    var sk = rec.studentId ? ('id:'+rec.studentId) : (nameToId[sname] ? ('id:'+nameToId[sname]) : ('nm:'+sname));
     if (!monMap[mon]) monMap[mon] = {};
     if (!monMap[mon][sk]) monMap[mon][sk] = { name: sname, classes: {}, recs: [] };
     monMap[mon][sk].recs.push(rec);
