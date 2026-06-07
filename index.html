@@ -1673,6 +1673,44 @@ onAuthStateChanged(auth, function(user) {
   </div>
 
   <!-- 학생 배정 모달 (원장 전용) -->
+  <!-- 출결 체크 모드 설정 모달 -->
+  <div id="kioskSetupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10800;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+    <div style="background:#fff;border-radius:16px;padding:22px;width:100%;max-width:320px">
+      <div style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:6px">출결 체크 모드</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;line-height:1.55">학생이 출결코드로 등·하원을 직접 체크합니다. 모드를 나가려면 아래에서 정한 해제 코드가 필요합니다.</div>
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">잠금 해제 코드 (4자리)</label>
+      <input id="kioskPinInput" inputmode="numeric" maxlength="4" placeholder="예: 1234" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:16px;font-family:inherit;box-sizing:border-box;letter-spacing:6px;text-align:center">
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button onclick="closeKioskSetup()" style="flex:1;padding:11px;background:#f1f5f9;color:#64748b;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
+        <button onclick="startKioskFromSetup()" style="flex:2;padding:11px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">시작</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 출결 체크 잠금 화면 -->
+  <div id="kioskOverlay" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#0f172a,#1e293b);z-index:11000;flex-direction:column;align-items:center;justify-content:flex-start;padding:26px 16px;box-sizing:border-box;overflow-y:auto">
+    <button onclick="kioskExitPrompt()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.1);color:#cbd5e1;border:none;border-radius:8px;padding:8px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">나가기</button>
+    <div style="color:#fff;font-size:20px;font-weight:800;margin-top:6px">출결 체크</div>
+    <div id="kioskSchoolName" style="color:#94a3b8;font-size:13px;margin-bottom:12px"></div>
+    <div id="kioskResult" style="min-height:64px;display:flex;align-items:center;justify-content:center"></div>
+    <div id="kioskDisplay" style="font-size:32px;font-weight:800;color:#fff;letter-spacing:8px;height:42px;margin-bottom:14px">· · · ·</div>
+    <div style="display:grid;grid-template-columns:repeat(3,68px);gap:11px"><button onclick="kioskKey('1')" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:inherit">1</button><button onclick="kioskKey('2')" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:inherit">2</button><button onclick="kioskKey('3')" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:inherit">3</button><button onclick="kioskKey('4')" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:inherit">4</button><button onclick="kioskKey('5')" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:inherit">5</button><button onclick="kioskKey('6')" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:inherit">6</button><button onclick="kioskKey('7')" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:inherit">7</button><button onclick="kioskKey('8')" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:inherit">8</button><button onclick="kioskKey('9')" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:inherit">9</button><button onclick="kioskClear()" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">지움</button><button onclick="kioskKey('0')" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:inherit">0</button><button onclick="kioskBack()" style="height:62px;border-radius:14px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:inherit">&#8592;</button></div>
+    <div style="color:#64748b;font-size:11px;margin-top:18px">출결코드 4자리를 입력하세요</div>
+    <div id="kioskRecent" style="margin-top:16px;width:100%;max-width:300px"></div>
+  </div>
+
+  <!-- 출결 모드 나가기 확인 -->
+  <div id="kioskExitModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:11200;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+    <div style="background:#fff;border-radius:16px;padding:22px;width:100%;max-width:300px">
+      <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:12px">잠금 해제 코드 입력</div>
+      <input id="kioskExitInput" inputmode="numeric" maxlength="4" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:16px;font-family:inherit;box-sizing:border-box;letter-spacing:6px;text-align:center">
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button onclick="closeKioskExit()" style="flex:1;padding:10px;background:#f1f5f9;color:#64748b;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
+        <button onclick="confirmKioskExit()" style="flex:1;padding:10px;background:#0891b2;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">나가기</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 학생 출결 달력 모달 -->
   <div id="studentCalendarModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9300;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
     <div style="background:#fff;border-radius:16px;padding:20px;width:100%;max-width:380px;max-height:88vh;overflow-y:auto">
@@ -1746,6 +1784,7 @@ onAuthStateChanged(auth, function(user) {
     <div class="card">
       <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 출결 현황</div>
       <div style="font-size:11px;color:#94a3b8;margin:-4px 0 12px;line-height:1.5">수업내용 입력의 지각 정도·보충 기준입니다. 학생을 눌러 달력으로 볼 수 있어요.</div>
+      <button onclick="openKioskSetup()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:14px"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg> 출결 체크 모드 시작 (학생 코드 입력)</button>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <select id="attYear" onchange="renderAttendance()" style="flex:1;min-width:90px;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit"></select>
         <select id="attMonth" onchange="renderAttendance()" style="flex:1;min-width:90px;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit"><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select>
@@ -3106,6 +3145,124 @@ function drawCalendar() {
   grid.innerHTML=html;
 }
 
+/* ===== 출결 체크 모드 (트랙2: 등하원 코드 시스템) ===== */
+var _kioskOn=false, _kioskExitPin='', _kioskInput='', _checkinDay={}, _checkinDate='', _notifyLog=[];
+var KIOSK_OUT_GAP_MS=30*60*1000;
+function _hm(ms){ var d=new Date(ms); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+function openKioskSetup(){
+  var inp=document.getElementById('kioskPinInput'); if(inp) inp.value='';
+  document.getElementById('kioskSetupModal').style.display='flex';
+}
+function closeKioskSetup(){ var m=document.getElementById('kioskSetupModal'); if(m) m.style.display='none'; }
+function startKioskFromSetup(){
+  var pin=((document.getElementById('kioskPinInput')||{value:''}).value||'');
+  if(!/^[0-9]{4}$/.test(pin)){ showToast('해제 코드 4자리를 입력하세요.','error'); return; }
+  _kioskExitPin=pin; closeKioskSetup(); startKiosk();
+}
+function startKiosk(){
+  _kioskInput=''; _kioskOn=true; _checkinDate=todayStr(); _notifyLog=[];
+  document.getElementById('kioskSchoolName').textContent=(currentSchoolProfile&&currentSchoolProfile.name)||'';
+  document.getElementById('kioskResult').innerHTML='';
+  document.getElementById('kioskRecent').innerHTML='';
+  _renderKioskDisplay();
+  document.getElementById('kioskOverlay').style.display='flex';
+  try{ history.pushState({kiosk:1},''); }catch(e){}
+  loadCheckins();
+}
+function loadCheckins(){
+  _checkinDay={};
+  if(window.fbDb && currentSchoolId){
+    window.fbGetDoc(window.fbDoc(window.fbDb,'schools',currentSchoolId,'checkins',_checkinDate)).then(function(snap){
+      _checkinDay=(snap&&snap.exists&&snap.exists())?(snap.data()||{}):{};
+    }).catch(function(){ _checkinDay={}; });
+  } else {
+    try{ _checkinDay=JSON.parse(localStorage.getItem('kms_checkins_'+currentSchoolId+'_'+_checkinDate)||'{}'); }catch(e){ _checkinDay={}; }
+  }
+}
+function _renderKioskDisplay(){
+  var d=document.getElementById('kioskDisplay'); if(!d) return;
+  var arr=[]; for(var i=0;i<4;i++){ arr.push(i<_kioskInput.length?_kioskInput[i]:'·'); }
+  d.textContent=arr.join(' ');
+}
+function kioskKey(n){
+  if(!_kioskOn || _kioskInput.length>=4) return;
+  _kioskInput+=n; _renderKioskDisplay();
+  if(_kioskInput.length===4) setTimeout(kioskSubmit,140);
+}
+function kioskBack(){ _kioskInput=_kioskInput.slice(0,-1); _renderKioskDisplay(); }
+function kioskClear(){ _kioskInput=''; _renderKioskDisplay(); }
+function kioskSubmit(){
+  var code=_kioskInput; _kioskInput=''; _renderKioskDisplay();
+  if(code.length!==4) return;
+  var stu=students.find(function(s){ return String(s.code4)===String(code); });
+  if(!stu){ _kioskResult('error','코드를 확인해주세요','일치하는 학생이 없습니다'); return; }
+  processCheckin(stu);
+}
+function processCheckin(stu){
+  var sid=String(stu.id), now=Date.now(), rec=_checkinDay[sid];
+  if(!rec || !rec.inAt){
+    _checkinDay[sid]={ name:stu.name, inAt:now, outAt:0 };
+    persistCheckin(sid); notifyStub('등원', stu, now);
+    _kioskResult('in', stu.name+' 등원!', _hm(now)+' 등원 처리되었습니다');
+  } else if(!rec.outAt){
+    if(now-rec.inAt < KIOSK_OUT_GAP_MS){
+      _kioskResult('warn', stu.name+' 이미 등원', _hm(rec.inAt)+' 등원함 · 하원은 30분 후');
+    } else {
+      rec.outAt=now; _checkinDay[sid]=rec;
+      persistCheckin(sid); notifyStub('하원', stu, now);
+      _kioskResult('out', stu.name+' 하원!', _hm(now)+' 하원 처리되었습니다');
+    }
+  } else {
+    _kioskResult('warn', stu.name+' 출결 완료', '오늘 등원·하원이 모두 기록됨');
+  }
+}
+function persistCheckin(sid){
+  var obj={}; obj[sid]=_checkinDay[sid];
+  if(window.fbDb && currentSchoolId){
+    window.fbSetDocMerge(window.fbDoc(window.fbDb,'schools',currentSchoolId,'checkins',_checkinDate), obj).catch(function(){});
+  }
+  try{ localStorage.setItem('kms_checkins_'+currentSchoolId+'_'+_checkinDate, JSON.stringify(_checkinDay)); }catch(e){}
+}
+function notifyStub(type, stu, ms){
+  var school=(currentSchoolProfile&&currentSchoolProfile.name)||'학원';
+  var msg='['+school+'] '+stu.name+' 학생이 '+_hm(ms)+'에 '+type+'했습니다.';
+  _notifyLog.unshift({ msg:msg, at:ms, type:type, student:stu.name });
+  try{ var q=JSON.parse(localStorage.getItem('kms_notifyQueue')||'[]'); q.unshift({msg:msg,at:ms,type:type,sent:false}); localStorage.setItem('kms_notifyQueue', JSON.stringify(q.slice(0,300))); }catch(e){}
+  if(window.console) console.log('[알림 stub - 발송 예정]', msg);
+  _renderKioskRecent();
+}
+function _renderKioskRecent(){
+  var el=document.getElementById('kioskRecent'); if(!el) return;
+  var items=_notifyLog.slice(0,5);
+  el.innerHTML = items.length ? '<div style="color:#64748b;font-size:11px;margin-bottom:6px;text-align:center">최근 알림 (전송 예정)</div>'+items.map(function(it){
+    var c= it.type==='등원' ? '#34d399' : '#fbbf24';
+    return '<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:8px 11px;margin-bottom:5px;color:#cbd5e1;font-size:12px"><span style="color:'+c+';font-weight:700">'+it.type+'</span> '+escapeNotice(it.student)+' · '+_hm(it.at)+'</div>';
+  }).join('') : '';
+}
+function _kioskResult(kind, big, sub){
+  var colors={'in':'#34d399','out':'#fbbf24','warn':'#94a3b8','error':'#f87171'};
+  var c=colors[kind]||'#cbd5e1';
+  var el=document.getElementById('kioskResult'); if(!el) return;
+  el.innerHTML='<div style="text-align:center"><div style="font-size:22px;font-weight:800;color:'+c+'">'+escapeNotice(big)+'</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">'+escapeNotice(sub)+'</div></div>';
+  clearTimeout(window._kioskResultTimer);
+  window._kioskResultTimer=setTimeout(function(){ var e=document.getElementById('kioskResult'); if(e&&_kioskOn) e.innerHTML=''; }, 3500);
+}
+function kioskExitPrompt(){
+  var inp=document.getElementById('kioskExitInput'); if(inp) inp.value='';
+  document.getElementById('kioskExitModal').style.display='flex';
+  setTimeout(function(){ if(inp) inp.focus(); },60);
+}
+function closeKioskExit(){ var m=document.getElementById('kioskExitModal'); if(m) m.style.display='none'; }
+function confirmKioskExit(){
+  var v=((document.getElementById('kioskExitInput')||{value:''}).value||'');
+  if(v===_kioskExitPin){ closeKioskExit(); closeKiosk(); }
+  else { showToast('해제 코드가 일치하지 않습니다.','error'); }
+}
+function closeKiosk(){
+  _kioskOn=false; _kioskInput='';
+  var o=document.getElementById('kioskOverlay'); if(o) o.style.display='none';
+}
+
 function switchTab(tab) {
   activeTab = tab;
   ['input','list','notice','stats','students','teachers','message','attendance','billing'].forEach(t => {
@@ -3183,6 +3340,7 @@ function closeCreateUserModal() {
   navOnOverlayClosed('createUserModal');
 }
 window.addEventListener('popstate', function(e) {
+  if (_kioskOn) { try{ history.pushState({kiosk:1},''); }catch(_e){} return; }
   if (_navSuppressPop) { _navSuppressPop = false; return; }
   if (_navOverlays.length) {
     var top = _navOverlays.pop();
