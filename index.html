@@ -1646,16 +1646,17 @@ onAuthStateChanged(auth, function(user) {
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
         <input type="text" id="newStudentClass" placeholder="반 (예: 고1오전)" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:100px;font-family:inherit">
-        <input type="text" id="newStudentName"  placeholder="학생 이름" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;flex:1;font-family:inherit">
-        <input type="text" id="newStudentGrade" placeholder="학년 (예: 고등1)" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:110px;font-family:inherit">
+        <input type="text" id="newStudentName"  placeholder="학생 이름 *" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;flex:1;font-family:inherit">
+        <input type="text" id="newStudentGrade" placeholder="학년 * (예: 고등1)" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:110px;font-family:inherit">
         <input type="text" id="newStudentSchool" placeholder="학교명 (예: ○○중)" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:140px;font-family:inherit">
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
         <input type="tel" id="newStudentPhone"  placeholder="학생 번호" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;flex:1;font-family:inherit">
         <input type="tel" id="newParentPhone"   placeholder="학부모 번호" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;flex:1;font-family:inherit">
       </div>
+      <div style="font-size:10px;color:#f59e0b;margin:-2px 0 8px;line-height:1.45">※ 학부모 번호 미입력 시 등·하원 알림(문자·알림톡) 수신이 불가합니다.</div>
       <div style="display:flex;gap:8px;margin-bottom:4px;flex-wrap:wrap;align-items:center">
-        <input type="text" id="newStudentCode" inputmode="numeric" maxlength="4" placeholder="출결코드 4자리(선택)" oninput="this.value=this.value.replace(/[^0-9]/g,'');checkNewStudentCode()" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:150px;font-family:inherit">
+        <input type="text" id="newStudentCode" inputmode="numeric" maxlength="4" placeholder="출결코드 4자리 *" oninput="this.value=this.value.replace(/[^0-9]/g,'');checkNewStudentCode()" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:150px;font-family:inherit">
         <span id="newStudentCodeMsg" style="font-size:11px;font-weight:700"></span>
         <button onclick="addStudent()" style="margin-left:auto;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:8px;padding:7px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">+ 학생 등록</button>
       </div>
@@ -1772,8 +1773,8 @@ onAuthStateChanged(auth, function(user) {
   <div class="panel" id="panel-attendance">
     <div class="card">
       <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 출결 현황</div>
-      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 12px;line-height:1.5">수업내용 입력의 지각 정도·보충 기준입니다. 학생을 눌러 달력으로 볼 수 있어요.</div>
-      <button onclick="startKiosk()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:14px"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg> 출결 체크 모드 시작 (학생 코드 입력)</button>
+      <button onclick="startKiosk()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:8px"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg> 출결 체크 모드 시작 (학생 코드 입력)<div style="font-size:10px;font-weight:600;opacity:0.9;margin-top:3px">등·하원 문자·알림톡 발송에만 사용됩니다</div></button>
+      <div style="font-size:11px;color:#94a3b8;margin:0 0 12px;line-height:1.5">출/결/지/보충 현황은 <b style="color:#64748b">수업내용 입력 탭</b> 기준입니다. 학생을 눌러 달력으로 볼 수 있어요.</div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <select id="attYear" onchange="renderAttendance()" style="flex:1;min-width:90px;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit"></select>
         <select id="attMonth" onchange="renderAttendance()" style="flex:1;min-width:90px;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit"><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select>
@@ -2556,6 +2557,8 @@ function addStudent() {
   const parent = document.getElementById('newParentPhone')  ? document.getElementById('newParentPhone').value.trim() : '';
   const code4  = document.getElementById('newStudentCode')  ? document.getElementById('newStudentCode').value.trim() : '';
   if (!name) { showToast('학생 이름을 입력해주세요.', 'error'); return; }
+  if (!grade) { showToast('학년을 입력해주세요.', 'error'); return; }
+  if (!code4) { showToast('출결코드(4자리)를 입력해주세요.', 'error'); return; }
   if (students.find(s => s.name === name && s.className === cls)) {
     showToast('이미 등록된 학생입니다.', 'error'); return;
   }
@@ -3149,8 +3152,11 @@ function drawCalendar() {
     var info=byDate[dd];
     var bg='#fff', col='#334155', bd='#e2e8f0';
     if(info&&info.att&&attColor[info.att]){ bg=attColor[info.att][0]; col=attColor[info.att][1]; bd=bg; }
-    var dot=(info&&info.mk)?'<span style="position:absolute;right:3px;bottom:3px;width:6px;height:6px;border-radius:50%;background:#7c3aed"></span>':'';
-    html+='<div style="position:relative;aspect-ratio:1;min-height:30px;border:1px solid '+bd+';border-radius:6px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+col+'">'+day+dot+'</div>';
+    var mk=(info&&info.mk);
+    if(mk && !(info&&info.att&&attColor[info.att])){ bg='#f5f3ff'; col='#7c3aed'; }
+    var _bd2=mk?'2px solid #7c3aed':('1px solid '+bd);
+    var dot=mk?'<span style="position:absolute;right:3px;bottom:3px;width:7px;height:7px;border-radius:50%;background:#7c3aed;box-shadow:0 0 0 1.5px #fff"></span>':'';
+    html+='<div style="position:relative;aspect-ratio:1;min-height:30px;border:'+_bd2+';border-radius:6px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+col+'">'+day+dot+'</div>';
   }
   html+='</div>';
   grid.innerHTML=html;
@@ -5478,6 +5484,7 @@ function scheduleAutoLogout() {
 }
 
 function doAutoLogout() {
+  if (_kioskOn) { markActivity(); return; } // 출결 체크 모드 중엔 로그아웃 보류
   showToast('2시간 동안 활동이 없어 자동 로그아웃되었습니다.', 'error');
   setTimeout(function() { doLogout(); }, 2000);
 }
@@ -5960,6 +5967,9 @@ function showSubscribeScreen(fbUser, profile, reason, expDate) {
   // subscribeScreen이 mainApp(display:none) 안에 있으면 안 보이므로 body로 이동
   if (subEl.parentElement !== document.body) document.body.appendChild(subEl);
   subEl.style.display = 'block';
+  // 신청 완료 후 재진입 시 폼이 사라지는 문제 방지: 원본 폼 저장/복원
+  var _fb = document.getElementById('subscribeFormBox');
+  if (_fb) { if (window._subFormBoxHTML == null) window._subFormBoxHTML = _fb.innerHTML; else _fb.innerHTML = window._subFormBoxHTML; }
 
   var title = document.getElementById('subscribeTitle');
   var sub   = document.getElementById('subscribeSubtitle');
@@ -8567,8 +8577,11 @@ function _statsCalendarHTML(recs, ym){
       var info=byDate[day];
       var bg='#f8fafc', col='#334155', bd='#eef2f7';
       if(info && info.att && attColor[info.att]){ bg=attColor[info.att][0]; col=attColor[info.att][1]; bd=bg; }
-      var dot=(info && info.mk)?'<div style="width:5px;height:5px;border-radius:50%;background:#7c3aed;margin:1px auto 0"></div>':'';
-      html+='<td style="height:26px;text-align:center;vertical-align:middle;border-radius:5px;border:1px solid '+bd+';background:'+bg+';color:'+col+';font-size:10px;font-weight:700">'+day+dot+'</td>';
+      var mk=(info && info.mk);
+      if(mk && !(info && info.att && attColor[info.att])){ bg='#f5f3ff'; col='#7c3aed'; }
+      var _bd=mk?'2px solid #7c3aed':('1px solid '+bd);
+      var dot=mk?'<div style="width:6px;height:6px;border-radius:50%;background:#7c3aed;margin:2px auto 0"></div>':'';
+      html+='<td style="height:26px;text-align:center;vertical-align:middle;border-radius:5px;border:'+_bd+';background:'+bg+';color:'+col+';font-size:10px;font-weight:700">'+day+dot+'</td>';
     }
     html+='</tr>';
   }
