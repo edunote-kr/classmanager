@@ -420,6 +420,13 @@ textarea { resize:vertical; }
     border-bottom:4px solid #FEE500;
   }
 }
+
+/* 수업입력 미리보기 (웹 전용) */
+#lessonPreviewToggle{display:none;position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:7000;background:#4f46e5;color:#fff;border:none;border-radius:10px 0 0 10px;width:30px;height:72px;font-size:20px;cursor:pointer;box-shadow:-2px 0 8px rgba(0,0,0,0.12);font-family:inherit;align-items:center;justify-content:center}
+#lessonPreviewPane{position:fixed;top:0;right:0;bottom:0;width:min(440px,44vw);background:#eef2f7;border-left:1px solid #d8dee9;z-index:6990;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;box-shadow:-6px 0 20px rgba(0,0,0,0.08)}
+#lessonPreviewPane.open{transform:translateX(0)}
+@media (min-width:1024px){ body.tab-input #lessonPreviewToggle{display:flex} body.preview-open #lessonPreviewToggle{right:min(440px,44vw)} body.preview-open #mainContent{padding-right:calc(min(440px,44vw) + 24px)} }
+@media (max-width:1023px){ #lessonPreviewPane,#lessonPreviewToggle{display:none !important} }
 </style>
 
 <script type="module">
@@ -1385,6 +1392,15 @@ onAuthStateChanged(auth, function(user) {
 </div>
 
 <div class="content" id="mainContent">
+  <!-- 수업입력 미리보기 (웹 전용) -->
+  <button id="lessonPreviewToggle" onclick="toggleLessonPreview()" title="미리보기 열기/닫기"><span id="lessonPreviewArrow">&#8249;</span></button>
+  <div id="lessonPreviewPane">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #d8dee9;background:#fff">
+      <div style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:5px"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> 미리보기</div>
+      <button onclick="toggleLessonPreview()" style="background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer">&times;</button>
+    </div>
+    <div id="lessonPreviewBody" style="flex:1;overflow-y:auto;padding:16px"></div>
+  </div>
 
   <!-- INPUT PANEL -->
   <div class="panel active" id="panel-input">
@@ -3294,6 +3310,40 @@ function closeKiosk(){
   var o=document.getElementById('kioskOverlay'); if(o) o.style.display='none';
 }
 
+var _lessonPreviewOpen=false, _previewTimer=null;
+function toggleLessonPreview(){
+  _lessonPreviewOpen=!_lessonPreviewOpen;
+  var pane=document.getElementById('lessonPreviewPane');
+  var arrow=document.getElementById('lessonPreviewArrow');
+  if(_lessonPreviewOpen){
+    if(pane) pane.classList.add('open');
+    document.body.classList.add('preview-open');
+    if(arrow) arrow.textContent='\u203A';
+    renderLessonPreview();
+  } else {
+    if(pane) pane.classList.remove('open');
+    document.body.classList.remove('preview-open');
+    if(arrow) arrow.textContent='\u2039';
+  }
+}
+function renderLessonPreview(){
+  if(!_lessonPreviewOpen) return;
+  var body=document.getElementById('lessonPreviewBody'); if(!body) return;
+  try{
+    var rec=collectRecordFromForm();
+    var has = rec.todayContent||rec.homework||rec.reading||rec.grammar||rec.reading1||rec.grammar1||rec.exam1||rec.student||rec.memo;
+    if(!has){ body.innerHTML='<div style="color:#94a3b8;font-size:13px;text-align:center;padding:30px 10px;line-height:1.6">입력을 시작하면<br>여기에 카드가 미리 보여요.</div>'; return; }
+    body.innerHTML='<div style="pointer-events:none">'+makeCard(rec)+'</div>';
+  }catch(e){ body.innerHTML='<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">미리보기를 표시할 수 없습니다.</div>'; }
+}
+function _scheduleLessonPreview(){
+  if(!_lessonPreviewOpen) return;
+  clearTimeout(_previewTimer);
+  _previewTimer=setTimeout(renderLessonPreview,250);
+}
+document.addEventListener('input', function(e){ if(_lessonPreviewOpen && e.target && e.target.closest && e.target.closest('#panel-input')) _scheduleLessonPreview(); });
+document.addEventListener('change', function(e){ if(_lessonPreviewOpen && e.target && e.target.closest && e.target.closest('#panel-input')) _scheduleLessonPreview(); });
+
 function switchTab(tab) {
   activeTab = tab;
   ['input','list','notice','stats','students','teachers','message','attendance','billing'].forEach(t => {
@@ -3305,6 +3355,9 @@ function switchTab(tab) {
     var stab = document.getElementById('stab-'+t);
     if (stab) stab.classList.toggle('active', t===tab);
   });
+  document.body.classList.toggle('tab-input', tab==='input');
+  if(tab!=='input' && _lessonPreviewOpen){ _lessonPreviewOpen=false; var _pp=document.getElementById('lessonPreviewPane'); if(_pp)_pp.classList.remove('open'); document.body.classList.remove('preview-open'); var _ar=document.getElementById('lessonPreviewArrow'); if(_ar)_ar.textContent='\u2039'; }
+  if(tab==='input' && _lessonPreviewOpen) setTimeout(renderLessonPreview,50);
   var _isOwnerTab = isOwnerOrAdmin();
   ['tab-teachers','stab-teachers'].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.display = _isOwnerTab ? '' : 'none'; });
   if (tab==='list')     { updateStudentFilter(); renderList(); }
@@ -3585,9 +3638,7 @@ function setCompVal(field, val) {
 
 function updateRing() { /* 링 UI 제거됨 */ }
 
-async function saveRecord() {
-  try {
-  // 동적 블록 → hidden 필드 동기화
+function collectRecordFromForm() {
   serializeLessonBlocks();
   serializeHomeworks();
   serializeLastHomeworks();
@@ -3612,10 +3663,7 @@ async function saveRecord() {
   const classEl      = document.getElementById('f-class');
   const className    = classEl ? (classEl.value||'').trim() : '';
 
-  if (!todayContent && !homework && !reading && !grammar && !reading1 && !grammar1 && !exam1 && !student) {
-    showToast('수업 내용 또는 과제를 입력해주세요.','error'); return;
-  }
-  const rec = {
+  var rec = {
     id:             editId || (Date.now() + '_' + Math.random().toString(36).slice(2,8)),
     teacher:        currentUser || '',
     date:           document.getElementById('f-date').value,
@@ -3706,6 +3754,16 @@ async function saveRecord() {
     supplement5Comp: parseInt((document.getElementById('f-supplement5Comp')||{value:'0'}).value)||0,
 
   };
+  return rec;
+}
+
+async function saveRecord() {
+  try {
+  // 동적 블록 → hidden 필드 동기화
+  var rec = collectRecordFromForm();
+  if (!rec.todayContent && !rec.homework && !rec.reading && !rec.grammar && !rec.reading1 && !rec.grammar1 && !rec.exam1 && !rec.student) {
+    showToast('수업 내용 또는 과제를 입력해주세요.','error'); return;
+  }
   var wasEdit = (editId !== null);
   if (editId!==null) {
     records = records.map(r=>String(r.id)===String(editId) ? rec : r);
