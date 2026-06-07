@@ -8538,6 +8538,43 @@ function renderList() {
   }
 }
 
+function _statsCalendarHTML(recs, ym){
+  var y=parseInt(ym.slice(0,4),10), m=parseInt(ym.slice(5,7),10);
+  var byDate={};
+  (recs||[]).forEach(function(r){
+    if((r.date||'').slice(0,7)!==ym) return;
+    var d=parseInt((r.date||'').slice(8,10),10); if(!d) return;
+    if(!byDate[d]) byDate[d]={att:'',mk:false};
+    if(r.attendance) byDate[d].att=r.attendance;
+    if(r.makeup) byDate[d].mk=true;
+  });
+  var firstDow=new Date(y,m-1,1).getDay();
+  var days=new Date(y,m,0).getDate();
+  var attColor={'정시도착':['#dcfce7','#16a34a'],'15분이내':['#fef9c3','#ca8a04'],'15분이상':['#fef9c3','#ca8a04'],'결석':['#fee2e2','#dc2626']};
+  var wk=['일','월','화','수','목','금','토'];
+  var html='<table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:3px;font-family:inherit">';
+  html+='<tr>'+wk.map(function(w,i){ return '<td style="text-align:center;font-size:9px;font-weight:700;padding:1px 0;color:'+(i===0?'#dc2626':(i===6?'#2563eb':'#94a3b8'))+'">'+w+'</td>'; }).join('')+'</tr>';
+  var cells=[]; var b;
+  for(b=0;b<firstDow;b++) cells.push('');
+  for(b=1;b<=days;b++) cells.push(b);
+  while(cells.length%7!==0) cells.push('');
+  for(var i=0;i<cells.length;i+=7){
+    html+='<tr>';
+    for(var j=0;j<7;j++){
+      var day=cells[i+j];
+      if(day===''){ html+='<td style="height:26px"></td>'; continue; }
+      var info=byDate[day];
+      var bg='#f8fafc', col='#334155', bd='#eef2f7';
+      if(info && info.att && attColor[info.att]){ bg=attColor[info.att][0]; col=attColor[info.att][1]; bd=bg; }
+      var dot=(info && info.mk)?'<div style="width:5px;height:5px;border-radius:50%;background:#7c3aed;margin:1px auto 0"></div>':'';
+      html+='<td style="height:26px;text-align:center;vertical-align:middle;border-radius:5px;border:1px solid '+bd+';background:'+bg+';color:'+col+';font-size:10px;font-weight:700">'+day+dot+'</td>';
+    }
+    html+='</tr>';
+  }
+  html+='</table>';
+  return html;
+}
+
 function renderStats() {
   // 관리자가 아니면 본인 기록만, 관리자는 선생님 필터 적용
   var records = window.records.filter(function(r){
@@ -8650,7 +8687,7 @@ function renderStats() {
           +'</div>'
           +'<div class="group-body collapsed" id="gb-'+gid+'" style="max-height:0" data-student="'+esc(sname)+'" data-month="'+esc(mon)+'">'
           +'<div id="stuinner-'+gid+'" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:0 0 8px 8px;padding:16px 18px">'
-          +(attHTML?'<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:800;color:#475569"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 지각정도</span><br><div style="margin-top:4px">'+attHTML+'</div></div>':'')
+          +'<div style="margin-bottom:10px"><span style="font-size:11px;font-weight:800;color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> 출결 달력</span><div style="margin-top:6px">'+_statsCalendarHTML(recs, mon)+'</div><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:7px;font-size:10px;color:#64748b"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#16a34a;vertical-align:middle;margin-right:3px"></span>출</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#ca8a04;vertical-align:middle;margin-right:3px"></span>지각</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#dc2626;vertical-align:middle;margin-right:3px"></span>결석</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#7c3aed;vertical-align:middle;margin-right:3px"></span>보충</span></div></div>'
           +(attitudeHTML?'<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:800;color:#475569"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 수업태도</span><br><div style="margin-top:4px">'+attitudeHTML+'</div></div>':'')
           +(monthHTML?'<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:800;color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg> 월별 이행률</span><div style="margin-top:6px">'+monthHTML+'</div></div>':'')
           +'<div><span style="font-size:11px;font-weight:800;color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 대표 시험 점수 추이 <span style="font-size:9px;font-weight:700;color:#94a3b8">(TEST 1)</span></span>'
