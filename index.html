@@ -1648,6 +1648,7 @@ onAuthStateChanged(auth, function(user) {
         <input type="text" id="newStudentClass" placeholder="반 (예: 고1오전)" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:100px;font-family:inherit">
         <input type="text" id="newStudentName"  placeholder="학생 이름" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;flex:1;font-family:inherit">
         <input type="text" id="newStudentGrade" placeholder="학년 (예: 고등1)" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:110px;font-family:inherit">
+        <input type="text" id="newStudentSchool" placeholder="학교명 (예: ○○중)" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;width:140px;font-family:inherit">
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
         <input type="tel" id="newStudentPhone"  placeholder="학생 번호" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;flex:1;font-family:inherit">
@@ -1661,6 +1662,7 @@ onAuthStateChanged(auth, function(user) {
       <div style="font-size:10px;color:#94a3b8;margin-bottom:12px;line-height:1.4">출결코드는 같은 학원 내에서 중복될 수 없습니다. (나중에 출결관리에 사용)</div>
       </div><!-- /studentAdminControls -->
       <div id="studentTeacherNote" style="display:none;font-size:11px;color:#0891b2;background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:8px 10px;margin-bottom:10px">원장이 배정한 학생만 표시됩니다. 학생 정보 수정은 원장에게 문의하세요.</div>
+      <div id="studentLevelChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
       <input type="text" id="studentSearch" oninput="filterStudentList()" placeholder="학생 검색 (이름, 반, 학년, 번호...)" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:10px">
       
       <div id="studentList">
@@ -2549,6 +2551,7 @@ function addStudent() {
   const cls    = document.getElementById('newStudentClass').value.trim();
   const name   = document.getElementById('newStudentName').value.trim();
   const grade  = document.getElementById('newStudentGrade') ? document.getElementById('newStudentGrade').value.trim() : '';
+  const school = document.getElementById('newStudentSchool') ? document.getElementById('newStudentSchool').value.trim() : '';
   const phone  = document.getElementById('newStudentPhone') ? document.getElementById('newStudentPhone').value.trim() : '';
   const parent = document.getElementById('newParentPhone')  ? document.getElementById('newParentPhone').value.trim() : '';
   const code4  = document.getElementById('newStudentCode')  ? document.getElementById('newStudentCode').value.trim() : '';
@@ -2560,7 +2563,7 @@ function addStudent() {
     if (!isCode4(code4)) { showToast('출결코드는 4자리 숫자로 입력해주세요.', 'error'); return; }
     if (code4Taken(code4, null)) { showToast('이미 사용 중인 출결코드입니다.', 'error'); return; }
   }
-  students.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2,8), className: cls, name, grade, phone, parent, code4: code4, assignedTo: [], createdAt: new Date().toISOString() });
+  students.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2,8), className: cls, name, grade, school, phone, parent, code4: code4, assignedTo: [], createdAt: new Date().toISOString() });
   persistStudents();
   document.getElementById('newStudentName').value  = '';
   if (document.getElementById('newStudentPhone')) document.getElementById('newStudentPhone').value = '';
@@ -2594,6 +2597,7 @@ function renderStudents() {
   if (ctrl) ctrl.style.display = isOwner ? 'block' : 'none';
   var note = document.getElementById('studentTeacherNote');
   if (note) note.style.display = isOwner ? 'none' : 'block';
+  renderStudentLevelChips();
 
   if (students.length === 0) {
     el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">' + (isOwner ? '등록된 학생이 없습니다' : '배정된 학생이 없습니다') + '</div>';
@@ -2643,7 +2647,7 @@ function renderStudents() {
     groups[g].push(s);
   });
   Object.keys(groups).sort().forEach(g => {
-    html += '<div style="margin-bottom:12px">';
+    html += '<div data-stu-group="1" style="margin-bottom:12px">';
     html += '<div style="font-size:11px;font-weight:800;color:#6366f1;margin-bottom:6px">' + g + '</div>';
     groups[g].sort(function(a,b){ return a.name.localeCompare(b.name, 'ko'); }).forEach(s => {
       html += makeStudentRow(s);
@@ -2652,6 +2656,7 @@ function renderStudents() {
   });
 
   el.innerHTML = html;
+  filterStudentList();
 }
 
 function toggleStuGroup(tid) {
@@ -2726,21 +2731,36 @@ function toggleAssignSummary() {
   if (arrow) arrow.textContent = open ? '▶' : '▼';
 }
 
-// 원생목록 검색: 이름·반·학년·번호로 필터
+// 학년 레벨 분류 + 칩 필터
+var _stuLevelFilter = '전체';
+function gradeLevel(g){ g=String(g||''); if(/초/.test(g))return '초등'; if(/중/.test(g))return '중등'; if(/고/.test(g))return '고등'; return '기타'; }
+function setStuLevel(lv){ _stuLevelFilter=lv; renderStudentLevelChips(); filterStudentList(); }
+function renderStudentLevelChips(){
+  var box=document.getElementById('studentLevelChips'); if(!box) return;
+  var c={'전체':students.length,'초등':0,'중등':0,'고등':0};
+  students.forEach(function(s){ var L=gradeLevel(s.grade); if(c[L]!==undefined) c[L]++; });
+  var levels=['전체','초등','중등','고등'];
+  box.innerHTML=levels.map(function(lv){
+    var on=_stuLevelFilter===lv;
+    return '<button onclick="setStuLevel(\''+lv+'\')" style="padding:6px 13px;border-radius:20px;border:1.5px solid '+(on?'#6366f1':'#e2e8f0')+';background:'+(on?'#6366f1':'#fff')+';color:'+(on?'#fff':'#64748b')+';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">'+lv+' '+c[lv]+'</button>';
+  }).join('');
+}
+// 원생목록 검색: 이름·반·학년·학교·번호 + 학년 레벨로 필터
 function filterStudentList() {
   var q = (document.getElementById('studentSearch')||{value:''}).value.trim().toLowerCase();
+  var lv = _stuLevelFilter || '전체';
   var list = document.getElementById('studentList');
   if (!list) return;
-  if (!q) {
-    // 검색어 없으면 전체 표시
-    Array.prototype.forEach.call(list.querySelectorAll('[data-stu-id]'), function(el){
-      el.style.display = '';
-    });
-    return;
-  }
   Array.prototype.forEach.call(list.querySelectorAll('[data-stu-id]'), function(el){
     var txt = (el.getAttribute('data-stu-search')||'').toLowerCase();
-    el.style.display = txt.indexOf(q) !== -1 ? '' : 'none';
+    var elLv = el.getAttribute('data-stu-level')||'기타';
+    var okQ = !q || txt.indexOf(q) !== -1;
+    var okL = (lv==='전체') || (elLv===lv);
+    el.style.display = (okQ && okL) ? '' : 'none';
+  });
+  Array.prototype.forEach.call(list.querySelectorAll('[data-stu-group]'), function(g){
+    var any = Array.prototype.some.call(g.querySelectorAll('[data-stu-id]'), function(r){ return r.style.display!=='none'; });
+    g.style.display = any ? '' : 'none';
   });
 }
 
@@ -2763,8 +2783,8 @@ function saveAssignStudent() {
 
 function makeStudentRow(s) {
   // 검색용 통합 텍스트
-  var stuSearchText = [s.name||'', s.className||'', s.grade||'', s.phone||'', s.parent||''].join(' ').toLowerCase();
-  return '<div id="student-row-' + s.id + '" data-stu-id="' + s.id + '" data-stu-search="' + stuSearchText.replace(/"/g,'') + '" style="background:#f8fafc;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0">'
+  var stuSearchText = [s.name||'', s.className||'', s.grade||'', s.school||'', s.phone||'', s.parent||''].join(' ').toLowerCase();
+  return '<div id="student-row-' + s.id + '" data-stu-id="' + s.id + '" data-stu-search="' + stuSearchText.replace(/"/g,'') + '" data-stu-level="' + gradeLevel(s.grade) + '" style="background:#f8fafc;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0">'
     // 메인 행
     + '<div style="padding:8px 10px">'
     // 첫째 줄: 이름+학년 / 출결 / 버튼
@@ -2783,6 +2803,7 @@ function makeStudentRow(s) {
     // 둘째 줄: 반 / 전화번호
     + '<div style="display:flex;gap:8px;margin-top:5px;font-size:11px;color:#64748b;flex-wrap:wrap">'
     + (s.className ? '<span style="background:#f1f5f9;padding:1px 7px;border-radius:4px;font-weight:600">' + s.className + '</span>' : '')
+    + (s.school ? '<span style="background:#eef2ff;color:#4f46e5;padding:1px 7px;border-radius:4px;font-weight:600">' + s.school + '</span>' : '')
     + (s.phone  ? '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.44 2.68h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.6-.6a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 19z"/></svg>' + s.phone  + '</span>' : '')
     + (s.parent ? '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' + s.parent + '</span>' : '')
     + (s.code4 ? '<span style="background:#f5f3ff;color:#7c3aed;padding:1px 7px;border-radius:4px;font-weight:700">출결코드 ' + s.code4 + '</span>' : '')
@@ -2803,6 +2824,7 @@ function makeStudentRow(s) {
     + '<input id="edit-name-'   + s.id + '" value="' + (s.name||'') + '" placeholder="이름" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
     + '<input id="edit-grade-'  + s.id + '" value="' + (s.grade||'') + '" placeholder="학년" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
     + '</div>'
+    + '<input id="edit-school-' + s.id + '" value="' + (s.school||'') + '" placeholder="학교명" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;margin-bottom:6px">'
     + '<input id="edit-phone-'  + s.id + '" value="' + (s.phone||'') + '" placeholder="학생 번호" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;margin-bottom:6px">'
     + '<input id="edit-parent-' + s.id + '" value="' + (s.parent||'') + '" placeholder="학부모 번호" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;margin-bottom:6px">'
     + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">'
@@ -2830,6 +2852,7 @@ function saveEditStudent(id) {
   const newClass  = document.getElementById('edit-class-'  + id).value.trim();
   const newName   = document.getElementById('edit-name-'   + id).value.trim();
   const newGrade  = document.getElementById('edit-grade-'  + id) ? document.getElementById('edit-grade-'  + id).value.trim() : '';
+  const newSchool = document.getElementById('edit-school-' + id) ? document.getElementById('edit-school-' + id).value.trim() : '';
   const newPhone  = document.getElementById('edit-phone-'  + id) ? document.getElementById('edit-phone-'  + id).value.trim() : '';
   const newParent = document.getElementById('edit-parent-' + id) ? document.getElementById('edit-parent-' + id).value.trim() : '';
   const newCode   = document.getElementById('edit-code-'   + id) ? document.getElementById('edit-code-'   + id).value.trim() : '';
@@ -2844,6 +2867,7 @@ function saveEditStudent(id) {
   s.className = newClass;
   s.name      = newName;
   s.grade     = newGrade;
+  s.school    = newSchool;
   s.phone     = newPhone;
   s.parent    = newParent;
   s.code4     = newCode;
