@@ -328,7 +328,7 @@ textarea { resize:vertical; }
   display:flex; align-items:center; gap:14px;
   border-bottom:3px solid #6366f1; padding-bottom:16px; margin-bottom:24px;
 }
-#printOverlay .po-logo { width:52px; height:52px; border-radius:50%; border:2px solid #6366f1; object-fit:contain; }
+#printOverlay .po-logo { width:52px; height:52px; aspect-ratio:1/1; border-radius:50%; border:2px solid #6366f1; object-fit:contain; background:#fff; flex:0 0 52px; }
 #printOverlay .po-title { font-size:20px; font-weight:900; letter-spacing:1px; font-family:Georgia,serif; }
 #printOverlay .po-sub   { font-size:12px; color:#64748b; margin-top:3px; }
 #printOverlay .po-grid  { display:grid; grid-template-columns:1fr; gap:12px; }
@@ -1028,7 +1028,7 @@ onAuthStateChanged(auth, function(user) {
   </div>
   <!-- PC 전용: 학원 로고 + 학원명 (모바일에서는 CSS로 숨김) -->
   <div id="headerSchoolName" class="header-school-pc" style="display:flex;align-items:center;gap:10px;min-width:0">
-    <img id="headerSchoolLogo" src="" alt="" style="width:36px;height:36px;border-radius:8px;object-fit:contain;border:1.5px solid #e2e8f0;background:#fff;display:none;flex-shrink:0">
+    <img id="headerSchoolLogo" src="" alt="" style="width:36px;height:36px;aspect-ratio:1/1;border-radius:8px;object-fit:contain;border:1.5px solid #e2e8f0;background:#fff;display:none;flex:0 0 36px">
     <span id="headerSchoolNameText" style="font-size:16px;font-weight:800;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
   </div>
   <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;margin-left:auto;min-width:0;overflow:visible">
@@ -1088,7 +1088,7 @@ onAuthStateChanged(auth, function(user) {
 
     <!-- 로고 업로드 (원장만) -->
     <div id="myLogoSection" style="display:none;text-align:center;margin-bottom:20px">
-      <div id="myLogoPreview" style="width:80px;height:80px;border-radius:12px;border:2px dashed #e2e8f0;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;background:#f8fafc;overflow:hidden;cursor:pointer" onclick="document.getElementById('myLogoInput').click()">
+      <div id="myLogoPreview" style="width:80px;height:80px;aspect-ratio:1/1;border-radius:12px;border:2px dashed #e2e8f0;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;background:#f8fafc;overflow:hidden;cursor:pointer;flex:0 0 80px" onclick="document.getElementById('myLogoInput').click()">
         <span style="font-size:28px"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg></span>
       </div>
       <input type="file" id="myLogoInput" accept="image/*" style="display:none" onchange="previewLogo(this)">
@@ -9238,7 +9238,7 @@ function captureStuStat(gid, done, mode) {
 
     // 로고 캔버스로 그린 후 헤더에 삽입 후 캡처
     drawLogoToCanvas(40, function(logoCanvas) {
-      logoCanvas.style.cssText = 'width:40px;height:40px;border-radius:50%;border:2px solid #6366f1;flex-shrink:0';
+      logoCanvas.style.cssText = 'width:40px;height:40px;aspect-ratio:1/1;border-radius:50%;border:2px solid #6366f1;flex:0 0 40px;object-fit:contain;background:#fff';
       logoRow.appendChild(logoCanvas);
       logoRow.appendChild(logoText);
       logo.insertBefore(logoRow, titleDiv);
@@ -9834,7 +9834,7 @@ function saveListCard(id, mode) {
 
     // 로고 캔버스로 그린 후 헤더에 삽입 후 캡처
     drawLogoToCanvas(48, function(logoCanvas) {
-      logoCanvas.style.cssText = 'width:48px;height:48px;border-radius:10px;border:2px solid #6366f1;flex-shrink:0';
+      logoCanvas.style.cssText = 'width:48px;height:48px;aspect-ratio:1/1;border-radius:10px;border:2px solid #6366f1;flex:0 0 48px;object-fit:contain;background:#fff';
       hdr.insertBefore(logoCanvas, hdr.firstChild);
 
     html2canvas(wrapper, {
@@ -9944,7 +9944,7 @@ function saveNoticeCard(id, mode) {
 
     document.body.appendChild(wrapper);
     drawLogoToCanvas(48, function(logoCanvas){
-      logoCanvas.style.cssText = 'width:48px;height:48px;border-radius:10px;border:2px solid #0891b2;flex-shrink:0';
+      logoCanvas.style.cssText = 'width:48px;height:48px;aspect-ratio:1/1;border-radius:10px;border:2px solid #0891b2;flex:0 0 48px;object-fit:contain;background:#fff';
       hdr.insertBefore(logoCanvas, hdr.firstChild);
       html2canvas(wrapper, { scale:2, useCORS:true, backgroundColor:'#ffffff', width:480, windowWidth:480 })
         .then(async function(canvas){
