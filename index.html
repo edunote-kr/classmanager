@@ -1149,7 +1149,9 @@ onAuthStateChanged(auth, function(user) {
         <div style="font-size:11px;color:#64748b;margin-bottom:4px">서비스 만료일</div>
         <div id="myExpiryDate" style="font-size:16px;font-weight:900"></div>
         <div id="myExpiryDday" style="font-size:12px;margin-top:4px;font-weight:700"></div>
+        <div id="myCreditLine" style="font-size:12px;margin-top:8px;font-weight:800;color:#0891b2;background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:6px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> 남은 크레딧 (문자) · <span id="myCreditCount">0</span>건</div>
         <button id="myRenewBtn" onclick="openPlanExtend()" style="margin-top:8px;width:100%;padding:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:none"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> 플랜 연장/변경하기</button>
+        <div style="font-size:10px;color:#94a3b8;margin-top:6px;line-height:1.5">플랜 연장 · 크레딧(문자 발송) 추가 구매는 계좌/카드 결제로 신청하실 수 있어요</div>
       </div>
     </div>
 
@@ -1251,32 +1253,36 @@ onAuthStateChanged(auth, function(user) {
     <div id="subPlanCards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
 
       <div onclick="selectSubPlan('free')" id="subplan-free" style="background:#fff;border:2px solid #6366f1;border-radius:14px;padding:16px;text-align:center;cursor:pointer;position:relative">
-        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:10px;white-space:nowrap">추천</div>
         <div style="font-size:20px;margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg></div>
         <div style="font-size:13px;font-weight:900;color:#1e293b">무료 체험</div>
         <div style="font-size:11px;color:#64748b;margin:2px 0">14일</div>
         <div style="font-size:20px;font-weight:900;color:#6366f1">0원</div>
+        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#6366f1">프로 기능 체험</div>
       </div>
 
-      <div onclick="selectSubPlan('30')" id="subplan-30" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;cursor:pointer">
-        <div style="font-size:20px;margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></div>
-        <div style="font-size:13px;font-weight:900;color:#1e293b">단기</div>
+      <div onclick="selectSubPlan('basic')" id="subplan-basic" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;cursor:pointer">
+        <div style="font-size:20px;margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+        <div style="font-size:13px;font-weight:900;color:#1e293b">베이직</div>
         <div style="font-size:11px;color:#64748b;margin:2px 0">30일</div>
         <div style="font-size:20px;font-weight:900;color:#1e293b">10원</div>
+        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#94a3b8">알림 미포함</div>
       </div>
 
-      <div onclick="selectSubPlan('90')" id="subplan-90" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;cursor:pointer">
-        <div style="font-size:20px;margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></div>
-        <div style="font-size:13px;font-weight:900;color:#1e293b">표준</div>
-        <div style="font-size:11px;color:#64748b;margin:2px 0">90일</div>
+      <div onclick="selectSubPlan('pro')" id="subplan-pro" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;cursor:pointer;position:relative">
+        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:10px;white-space:nowrap">추천</div>
+        <div style="font-size:20px;margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg></div>
+        <div style="font-size:13px;font-weight:900;color:#1e293b">프로</div>
+        <div style="font-size:11px;color:#64748b;margin:2px 0">30일</div>
         <div style="font-size:20px;font-weight:900;color:#1e293b">10원</div>
+        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#6366f1">문자 300건/월</div>
       </div>
 
-      <div onclick="selectSubPlan('365')" id="subplan-365" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;cursor:pointer">
+      <div onclick="selectSubPlan('premium')" id="subplan-premium" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;cursor:pointer">
         <div style="font-size:20px;margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
-        <div style="font-size:13px;font-weight:900;color:#1e293b">연간</div>
-        <div style="font-size:11px;color:#64748b;margin:2px 0">365일</div>
+        <div style="font-size:13px;font-weight:900;color:#1e293b">프리미엄</div>
+        <div style="font-size:11px;color:#64748b;margin:2px 0">30일</div>
         <div style="font-size:20px;font-weight:900;color:#1e293b">10원</div>
+        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#d97706">문자 1,000건/월</div>
       </div>
     </div>
 
@@ -1286,6 +1292,7 @@ onAuthStateChanged(auth, function(user) {
 
     <!-- 신청 폼 (2단계, 무료는 건너뜀) -->
     <div id="subscribeFormBox" style="display:none;background:#fff;border-radius:14px;padding:20px;border:1px solid #e2e8f0">
+      <button type="button" onclick="backToPlanSelect()" style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;font-family:inherit;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m15 18-6-6 6-6"/></svg> 요금제 목록으로</button>
       <div style="font-size:15px;font-weight:900;color:#1e293b;text-align:center;margin-bottom:4px">에듀노트 정식버전 (연장/변경)신청</div>
       <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:14px">아래 정보를 입력하고 신청해주세요</div>
 
@@ -1296,9 +1303,9 @@ onAuthStateChanged(auth, function(user) {
         <div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:8px">프로그램 이용료 안내</div>
         <div style="font-size:12px;color:#475569;line-height:1.9">
           <div id="feerow-free" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>무료 체험 (쿠폰)</span><b style="color:#6366f1">0원 / 14일</b></div>
-          <div id="feerow-30"   style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>단기 (30일)</span><b>10원</b></div>
-          <div id="feerow-90"   style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>표준 (90일)</span><b>10원</b></div>
-          <div id="feerow-365"  style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>연간 (365일)</span><b>10원</b></div>
+          <div id="feerow-basic" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>베이직 (30일) · 알림 미포함</span><b>10원</b></div>
+          <div id="feerow-pro" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>프로 (30일) · 문자 300건/월</span><b>10원</b></div>
+          <div id="feerow-premium" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>프리미엄 (30일) · 문자 1,000건/월</span><b>10원</b></div>
         </div>
         <div style="font-size:10px;color:#94a3b8;margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:8px">※ 결제는 계좌입금으로 진행됩니다. 신청 후 안내드립니다.</div>
       </div>
@@ -6177,7 +6184,7 @@ function pickActivatePlan(plan) {
 }
 
 function highlightActivateCards(plan) {
-  ['free','30','90','365'].forEach(function(p) {
+  ['free','basic','pro','premium'].forEach(function(p) {
     var card = document.getElementById('acard-' + p);
     if (!card) return;
     if (p === plan) {
@@ -6202,7 +6209,7 @@ function showActivatePlanSelect() {
 
 function selectActivatePlan(plan) {
   selectedActivatePlan = plan;
-  ['free','30','90','365'].forEach(function(p) {
+  ['free','basic','pro','premium'].forEach(function(p) {
     var el = document.getElementById('aplan-' + p);
     if (!el) return;
     el.style.border = p === plan ? '2px solid #6366f1' : '1.5px solid #e2e8f0';
@@ -6378,7 +6385,7 @@ function showSubscribeScreen(fbUser, profile, reason, expDate) {
 
   // 플랜 미선택 상태로 시작 (사용자가 직접 선택해야 함 — 무료 자동선택 방지)
   selectedSubPlan = '';
-  ['free','30','90','365'].forEach(function(p) {
+  ['free','basic','pro','premium'].forEach(function(p) {
     var el = document.getElementById('subplan-' + p);
     if (el) { el.style.border = '1.5px solid #e2e8f0'; el.style.background = '#fff'; }
   });
@@ -6398,8 +6405,8 @@ function showSubscribeScreen(fbUser, profile, reason, expDate) {
 
 function selectSubPlan(plan) {
   selectedSubPlan = plan;
-  var labels = { free:'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg> 무료 체험 (14일)', '30':'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> 단기 (30일) · 10원', '90':'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> 표준 (90일) · 10원', '365':'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> 연간 (365일) · 10원' };
-  ['free','30','90','365'].forEach(function(p) {
+  var labels = { free:'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg> 무료 체험 (14일) · 프로 체험', basic:'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> 베이직 (30일) · 10원', pro:'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> 프로 (30일) · 10원', premium:'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> 프리미엄 (30일) · 10원' };
+  ['free','basic','pro','premium'].forEach(function(p) {
     var el = document.getElementById('subplan-' + p);
     if (!el) return;
     el.style.border = p === plan ? '2px solid #6366f1' : '1.5px solid #e2e8f0';
@@ -6416,7 +6423,7 @@ function selectSubPlan(plan) {
     hint.style.color = '#6366f1';
   }
   // 요금표 안내 카드에서 선택한 플랜 행 강조
-  ['free','30','90','365'].forEach(function(p) {
+  ['free','basic','pro','premium'].forEach(function(p) {
     var row = document.getElementById('feerow-' + p);
     if (!row) return;
     if (p === plan) {
@@ -6432,6 +6439,22 @@ function selectSubPlan(plan) {
 }
 
 // 1단계 → 2단계: 무료는 즉시 활성화, 유료는 신청 폼 표시
+// 신청서 → 요금제 목록으로 되돌아가기 (요금제 잘못 선택 시)
+function backToPlanSelect() {
+  var box = document.getElementById('subscribeFormBox');
+  if (box) box.style.display = 'none';
+  var cards = document.getElementById('subPlanCards');
+  if (cards) cards.style.display = 'grid';
+  var nextBtn = document.getElementById('subNextBtn');
+  if (nextBtn) nextBtn.style.display = 'block';
+  var nextHint = document.getElementById('subNextHint');
+  if (nextHint) { nextHint.style.display = 'block'; nextHint.textContent = ''; }
+  // 신청 결과/오류 메시지 정리
+  var res = document.getElementById('subResult');
+  if (res) res.style.display = 'none';
+  if (cards) cards.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function proceedToApplyForm() {
   if (!selectedSubPlan) {
     var hint = document.getElementById('subNextHint');
@@ -6599,10 +6622,10 @@ function submitSubscribeApply() {
 // ── 서비스 신청 ───────────────────────────────────────────
 var applyPlan = 'free';
 var PLANS = {
-  free: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg> 무료 체험 (14일)', days: 14, price: 0, priceLabel: '무료' },
-  '30':  { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> 단기 (30일)',      days: 30,  price: 10, priceLabel: '10원' },
-  '90':  { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> 표준 (90일)',       days: 90,  price: 10, priceLabel: '10원' },
-  '365': { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> 연간 (365일)',      days: 365, price: 10, priceLabel: '10원' }
+  free: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg> 무료 체험 (14일)', days: 14, price: 0, priceLabel: '무료', notify: true, smsQuota: 300, tier: 'pro' },
+  basic: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> 베이직 (30일)', days: 30, price: 10, priceLabel: '10원', notify: false, smsQuota: 0, tier: 'basic' },
+  pro: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> 프로 (30일)', days: 30, price: 10, priceLabel: '10원', notify: true, smsQuota: 300, tier: 'pro' },
+  premium: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> 프리미엄 (30일)', days: 30, price: 10, priceLabel: '10원', notify: true, smsQuota: 1000, tier: 'premium' }
 };
 
 function openApplyModal(plan) {
@@ -8059,7 +8082,7 @@ function loadMySchoolCodes(schoolId) {
       var d = snap.data();
       document.getElementById('myOwnerCode').textContent = d.ownerCode || '------';
       document.getElementById('myTeacherCode').textContent = d.teacherCode || '------';
-      showMyExpiry(d.expiresAt);
+      showMyExpiry(d.expiresAt, d.credits);
       return;
     }
     window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snaps) {
@@ -8069,14 +8092,15 @@ function loadMySchoolCodes(schoolId) {
             (d.name && d.name === document.getElementById('mySchoolName').value)) {
           document.getElementById('myOwnerCode').textContent = d.ownerCode || '------';
           document.getElementById('myTeacherCode').textContent = d.teacherCode || '------';
-          showMyExpiry(d.expiresAt);
+          showMyExpiry(d.expiresAt, d.credits);
         }
       });
     });
   });
 }
 
-function showMyExpiry(expiresAt) {
+function showMyExpiry(expiresAt, credits) {
+  var _cc=document.getElementById('myCreditCount'); if(_cc) _cc.textContent = (credits!=null?credits:0);
   var sec = document.getElementById('myExpirySection');
   if (!sec) return;
   if (!expiresAt) { sec.style.display = 'none'; return; }
