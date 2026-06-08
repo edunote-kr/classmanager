@@ -1295,7 +1295,7 @@ onAuthStateChanged(auth, function(user) {
     <div id="creditPurchaseBox" style="display:none;background:#fff;border-radius:14px;padding:20px;border:1px solid #e2e8f0;margin-bottom:16px">
       <button type="button" onclick="backToPlanSelect()" style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;font-family:inherit;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m15 18-6-6 6-6"/></svg> 요금제 목록으로</button>
       <div style="font-size:15px;font-weight:900;color:#1e293b;text-align:center;margin-bottom:4px">크레딧(문자) 구매</div>
-      <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:14px">1크레딧 = 1원 · 문자 1건당 1크레딧 차감</div>
+      <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:14px">1크레딧 = 1원 · 문자 1건당 00크레딧 차감</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
         <div onclick="selectCredit(10000)" id="credit-10000" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer"><div style="font-size:16px;font-weight:900;color:#1e293b">10,000원</div><div style="font-size:11px;color:#0891b2;font-weight:700;margin-top:2px">10,000 크레딧</div></div>
         <div onclick="selectCredit(30000)" id="credit-30000" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer"><div style="font-size:16px;font-weight:900;color:#1e293b">30,000원</div><div style="font-size:11px;color:#0891b2;font-weight:700;margin-top:2px">30,000 크레딧</div></div>
@@ -3656,10 +3656,23 @@ function renderLessonPreview(){
   }catch(e){ html='<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">미리보기를 표시할 수 없습니다.</div>'; }
   bodies.forEach(function(bd){ if(bd) bd.innerHTML=html; });
 }
-function previewAfterLoad(){ if(_lessonPreviewOpen||_mobileSheetOpen) renderLessonPreview(); }
+function _autoOpenPreviewDesktop(){
+  if(window.innerWidth < 1024) return;                 // 데스크톱(웹)만 자동 팝업
+  if(typeof activeTab!=='undefined' && activeTab!=='input') return;
+  if(_lessonPreviewOpen) return;
+  if(_previewUserToggled) return;                      // 사용자가 직접 닫았으면 존중
+  openLessonPreview();
+}
+function previewAfterLoad(){
+  // 불러오기 시: 데스크톱은 미리보기 자동 팝업(닫아놨어도 다시 열어 보여줌)
+  if(window.innerWidth >= 1024 && (typeof activeTab==='undefined' || activeTab==='input')){
+    _previewUserToggled=false;
+    if(!_lessonPreviewOpen) openLessonPreview(); else renderLessonPreview();
+  } else if(_lessonPreviewOpen||_mobileSheetOpen){ renderLessonPreview(); }
+}
 function _scheduleLessonPreview(){ if(!_lessonPreviewOpen && !_mobileSheetOpen) return; clearTimeout(_previewTimer); _previewTimer=setTimeout(renderLessonPreview,250); }
-document.addEventListener('input', function(e){ if((_lessonPreviewOpen||_mobileSheetOpen) && e.target && e.target.closest && e.target.closest('#panel-input')) _scheduleLessonPreview(); });
-document.addEventListener('change', function(e){ if((_lessonPreviewOpen||_mobileSheetOpen) && e.target && e.target.closest && e.target.closest('#panel-input')) _scheduleLessonPreview(); });
+document.addEventListener('input', function(e){ if(!(e.target && e.target.closest && e.target.closest('#panel-input'))) return; if(_lessonPreviewOpen||_mobileSheetOpen){ _scheduleLessonPreview(); } else { _autoOpenPreviewDesktop(); } });
+document.addEventListener('change', function(e){ if(!(e.target && e.target.closest && e.target.closest('#panel-input'))) return; if(_lessonPreviewOpen||_mobileSheetOpen){ _scheduleLessonPreview(); } else { _autoOpenPreviewDesktop(); } });
 
 function switchTab(tab) {
   activeTab = tab;
