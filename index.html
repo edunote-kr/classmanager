@@ -3976,6 +3976,11 @@ async function saveRecord() {
   try {
   // 동적 블록 → hidden 필드 동기화
   var rec = collectRecordFromForm();
+  if (!(rec.date||'').slice(0,10)) {
+    showToast('날짜를 입력해주세요.','error');
+    var _df=document.getElementById('f-date'); if(_df){ try{ _df.focus(); }catch(e){} }
+    return;
+  }
   if (!rec.todayContent && !rec.homework && !rec.reading && !rec.grammar && !rec.reading1 && !rec.grammar1 && !rec.exam1 && !rec.student) {
     showToast('수업 내용 또는 과제를 입력해주세요.','error'); return;
   }
@@ -5930,6 +5935,7 @@ function doLogout() {
   window.currentUser = null;
   window._loadedUid = null; // 재로그인 시 loadUserProfile 재실행 허용
   _navOverlays.length = 0;
+  var _scm=document.getElementById('studentCalendarModal'); if(_scm) _scm.style.display='none'; // 출결 달력 모달 잔상 방지
   var _ag=document.getElementById('assignStudentGrid'); if(_ag) _ag.innerHTML='';
   window._loginInProgress = false;
   localStorage.removeItem('kms_cache_user');
