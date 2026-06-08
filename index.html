@@ -1473,6 +1473,16 @@ onAuthStateChanged(auth, function(user) {
           </select>
         </div>
       </div>
+      <div style="margin-top:10px">
+        <label class="field-label">수업 구분</label>
+        <select id="f-session" style="padding:11px 14px;font-size:14px;width:100%;box-sizing:border-box;border-radius:8px;border:1.5px solid #e2e8f0;font-family:inherit;background:#fff">
+          <option value="정규">정규</option>
+          <option value="추가">추가</option>
+          <option value="보충">보충</option>
+          <option value="특강">특강</option>
+        </select>
+        <div style="font-size:10px;color:#94a3b8;margin-top:5px;line-height:1.45">한 학생이 같은 날 여러 수업을 들을 때 출결을 구분합니다. (예: 정규 + 추가)</div>
+      </div>
     </div>
 
     <div class="card">
@@ -1813,7 +1823,8 @@ onAuthStateChanged(auth, function(user) {
     <div class="card">
       <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 출결 현황</div>
       <button onclick="startKiosk()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:8px"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg> 출결 체크 모드 시작 (학생 코드 입력)<div style="font-size:10px;font-weight:600;opacity:0.9;margin-top:3px">등·하원 문자·알림톡 발송에만 사용됩니다</div></button>
-      <div style="font-size:11px;color:#94a3b8;margin:0 0 12px;line-height:1.5">출/결/지/보충 현황은 <b style="color:#64748b">수업내용 입력 탭</b> 기준입니다. 학생을 눌러 달력으로 볼 수 있어요.</div>
+      <div style="font-size:11px;color:#94a3b8;margin:0 0 8px;line-height:1.5">출/결/지/보충 현황은 <b style="color:#64748b">전체 선생님</b>의 수업 입력 기준으로 통합됩니다. 학생을 눌러 달력으로 볼 수 있어요.</div>
+      <button id="attBackfillBtn" onclick="backfillClassAttendance()" style="width:100%;padding:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> 내 기존 기록 출결로 가져오기 (계정당 1회)</button>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <select id="attYear" onchange="renderAttendance()" style="flex:1;min-width:90px;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit"></select>
         <select id="attMonth" onchange="renderAttendance()" style="flex:1;min-width:90px;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit"><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select>
@@ -1881,6 +1892,7 @@ var currentRole = null; // 'superadmin', 'owner', 'teacher'
 var currentSchool = null;
 var currentSchoolId = null; // 소속 학원 ID
 var currentSchoolProfile = { name: '', phone: '', logo: null }; // 이미지 저장용 학원 프로필
+var _attEntries = []; // 학교 단위 수업출결(classAttendance) 평면 배열 (전 선생님 통합)
 var ACCOUNTS = {};
 
 var GAS_URL='';
@@ -1914,6 +1926,7 @@ function normalizeRec(r) {
     studentId:      r.studentId      || '',
     attendance:     r.attendance     || '',
     makeup:         !!r.makeup,
+    session:        r.session       || '정규',
     wordTest:       r.wordTest       || '',
     wordScore:      r.wordScore      || '',
     testsJson:      r.testsJson      || '',
@@ -3090,8 +3103,101 @@ function saveBulkAssign() {
   if (typeof renderStudents==='function') renderStudents();
 }
 
+function _myUidForAtt() {
+  return (window.fbAuth && window.fbAuth.currentUser) ? window.fbAuth.currentUser.uid : (currentSchool || '');
+}
+
+// 학교 단위 수업출결 로드 (schools/{id}/classAttendance/{date}) → _attEntries 평면화
+function loadClassAttendance(cb) {
+  _attEntries = [];
+  if (!window.fbDb || !currentSchoolId) { if (typeof cb==='function') cb(); return; }
+  window.fbGetDocs(window.fbCollection(window.fbDb, 'schools', currentSchoolId, 'classAttendance'))
+    .then(function(snap){
+      var out = [];
+      snap.forEach(function(docSnap){
+        var date = docSnap.id;
+        var data = docSnap.data() || {};
+        var ents = data.entries || {};
+        Object.keys(ents).forEach(function(k){
+          var e = ents[k] || {};
+          out.push({
+            date: date,
+            student: e.name || '',
+            studentId: e.studentId || '',
+            className: e.className || '',
+            teacher: e.teacherName || '',
+            teacherUid: e.teacherUid || '',
+            attendance: e.status || '',
+            makeup: !!e.makeup,
+            session: e.session || '정규'
+          });
+        });
+      });
+      _attEntries = out;
+    })
+    .catch(function(err){ console.warn('[classAttendance] load 실패:', err); })
+    .finally(function(){ if (typeof cb==='function') cb(); });
+}
+
+// 수업기록의 출결만 학교 단위로 복제(mirror). 과제/수업내용은 복제하지 않음.
+function mirrorClassAttendance(rec) {
+  if (!window.fbDb || !currentSchoolId || !rec) return Promise.resolve();
+  var date = (rec.date || '').slice(0,10);
+  if (!date) return Promise.resolve();
+  var sid = rec.studentId || (typeof resolveStudentId==='function' ? resolveStudentId(rec) : '');
+  if (!sid) return Promise.resolve();                 // 학생 식별 불가 → 키 생성 불가 (스킵)
+  if (!rec.attendance && !rec.makeup) return Promise.resolve(); // 출결 정보 없으면 스킵
+  var uid = _myUidForAtt();
+  var session = rec.session || '정규';
+  var key = [sid, rec.className||'', uid, session].join('__');
+  var payload = { entries: {} };
+  payload.entries[key] = {
+    studentId: sid,
+    name: rec.student || '',
+    className: rec.className || '',
+    teacherUid: uid,
+    teacherName: rec.teacher || currentUser || '',
+    session: session,
+    status: rec.attendance || '',
+    makeup: !!rec.makeup,
+    recordedAt: new Date().toISOString()
+  };
+  var ref = window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'classAttendance', date);
+  return window.fbSetDocMerge(ref, payload).catch(function(err){ console.warn('[classAttendance] mirror 실패:', err); });
+}
+
+// 내 계정의 기존 수업기록 출결을 학교 출결로 1회 가져오기 (계정당 1회, 중복 안전)
+async function backfillClassAttendance() {
+  if (!isOwnerOrAdmin()) { showToast('원장만 사용할 수 있습니다.', 'error'); return; }
+  if (!window.fbDb || !currentSchoolId) { showToast('학원 정보가 없어 가져올 수 없습니다.', 'error'); return; }
+  var src = (window.records || []).filter(function(r){ return (r.attendance || r.makeup); });
+  if (!src.length) { showToast('가져올 출결 기록이 없습니다.', 'error'); return; }
+  if (!confirm('내 계정의 기존 수업기록 ' + src.length + '건의 출결을 학교 출결로 가져옵니다.\n(여러 번 눌러도 중복되지 않습니다)')) return;
+  showLoading(true);
+  var ok = 0, skip = 0;
+  for (var i=0; i<src.length; i++) {
+    try {
+      var r = src[i];
+      var sid = r.studentId || (typeof resolveStudentId==='function' ? resolveStudentId(r) : '');
+      if (!sid || !((r.date||'').slice(0,10))) { skip++; continue; }
+      await mirrorClassAttendance(r);
+      ok++;
+    } catch(e) { skip++; }
+  }
+  showLoading(false);
+  showToast(ok + '건 가져오기 완료' + (skip ? (' · ' + skip + '건 건너뜀(학생 식별 불가)') : ''));
+  loadClassAttendance(renderAttendance);
+}
+
 function _attScopeRecords() {
-  return records.filter(function(r){ return isOwnerOrAdmin() || r.teacher === currentUser; });
+  if (isOwnerOrAdmin()) return _attEntries.slice();
+  // 선생님: 본인이 기록했거나 본인에게 배정된 학생의 출결만
+  var uid = _myUidForAtt();
+  var assigned = {};
+  ((typeof students!=='undefined' && students) || []).forEach(function(s){ if(s && s.id!=null) assigned[String(s.id)] = true; });
+  return _attEntries.filter(function(e){
+    return e.teacherUid === uid || assigned[String(e.studentId)];
+  });
 }
 function renderAttendance() {
   var ysel=document.getElementById('attYear'), msel=document.getElementById('attMonth'), grid=document.getElementById('attList');
@@ -3410,7 +3516,8 @@ function switchTab(tab) {
   if (tab==='attendance') {
     var _am=document.getElementById('attMonth'); if(_am) _am.value=String(new Date().getMonth()+1);
     var _ay=document.getElementById('attYear');  if(_ay) _ay.value=String(new Date().getFullYear());
-    renderAttendance();
+    var _bf=document.getElementById('attBackfillBtn'); if(_bf) _bf.style.display = isOwnerOrAdmin() ? '' : 'none';
+    loadClassAttendance(renderAttendance);
   }
 }
 
@@ -3735,6 +3842,7 @@ function collectRecordFromForm() {
     memo:           document.getElementById('f-memo').value.trim(),
     attendance:     (document.querySelector('input[name=attendance]:checked')||{}).value || '',
     makeup:         !!((document.getElementById('makeup-check')||{}).checked),
+    session:        (document.getElementById('f-session')||{value:'정규'}).value || '정규',
     wordTest:       document.getElementById('f-wordTest').value.trim(),
     wordScore:      document.getElementById('f-wordScore').value.trim(),
     testsJson:      (document.getElementById('f-testsJson')||{value:''}).value || '',
@@ -3841,6 +3949,7 @@ async function saveRecord() {
       .then(function(){ showToast('저장 완료!'); })
       .catch(function(){ showToast('저장 실패. 다시 시도해주세요.', 'error'); })
       .finally(function(){ showLoading(false); });
+    mirrorClassAttendance(rec); // 출결만 학교 단위로 복제
   } else {
     showToast('저장 완료!');
     showLoading(false);
@@ -3855,6 +3964,7 @@ function resetForm() {
   updateSubRing('reading'); updateSubRing('grammar');
   document.querySelectorAll('input[name=attendance],input[name=attitude]').forEach(r=>r.checked=false);
   var _mkR=document.getElementById('makeup-check'); if(_mkR)_mkR.checked=false;
+  var _seR=document.getElementById('f-session'); if(_seR)_seR.value='정규';
   updateAttendance(); updateAttitude();
   resetLessonBlocks(); // 동적 블록 초기화
   resetHomeworks();    // 동적 과제 초기화
@@ -3889,6 +3999,7 @@ function editRecord(id) {
   setStudentSelectFromRec(rec);
   document.querySelectorAll('input[name=attendance]').forEach(r=>{r.checked=(r.value===(rec.attendance||''));});
   var _mkE=document.getElementById('makeup-check'); if(_mkE)_mkE.checked=!!rec.makeup;
+  var _seE=document.getElementById('f-session'); if(_seE)_seE.value=rec.session||'정규';
   document.querySelectorAll('input[name=attitude]').forEach(r=>{r.checked=(r.value===(rec.attitude||''));});
   updateAttendance(); updateAttitude();
   // 동적 지난 과제 역직렬화
@@ -9844,6 +9955,7 @@ function loadRecord() {
 
   // 지각정도 · 수업태도
   document.querySelectorAll('input[name=attendance]').forEach(r => { r.checked = r.value === rec.attendance; });
+  var _seL=document.getElementById('f-session'); if(_seL)_seL.value=rec.session||'정규';
   document.querySelectorAll('input[name=attitude]').forEach(r => { r.checked = r.value === rec.attitude; });
 
   // 불러오기: 작성하려는 날짜와 같으면 그대로 유지, 그보다 과거 기록이면 새 기록으로 작성(지난 과제 이동 등)
