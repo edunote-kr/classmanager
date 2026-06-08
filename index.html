@@ -442,7 +442,7 @@ textarea { resize:vertical; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import { getAuth, setPersistence, browserSessionPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-import { getFirestore, initializeFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, addDoc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+import { getFirestore, initializeFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, addDoc, deleteDoc, updateDoc, onSnapshot, deleteField } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-functions.js";
 
 const firebaseConfig = {
@@ -497,6 +497,7 @@ window.fbWhere = where;
 window.fbAddDoc = addDoc;
 window.fbDeleteDoc = deleteDoc;
 window.fbUpdateDoc = updateDoc;
+window.fbDeleteField = deleteField;
 window.fbOnSnapshot = onSnapshot;
 window.fbGoogleProvider = googleProvider;
 window.fbSignInWithPopup = signInWithPopup;
@@ -3218,6 +3219,37 @@ async function backfillClassAttendance() {
   showLoading(false);
   showToast(ok + '건 가져오기 완료' + (skip ? (' · ' + skip + '건 건너뜀(학생 식별 불가)') : ''));
   loadClassAttendance(renderAttendance);
+}
+
+// 옛 복합키(studentId__반__선생__세션) 출결 entry 일괄 정리. 전체 덮어쓰기라 키에 '/' 있어도 안전.
+async function cleanupOldAttendanceKeys() {
+  if (!isOwnerOrAdmin()) { showToast('원장만 사용할 수 있습니다.', 'error'); return; }
+  if (!window.fbDb || !currentSchoolId) { showToast('학원 정보가 없습니다.', 'error'); return; }
+  showLoading(true);
+  try {
+    var snap = await window.fbGetDocs(window.fbCollection(window.fbDb, 'schools', currentSchoolId, 'classAttendance'));
+    var cleaned = 0;
+    for (var i = 0; i < snap.docs.length; i++) {
+      var d = snap.docs[i];
+      var data = d.data() || {};
+      var ents = data.entries || {};
+      var keep = {}; var removed = false;
+      Object.keys(ents).forEach(function(k){
+        if (k.indexOf('__') !== -1) { removed = true; } else { keep[k] = ents[k]; }
+      });
+      if (removed) {
+        var nd = Object.assign({}, data); nd.entries = keep;
+        await window.fbSetDoc(d.ref, nd);   // 전체 덮어쓰기 (field-path '/' 문제 회피)
+        cleaned++;
+      }
+    }
+    showToast('옛 출결 키 정리 완료: ' + cleaned + '개 날짜');
+    loadClassAttendance(renderAttendance);
+  } catch (e) {
+    showToast('정리 실패: ' + e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
 }
 
 function _attScopeRecords() {
