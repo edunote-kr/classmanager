@@ -3118,17 +3118,18 @@ function loadClassAttendance(cb) {
         var data = docSnap.data() || {};
         var ents = data.entries || {};
         Object.keys(ents).forEach(function(k){
+          if (k.indexOf('__') !== -1) return;           // 구버전(복합키) entry 무시
           var e = ents[k] || {};
+          var sessions = e.sessions || [];
+          if (!e.status && !e.makeup && !sessions.length) return; // 빈 칸 스킵
           out.push({
             date: date,
             student: e.name || '',
-            studentId: e.studentId || '',
-            className: e.className || '',
-            teacher: e.teacherName || '',
-            teacherUid: e.teacherUid || '',
+            studentId: e.studentId || k,
             attendance: e.status || '',
             makeup: !!e.makeup,
-            session: e.session || '정규'
+            count: (typeof e.count === 'number' ? e.count : sessions.length),
+            sessions: sessions
           });
         });
       });
@@ -3138,31 +3139,62 @@ function loadClassAttendance(cb) {
     .finally(function(){ if (typeof cb==='function') cb(); });
 }
 
-// 수업기록의 출결만 학교 단위로 복제(mirror). 과제/수업내용은 복제하지 않음.
+// 대표 출결 산출 규칙: 결석 > 지각(15분이상) > 지각(15분이내) > 정시도착
+function _repStatus(sessions) {
+  var sev = { '결석':4, '15분이상':3, '15분이내':2, '정시도착':1 };
+  var best = '', bestv = 0, mk = false;
+  (sessions || []).forEach(function(s){
+    if (s && s.makeup) mk = true;
+    var v = sev[s && s.status] || 0;
+    if (v > bestv) { bestv = v; best = s.status; }
+  });
+  return { status: best, makeup: mk };
+}
+
+// 수업 출결만 학교 단위로 복제(mirror).
+// 단위 = 학생 × 하루 (entries["{studentId}"] 1칸). 그날 수업들은 sessions[]에 누적 → 두 선생/여러 번도 1칸으로 통합.
+// 지각정도/보충을 안 고른 수업은 세션으로 인정하지 않음(출결 표시 X).
 function mirrorClassAttendance(rec) {
   if (!window.fbDb || !currentSchoolId || !rec) return Promise.resolve();
   var date = (rec.date || '').slice(0,10);
   if (!date) return Promise.resolve();
   var sid = rec.studentId || (typeof resolveStudentId==='function' ? resolveStudentId(rec) : '');
-  if (!sid) return Promise.resolve();                 // 학생 식별 불가 → 키 생성 불가 (스킵)
-  if (!rec.attendance && !rec.makeup) return Promise.resolve(); // 출결 정보 없으면 스킵
+  if (!sid) return Promise.resolve();                 // 학생 식별 불가 (스킵)
   var uid = _myUidForAtt();
-  var session = rec.session || '정규';
-  var key = [sid, rec.className||'', uid, session].join('__');
-  var payload = { entries: {} };
-  payload.entries[key] = {
-    studentId: sid,
-    name: rec.student || '',
-    className: rec.className || '',
-    teacherUid: uid,
-    teacherName: rec.teacher || currentUser || '',
-    session: session,
-    status: rec.attendance || '',
-    makeup: !!rec.makeup,
-    recordedAt: new Date().toISOString()
-  };
+  var rid = String(rec.id || '');
+  var hasAtt = !!(rec.attendance || rec.makeup);      // 지각정도/보충 입력 시에만 세션 인정
   var ref = window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'classAttendance', date);
-  return window.fbSetDocMerge(ref, payload).catch(function(err){ console.warn('[classAttendance] mirror 실패:', err); });
+  return window.fbGetDoc(ref).then(function(snap){
+    var data = (snap && typeof snap.exists === 'function' && snap.exists()) ? (snap.data() || {}) : {};
+    var entries = data.entries || {};
+    var entry = entries[sid] || { studentId: sid, name: rec.student || '', sessions: [] };
+    // 같은 기록(rid) 재저장 → 해당 세션 교체. (지각정도 해제 후 저장이면 추가 안 함 = 사실상 제거)
+    var sessions = (entry.sessions || []).filter(function(x){ return String(x.rid) !== rid; });
+    if (hasAtt) {
+      sessions.push({
+        rid: rid,
+        teacher: rec.teacher || currentUser || '',
+        teacherUid: uid,
+        className: rec.className || '',
+        session: rec.session || '정규',
+        status: rec.attendance || '',
+        makeup: !!rec.makeup,
+        at: new Date().toISOString()
+      });
+    }
+    var rep = _repStatus(sessions);
+    var payload = { entries: {} };
+    payload.entries[sid] = {
+      studentId: sid,
+      name: rec.student || entry.name || '',
+      status: rep.status,
+      makeup: rep.makeup,
+      count: sessions.length,
+      sessions: sessions,
+      updatedAt: new Date().toISOString()
+    };
+    return window.fbSetDocMerge(ref, payload);
+  }).catch(function(err){ console.warn('[classAttendance] mirror 실패:', err); });
 }
 
 // 내 계정의 기존 수업기록 출결을 학교 출결로 1회 가져오기 (계정당 1회, 중복 안전)
@@ -3281,9 +3313,7 @@ function drawCalendar() {
     if(r.student!==_calName) return;
     if((r.date||'').slice(0,7)!==ym) return;
     var d=(r.date||'').slice(8,10);
-    if(!byDate[d]) byDate[d]={att:'',mk:false};
-    if(r.attendance) byDate[d].att=r.attendance;
-    if(r.makeup) byDate[d].mk=true;
+    byDate[d]={att:r.attendance||'', mk:!!r.makeup, count:(r.count||(r.sessions?r.sessions.length:0)||0), sessions:(r.sessions||[])};
   });
   var firstDow=new Date(_calY,_calM-1,1).getDay();
   var days=new Date(_calY,_calM,0).getDate();
@@ -3301,7 +3331,13 @@ function drawCalendar() {
     if(mk && !(info&&info.att&&attColor[info.att])){ bg='#f5f3ff'; col='#7c3aed'; }
     var _bd2=mk?'2px solid #7c3aed':('1px solid '+bd);
     var dot=mk?'<span style="position:absolute;right:3px;bottom:3px;width:7px;height:7px;border-radius:50%;background:#7c3aed;box-shadow:0 0 0 1.5px #fff"></span>':'';
-    html+='<div style="position:relative;aspect-ratio:1;min-height:30px;border:'+_bd2+';border-radius:6px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+col+'">'+day+dot+'</div>';
+    var cnt=(info&&info.count)||0;
+    var cntBadge=(cnt>=2)?'<span style="position:absolute;top:1px;right:2px;font-size:9px;font-weight:800;color:#0891b2;background:#fff;border:1px solid #a5f3fc;border-radius:8px;padding:0 3px;line-height:1.5">'+cnt+'</span>':'';
+    var ttl='';
+    if(info&&info.sessions&&info.sessions.length){
+      ttl=info.sessions.map(function(sx){ return (sx.teacher||'')+' '+(sx.status||'')+(sx.makeup?' ·보충':'')+(sx.session&&sx.session!=='정규'?(' ('+sx.session+')'):''); }).join('\n').replace(/"/g,'');
+    }
+    html+='<div title="'+ttl+'" style="position:relative;aspect-ratio:1;min-height:30px;border:'+_bd2+';border-radius:6px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+col+'">'+day+dot+cntBadge+'</div>';
   }
   html+='</div>';
   grid.innerHTML=html;
@@ -4078,6 +4114,13 @@ function editRecord(id) {
   updateSubRing('reading');
   updateSubRing('grammar');
   switchTab('input');
+  // 수정 진입 시 데스크톱 미리보기 패널 자동 열기 (웹 전용, ≥1024px)
+  try {
+    if (window.matchMedia && window.matchMedia('(min-width:1024px)').matches
+        && typeof openLessonPreview === 'function') {
+      openLessonPreview();
+    }
+  } catch(e) {}
 }
 
 function cancelEdit() { editId=null; resetForm(); }
