@@ -1764,6 +1764,7 @@ onAuthStateChanged(auth, function(user) {
         <button onclick="calNavMonth(1)" style="background:#f1f5f9;border:none;border-radius:8px;width:34px;height:34px;font-size:18px;color:#475569;cursor:pointer;font-family:inherit">&#8250;</button>
       </div>
       <div id="calGrid"></div>
+      <div id="calDayDetail" style="display:none;margin-top:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px"></div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:11px;color:#64748b;justify-content:center">
         <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#16a34a;vertical-align:middle;margin-right:3px"></span>출</span>
         <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ca8a04;vertical-align:middle;margin-right:3px"></span>지각</span>
@@ -3310,7 +3311,7 @@ function filterAttList() {
     el.style.display=(!q||t.indexOf(q)!==-1)?'flex':'none';
   });
 }
-var _calName=null, _calY=null, _calM=null;
+var _calName=null, _calY=null, _calM=null, _calByDate={};
 function openStudentCalendar(id) {
   var s=students.find(function(x){ return String(x.id)===String(id); });
   if(!s){ showToast('학생 정보를 찾을 수 없습니다.','error'); return; }
@@ -3339,6 +3340,7 @@ function drawCalendar() {
   if(!grid) return;
   var ym=_calY+'-'+('0'+_calM).slice(-2);
   if(label) label.textContent=_calY+'년 '+_calM+'월';
+  var _dd=document.getElementById('calDayDetail'); if(_dd){ _dd.style.display='none'; _dd.innerHTML=''; } // 월 이동/재그리기 시 상세 닫기
   var scope=_attScopeRecords();
   var byDate={};
   scope.forEach(function(r){
@@ -3347,6 +3349,7 @@ function drawCalendar() {
     var d=(r.date||'').slice(8,10);
     byDate[d]={att:r.attendance||'', mk:!!r.makeup, count:(r.count||(r.sessions?r.sessions.length:0)||0), sessions:(r.sessions||[])};
   });
+  _calByDate=byDate;
   var firstDow=new Date(_calY,_calM-1,1).getDay();
   var days=new Date(_calY,_calM,0).getDate();
   var wk=['일','월','화','수','목','금','토'];
@@ -3369,10 +3372,32 @@ function drawCalendar() {
     if(info&&info.sessions&&info.sessions.length){
       ttl=info.sessions.map(function(sx){ return (sx.teacher||'')+' '+(sx.status||'')+(sx.makeup?' ·보충':'')+(sx.session&&sx.session!=='정규'?(' ('+sx.session+')'):''); }).join('\n').replace(/"/g,'');
     }
-    html+='<div title="'+ttl+'" style="position:relative;aspect-ratio:1;min-height:30px;border:'+_bd2+';border-radius:6px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+col+'">'+day+dot+cntBadge+'</div>';
+    var clickable=(info&&info.sessions&&info.sessions.length)?(' onclick="showCalDay(\''+dd+'\')"'):'';
+    var cur=(clickable?'cursor:pointer;':'');
+    html+='<div'+clickable+' title="'+ttl+'" style="'+cur+'position:relative;aspect-ratio:1;min-height:30px;border:'+_bd2+';border-radius:6px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+col+'">'+day+dot+cntBadge+'</div>';
   }
   html+='</div>';
   grid.innerHTML=html;
+}
+
+// 달력 날짜 탭 → 그날 선생님별 출결 상세 펼치기 (맥/모바일 hover 대체)
+function showCalDay(dd){
+  var el=document.getElementById('calDayDetail'); if(!el) return;
+  var info=_calByDate[dd];
+  if(!info || !(info.sessions && info.sessions.length)){ el.style.display='none'; el.innerHTML=''; return; }
+  var title=_calM+'월 '+parseInt(dd,10)+'일';
+  var rows=info.sessions.map(function(sx){
+    var st=sx.status||'';
+    var color = st==='정시도착' ? '#16a34a' : (st==='결석' ? '#dc2626' : (st ? '#ca8a04' : '#64748b'));
+    var lbl = st || '기록';
+    var extra = (sx.makeup?' · 보충':'') + (sx.session && sx.session!=='정규' ? (' · '+sx.session) : '');
+    return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid #eef2f7">'
+      + '<span style="font-size:12px;color:#475569;font-weight:600">'+escapeNotice(sx.teacher||'-')+'</span>'
+      + '<span style="font-size:12px;font-weight:700;color:'+color+'">'+escapeNotice(lbl)+escapeNotice(extra)+'</span>'
+      + '</div>';
+  }).join('');
+  el.innerHTML='<div style="font-size:12px;font-weight:800;color:#0891b2;margin-bottom:2px">'+title+' · 수업 '+info.sessions.length+'회</div>'+rows;
+  el.style.display='block';
 }
 
 /* ===== 출결 체크 모드 (트랙2: 등하원 코드 시스템) ===== */
