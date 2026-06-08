@@ -1246,7 +1246,7 @@ onAuthStateChanged(auth, function(user) {
     </div>
 
     <!-- 요금제 카드 -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+    <div id="subPlanCards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
 
       <div onclick="selectSubPlan('free')" id="subplan-free" style="background:#fff;border:2px solid #6366f1;border-radius:14px;padding:16px;text-align:center;cursor:pointer;position:relative">
         <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:10px;white-space:nowrap">추천</div>
@@ -3199,6 +3199,49 @@ function mirrorClassAttendance(rec) {
   }).catch(function(err){ console.warn('[classAttendance] mirror 실패:', err); });
 }
 
+// 기록 삭제 시: 해당 rid 세션을 학교 출결에서 제거. 세션이 모두 사라지면 빈 칸으로 처리(표시 X).
+function unmirrorClassAttendance(rec) {
+  if (!window.fbDb || !currentSchoolId || !rec) return Promise.resolve();
+  var date = (rec.date || '').slice(0,10);
+  if (!date) return Promise.resolve();
+  var sid = rec.studentId || (typeof resolveStudentId==='function' ? resolveStudentId(rec) : '');
+  if (!sid) return Promise.resolve();
+  var rid = String(rec.id || '');
+  var ref = window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'classAttendance', date);
+  return window.fbGetDoc(ref).then(function(snap){
+    var data = (snap && typeof snap.exists === 'function' && snap.exists()) ? (snap.data() || {}) : {};
+    var entries = data.entries || {};
+    var entry = entries[sid];
+    if (!entry) return;                                 // 해당 학생 출결 없음 (스킵)
+    var sessions = (entry.sessions || []).filter(function(x){ return String(x.rid) !== rid; });
+    var payload = { entries: {} };
+    if (sessions.length) {
+      var rep = _repStatus(sessions);
+      payload.entries[sid] = {
+        studentId: sid,
+        name: entry.name || rec.student || '',
+        status: rep.status,
+        makeup: rep.makeup,
+        count: sessions.length,
+        sessions: sessions,
+        updatedAt: new Date().toISOString()
+      };
+    } else {
+      // 세션이 모두 제거되면 빈 칸으로 (표시 로직이 빈 칸은 건너뜀)
+      payload.entries[sid] = {
+        studentId: sid,
+        name: entry.name || rec.student || '',
+        status: '',
+        makeup: false,
+        count: 0,
+        sessions: [],
+        updatedAt: new Date().toISOString()
+      };
+    }
+    return window.fbSetDocMerge(ref, payload);
+  }).catch(function(err){ console.warn('[classAttendance] unmirror 실패:', err); });
+}
+
 // 내 계정의 기존 수업기록 출결을 학교 출결로 1회 가져오기 (계정당 1회, 중복 안전)
 async function backfillClassAttendance() {
   if (!isOwnerOrAdmin()) { showToast('원장만 사용할 수 있습니다.', 'error'); return; }
@@ -3416,6 +3459,11 @@ function startKioskFromSetup(){
 }
 function startKiosk(){
   _kioskInput=''; _kioskOn=true; _checkinDate=todayStr(); _notifyLog=[];
+  // kioskOverlay가 #mainContent(PC에서 position:fixed) 안에 있으면 z-index가 갇혀 헤더에 가려짐 → body로 이동
+  ['kioskOverlay','kioskExitModal'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el && el.parentElement!==document.body) document.body.appendChild(el);
+  });
   document.getElementById('kioskSchoolName').textContent=(currentSchoolProfile&&currentSchoolProfile.name)||'';
   document.getElementById('kioskResult').innerHTML='';
   document.getElementById('kioskRecent').innerHTML='';
@@ -4014,7 +4062,7 @@ async function saveRecord() {
     records = records.map(r=>String(r.id)===String(editId) ? rec : r);
     editId = null; showToast('수정 완료!');
   } else {
-    records.unshift(rec); showToast('저장 완료!');
+    records.unshift(rec); editId = rec.id; showToast('저장 완료!'); // 같은 화면 재저장 시 중복 기록 생성 방지: 방금 저장한 기록을 편집 모드로 전환
   }
 
   // 학생 이름이 있으면 학생 목록에 자동 등록 (원장만 — 선생님은 학원 풀 쓰기 권한 없음)
@@ -4054,6 +4102,7 @@ async function saveRecord() {
 }
 
 function resetForm() {
+  editId = null; // 초기화 시 편집 모드 해제 → 다음 저장은 새 기록
   document.getElementById('f-date').value          = todayStr();
   ['f-class','f-student','f-lastHomework','f-lastHomework2','f-lastHomework3','f-lastHomework4','f-lastHomework5','f-todayContent','f-homework','f-homework2','f-homework3','f-homework4','f-homework5','f-memo','f-wordTest','f-wordScore','f-reading','f-grammar','f-reading1','f-grammar1','f-exam1','f-reading2','f-grammar2','f-exam2','f-reading3','f-grammar3','f-exam3','f-reading4','f-grammar4','f-exam4','f-reading5','f-grammar5','f-exam5','f-etc1','f-etc2','f-etc3','f-etc4','f-etc5'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   setComp('lastCompletion',0); setComp('lastCompletion2',0); setComp('lastCompletion3',0); setComp('lastCompletion4',0); setComp('lastCompletion5',0); setComp('readingComp',0); setComp('grammarComp',0); setComp('reading1Comp',0); setComp('grammar1Comp',0); setComp('exam1Comp',0); setComp('reading2Comp',0); setComp('grammar2Comp',0); setComp('exam2Comp',0); setComp('reading3Comp',0); setComp('grammar3Comp',0); setComp('exam3Comp',0); setComp('reading4Comp',0); setComp('grammar4Comp',0); setComp('exam4Comp',0); setComp('reading5Comp',0); setComp('grammar5Comp',0); setComp('exam5Comp',0); setComp('etc1Comp',0); setComp('etc2Comp',0); setComp('etc3Comp',0); setComp('etc4Comp',0); setComp('etc5Comp',0);
@@ -4209,6 +4258,7 @@ function deleteAllRecords() {
 
 function deleteRecord(id) {
   if (!confirm('삭제하시겠습니까?')) return;
+  var _delRec = records.find(function(r){return String(r.id)===String(id);}); // 출결 세션 정리용
   records=records.filter(function(r){return String(r.id)!==String(id);});
   persist();renderAll();showToast('삭제되었습니다.','info');
   // Firestore에서도 삭제
@@ -4216,6 +4266,7 @@ function deleteRecord(id) {
     var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(id));
     window.fbDeleteDoc(ref).catch(function(){});
   }
+  if (_delRec && typeof unmirrorClassAttendance==='function') unmirrorClassAttendance(_delRec); // 출결 세션도 함께 제거
 }
 
 function renderAll() {
@@ -6331,7 +6382,7 @@ function showSubscribeScreen(fbUser, profile, reason, expDate) {
   if (selEl) selEl.innerHTML = '<span style="color:#94a3b8">플랜을 선택해주세요</span>';
 
   // 1단계(요금제 선택) 화면으로 초기화
-  var cards = document.querySelector('#subscribeScreen [style*="grid-template-columns:1fr 1fr"]');
+  var cards = document.getElementById('subPlanCards');
   if (cards) cards.style.display = 'grid';
   var nextBtn = document.getElementById('subNextBtn');
   if (nextBtn) { nextBtn.style.display = 'block'; nextBtn.disabled = false; nextBtn.textContent = '선택한 요금제로 신청하기 →'; nextBtn.style.opacity = '1'; }
@@ -6410,7 +6461,7 @@ function proceedToApplyForm() {
   }
 
   // ── 유료 플랜: 신청 폼 표시 (요금제 카드/버튼 숨김) ──
-  var cards = document.querySelector('#subscribeScreen [style*="grid-template-columns:1fr 1fr"]');
+  var cards = document.getElementById('subPlanCards');
   if (cards) cards.style.display = 'none';
   var nextBtn = document.getElementById('subNextBtn');
   if (nextBtn) nextBtn.style.display = 'none';
