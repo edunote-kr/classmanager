@@ -3199,49 +3199,6 @@ function mirrorClassAttendance(rec) {
   }).catch(function(err){ console.warn('[classAttendance] mirror 실패:', err); });
 }
 
-// 기록 삭제 시: 해당 rid 세션을 학교 출결에서 제거. 세션이 모두 사라지면 빈 칸으로 처리(표시 X).
-function unmirrorClassAttendance(rec) {
-  if (!window.fbDb || !currentSchoolId || !rec) return Promise.resolve();
-  var date = (rec.date || '').slice(0,10);
-  if (!date) return Promise.resolve();
-  var sid = rec.studentId || (typeof resolveStudentId==='function' ? resolveStudentId(rec) : '');
-  if (!sid) return Promise.resolve();
-  var rid = String(rec.id || '');
-  var ref = window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'classAttendance', date);
-  return window.fbGetDoc(ref).then(function(snap){
-    var data = (snap && typeof snap.exists === 'function' && snap.exists()) ? (snap.data() || {}) : {};
-    var entries = data.entries || {};
-    var entry = entries[sid];
-    if (!entry) return;                                 // 해당 학생 출결 없음 (스킵)
-    var sessions = (entry.sessions || []).filter(function(x){ return String(x.rid) !== rid; });
-    var payload = { entries: {} };
-    if (sessions.length) {
-      var rep = _repStatus(sessions);
-      payload.entries[sid] = {
-        studentId: sid,
-        name: entry.name || rec.student || '',
-        status: rep.status,
-        makeup: rep.makeup,
-        count: sessions.length,
-        sessions: sessions,
-        updatedAt: new Date().toISOString()
-      };
-    } else {
-      // 세션이 모두 제거되면 빈 칸으로 (표시 로직이 빈 칸은 건너뜀)
-      payload.entries[sid] = {
-        studentId: sid,
-        name: entry.name || rec.student || '',
-        status: '',
-        makeup: false,
-        count: 0,
-        sessions: [],
-        updatedAt: new Date().toISOString()
-      };
-    }
-    return window.fbSetDocMerge(ref, payload);
-  }).catch(function(err){ console.warn('[classAttendance] unmirror 실패:', err); });
-}
-
 // 내 계정의 기존 수업기록 출결을 학교 출결로 1회 가져오기 (계정당 1회, 중복 안전)
 async function backfillClassAttendance() {
   if (!isOwnerOrAdmin()) { showToast('원장만 사용할 수 있습니다.', 'error'); return; }
@@ -3294,6 +3251,54 @@ async function cleanupOldAttendanceKeys() {
   } finally {
     showLoading(false);
   }
+}
+
+// record 삭제 시 그 record(rid)가 만든 출결 세션 1개 제거 + 대표상태/카운트 재계산
+function removeClassAttendanceSession(rec) {
+  if (!window.fbDb || !currentSchoolId || !rec) return Promise.resolve();
+  var date = (rec.date||'').slice(0,10);
+  if (!date) return Promise.resolve();
+  var sid = rec.studentId || (typeof resolveStudentId==='function' ? resolveStudentId(rec) : '');
+  if (!sid) return Promise.resolve();
+  var rid = String(rec.id||'');
+  var ref = window.fbDoc(window.fbDb, 'schools', currentSchoolId, 'classAttendance', date);
+  return window.fbGetDoc(ref).then(function(snap){
+    if (!(snap && typeof snap.exists==='function' && snap.exists())) return;
+    var data = snap.data()||{}; var entries = data.entries || {};
+    var entry = entries[sid]; if (!entry) return;
+    var sessions = (entry.sessions||[]).filter(function(x){ return String(x.rid) !== rid; });
+    var payload = { entries: {} };
+    if (!sessions.length) {
+      payload.entries[sid] = { studentId: sid, name: entry.name||'', status:'', makeup:false, count:0, sessions:[], updatedAt:new Date().toISOString() };
+    } else {
+      var rep = _repStatus(sessions);
+      payload.entries[sid] = { studentId: sid, name: entry.name||'', status: rep.status, makeup: rep.makeup, count: sessions.length, sessions: sessions, updatedAt: new Date().toISOString() };
+    }
+    return window.fbSetDocMerge(ref, payload);
+  }).catch(function(err){ console.warn('[classAttendance] 세션 제거 실패:', err); });
+}
+
+// 고아 출결 정리: 내가 기록한 세션 중 현재 내 records에 없는 rid(=삭제된 기록) 제거
+async function pruneOrphanAttendance() {
+  if (!window.fbDb || !currentSchoolId) return;
+  var myUid = _myUidForAtt();
+  var live = {}; (window.records||[]).forEach(function(r){ live[String(r.id)] = true; });
+  var snap = await window.fbGetDocs(window.fbCollection(window.fbDb,'schools',currentSchoolId,'classAttendance'));
+  var changed = 0;
+  for (var i=0;i<snap.docs.length;i++){
+    var d = snap.docs[i]; var data = d.data()||{}; var entries = data.entries||{};
+    var dirty = false; var newEntries = {};
+    Object.keys(entries).forEach(function(sid){
+      var e = entries[sid]||{}; var sess = e.sessions||[];
+      var kept = sess.filter(function(x){ return !(x.teacherUid===myUid && !live[String(x.rid)]); });
+      if (kept.length !== sess.length) dirty = true;
+      if (kept.length){ var rep=_repStatus(kept); newEntries[sid]={studentId:e.studentId||sid,name:e.name||'',status:rep.status,makeup:rep.makeup,count:kept.length,sessions:kept,updatedAt:new Date().toISOString()}; }
+      // kept 0개면 newEntries에서 통째 제외(칸 제거)
+    });
+    if (dirty){ var nd=Object.assign({},data); nd.entries=newEntries; await window.fbSetDoc(d.ref, nd); changed++; }
+  }
+  if (typeof showToast==='function') showToast('고아 출결 정리: '+changed+'개 날짜');
+  if (typeof loadClassAttendance==='function' && typeof renderAttendance==='function') loadClassAttendance(renderAttendance);
 }
 
 function _attScopeRecords() {
@@ -3458,12 +3463,10 @@ function startKioskFromSetup(){
   _kioskExitPin=pin; closeKioskSetup(); startKiosk();
 }
 function startKiosk(){
+  // position:fixed가 변형된 부모 기준으로 잡혀 버튼이 화면 밖으로 밀리는 문제 방지 → body로 이동
+  var _ko=document.getElementById('kioskOverlay'); if(_ko && _ko.parentElement!==document.body) document.body.appendChild(_ko);
+  var _kx=document.getElementById('kioskExitModal'); if(_kx && _kx.parentElement!==document.body) document.body.appendChild(_kx);
   _kioskInput=''; _kioskOn=true; _checkinDate=todayStr(); _notifyLog=[];
-  // kioskOverlay가 #mainContent(PC에서 position:fixed) 안에 있으면 z-index가 갇혀 헤더에 가려짐 → body로 이동
-  ['kioskOverlay','kioskExitModal'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el && el.parentElement!==document.body) document.body.appendChild(el);
-  });
   document.getElementById('kioskSchoolName').textContent=(currentSchoolProfile&&currentSchoolProfile.name)||'';
   document.getElementById('kioskResult').innerHTML='';
   document.getElementById('kioskRecent').innerHTML='';
@@ -4062,7 +4065,7 @@ async function saveRecord() {
     records = records.map(r=>String(r.id)===String(editId) ? rec : r);
     editId = null; showToast('수정 완료!');
   } else {
-    records.unshift(rec); editId = rec.id; showToast('저장 완료!'); // 같은 화면 재저장 시 중복 기록 생성 방지: 방금 저장한 기록을 편집 모드로 전환
+    records.unshift(rec); showToast('저장 완료!');
   }
 
   // 학생 이름이 있으면 학생 목록에 자동 등록 (원장만 — 선생님은 학원 풀 쓰기 권한 없음)
@@ -4102,7 +4105,6 @@ async function saveRecord() {
 }
 
 function resetForm() {
-  editId = null; // 초기화 시 편집 모드 해제 → 다음 저장은 새 기록
   document.getElementById('f-date').value          = todayStr();
   ['f-class','f-student','f-lastHomework','f-lastHomework2','f-lastHomework3','f-lastHomework4','f-lastHomework5','f-todayContent','f-homework','f-homework2','f-homework3','f-homework4','f-homework5','f-memo','f-wordTest','f-wordScore','f-reading','f-grammar','f-reading1','f-grammar1','f-exam1','f-reading2','f-grammar2','f-exam2','f-reading3','f-grammar3','f-exam3','f-reading4','f-grammar4','f-exam4','f-reading5','f-grammar5','f-exam5','f-etc1','f-etc2','f-etc3','f-etc4','f-etc5'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   setComp('lastCompletion',0); setComp('lastCompletion2',0); setComp('lastCompletion3',0); setComp('lastCompletion4',0); setComp('lastCompletion5',0); setComp('readingComp',0); setComp('grammarComp',0); setComp('reading1Comp',0); setComp('grammar1Comp',0); setComp('exam1Comp',0); setComp('reading2Comp',0); setComp('grammar2Comp',0); setComp('exam2Comp',0); setComp('reading3Comp',0); setComp('grammar3Comp',0); setComp('exam3Comp',0); setComp('reading4Comp',0); setComp('grammar4Comp',0); setComp('exam4Comp',0); setComp('reading5Comp',0); setComp('grammar5Comp',0); setComp('exam5Comp',0); setComp('etc1Comp',0); setComp('etc2Comp',0); setComp('etc3Comp',0); setComp('etc4Comp',0); setComp('etc5Comp',0);
@@ -4253,12 +4255,12 @@ function deleteAllRecords() {
   });
   chain.then(function(){ showToast('전체 삭제 완료!'); })
        .catch(function(){ showToast('일부 삭제 실패. 새로고침 후 확인하세요.', 'error'); })
-       .finally(function(){ showLoading(false); });
+       .finally(function(){ showLoading(false); if(typeof pruneOrphanAttendance==='function') pruneOrphanAttendance(); });
 }
 
 function deleteRecord(id) {
   if (!confirm('삭제하시겠습니까?')) return;
-  var _delRec = records.find(function(r){return String(r.id)===String(id);}); // 출결 세션 정리용
+  var delRec = records.filter(function(r){ return String(r.id)===String(id); })[0]; // 출결 세션 제거용
   records=records.filter(function(r){return String(r.id)!==String(id);});
   persist();renderAll();showToast('삭제되었습니다.','info');
   // Firestore에서도 삭제
@@ -4266,7 +4268,7 @@ function deleteRecord(id) {
     var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(id));
     window.fbDeleteDoc(ref).catch(function(){});
   }
-  if (_delRec && typeof unmirrorClassAttendance==='function') unmirrorClassAttendance(_delRec); // 출결 세션도 함께 제거
+  if (delRec && typeof removeClassAttendanceSession==='function') removeClassAttendanceSession(delRec); // 출결 세션도 함께 제거
 }
 
 function renderAll() {
@@ -7970,10 +7972,12 @@ function drawLogoToCanvas(size, callback) {
 
   var img = new Image();
   img.onload = function() {
-    // 정사각형 크롭 (중앙)
+    // 비율 유지 fit(contain): 잘리지 않고 전체가 들어가도록 (화면 object-fit:contain과 동일)
     var sw = img.width, sh = img.height;
-    var crop = Math.min(sw, sh);
-    ctx.drawImage(img, (sw-crop)/2, (sh-crop)/2, crop, crop, 0, 0, size, size);
+    var scale = Math.min(size/sw, size/sh);
+    var dw = sw*scale, dh = sh*scale;
+    var dx = (size-dw)/2, dy = (size-dh)/2;
+    ctx.drawImage(img, 0, 0, sw, sh, dx, dy, dw, dh);
     callback(c);
   };
   img.onerror = function() { callback(c); };
