@@ -7964,11 +7964,13 @@ function getImgLogoSrc() {
 // 로고를 canvas로 그려서 반환 (html2canvas 호환 보장)
 function drawLogoToCanvas(size, callback) {
   var src = getImgLogoSrc();
+  var SS = size * 3; // 3배 해상도(레티나/확대 시 또렷, 글자 뭉개짐 방지)
   var c = document.createElement('canvas');
-  c.width = size; c.height = size;
+  c.width = SS; c.height = SS;
   var ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillRect(0, 0, SS, SS);
 
   if (!src) { callback(c); return; }
 
@@ -7976,9 +7978,9 @@ function drawLogoToCanvas(size, callback) {
   img.onload = function() {
     // 비율 유지 fit(contain): 잘리지 않고 전체가 들어가도록 (화면 object-fit:contain과 동일)
     var sw = img.width, sh = img.height;
-    var scale = Math.min(size/sw, size/sh);
+    var scale = Math.min(SS/sw, SS/sh);
     var dw = sw*scale, dh = sh*scale;
-    var dx = (size-dw)/2, dy = (size-dh)/2;
+    var dx = (SS-dw)/2, dy = (SS-dh)/2;
     ctx.drawImage(img, 0, 0, sw, sh, dx, dy, dw, dh);
     callback(c);
   };
@@ -8407,7 +8409,7 @@ function previewLogo(input) {
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
-      var SIZE = 240; // 저장 크기 (정사각형)
+      var SIZE = 512; // 저장 크기 (정사각형, 고해상도 — 가는 선/글자 또렷)
 
       var canvas = document.createElement('canvas');
       canvas.width = SIZE;
@@ -8425,13 +8427,13 @@ function previewLogo(input) {
       ctx.drawImage(img, 0, 0, sw, sh, (SIZE-dw)/2, (SIZE-dh)/2, dw, dh);
 
       // JPEG 압축 (품질 0.75)
-      myLogoBase64 = canvas.toDataURL('image/jpeg', 0.75);
+      myLogoBase64 = canvas.toDataURL('image/png');
       _logoCleared = false;
 
       var preview = document.getElementById('myLogoPreview');
       preview.innerHTML = '<img src="' + myLogoBase64 + '" style="width:100%;height:100%;object-fit:contain">';
 
-      var kb = Math.round(myLogoBase64.length * 0.75 / 1024);
+      var kb = Math.round(myLogoBase64.length * 0.75 / 1024); // base64 → 대략 byte
       showToast('로고 적용 완료 (' + kb + 'KB)');
     };
     img.src = e.target.result;
