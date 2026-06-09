@@ -5476,6 +5476,8 @@ function doFirebaseSignup() {
       showLoading(false);
       if (err.code === 'auth/email-already-in-use') {
         showAuthError('이미 사용 중인 아이디입니다.');
+      } else if (err.code === 'school-name-taken') {
+        showAuthError(err.message);
       } else {
         showAuthError('가입 오류: ' + err.message);
       }
@@ -6267,39 +6269,50 @@ function autoActivateFreeTrial(uid, profile, teachers, plan) {
   var expires = new Date(now.getTime() + plan.days * 24 * 60 * 60 * 1000);
   var expiresStr = expires.toISOString().slice(0, 10);
 
-  // 고유 코드 생성을 위해 전체 학원 코드 수집
-  return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snap) {
-    var allCodes = [];
-    snap.forEach(function(d) {
-      var s = d.data();
-      if (s.ownerCode) allCodes.push(s.ownerCode);
-      if (s.teacherCode) allCodes.push(s.teacherCode);
-    });
-    var ownerCode   = generateUniqueCode(6, allCodes);
-    allCodes.push(ownerCode);
-    var teacherCode = generateUniqueCode(6, allCodes);
+  var schoolName = profile.schoolName || (profile.name + ' 학원');
+  var nameKey = normalizeSchoolKey(schoolName);
 
-    // 새 학원 문서 생성
-    var schoolData = {
-      name:        profile.schoolName || (profile.name + ' 학원'),
-      ownerCode:   ownerCode,
-      teacherCode: teacherCode,
-      plan:        'free',
-      status:      'active',
-      maxTeachers: (teachers || 0) + 1,
-      expiresAt:   expiresStr,
-      createdAt:   now.toISOString().slice(0, 10),
-      ownerUid:    uid
-    };
-    return window.fbAddDoc(window.fbCollection(window.fbDb, 'schools'), schoolData).then(function(ref) {
-      // 사용자 활성화 + 학원 연결 + 무료체험 사용 기록
-      return window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), {
-        status:        'active',
-        role:          'owner',
-        schoolId:      ref.id,
-        schoolName:    schoolData.name,
-        ownerCode:     ownerCode,
-        freeTrialUsed: true
+  // 동일 학원명이 이미 등록돼 있으면 새로 만들지 않음(중복 학원 방지)
+  return window.fbGetDoc(window.fbDoc(window.fbDb, 'schoolNames', nameKey)).then(function(idxSnap) {
+    if (idxSnap.exists() && idxSnap.data() && idxSnap.data().docId) {
+      return Promise.reject({ code: 'school-name-taken', message: '이미 등록된 학원명입니다. 같은 학원이면 선생님 코드로 가입해주세요.' });
+    }
+    // 고유 코드 생성을 위해 전체 학원 코드 수집
+    return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snap) {
+      var allCodes = [];
+      snap.forEach(function(d) {
+        var s = d.data();
+        if (s.ownerCode) allCodes.push(s.ownerCode);
+        if (s.teacherCode) allCodes.push(s.teacherCode);
+      });
+      var ownerCode   = generateUniqueCode(6, allCodes);
+      allCodes.push(ownerCode);
+      var teacherCode = generateUniqueCode(6, allCodes);
+
+      // 새 학원 문서 생성
+      var schoolData = {
+        name:        schoolName,
+        ownerCode:   ownerCode,
+        teacherCode: teacherCode,
+        plan:        'free',
+        status:      'active',
+        maxTeachers: (teachers || 0) + 1,
+        expiresAt:   expiresStr,
+        createdAt:   now.toISOString().slice(0, 10),
+        ownerUid:    uid
+      };
+      return window.fbAddDoc(window.fbCollection(window.fbDb, 'schools'), schoolData).then(function(ref) {
+        // schoolNames 인덱스 기록 (다음 가입자가 이 학원을 찾을 수 있게 → 중복 생성 방지)
+        writeSchoolNameIndex(schoolName, teacherCode, ref.id);
+        // 사용자 활성화 + 학원 연결 + 무료체험 사용 기록
+        return window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), {
+          status:        'active',
+          role:          'owner',
+          schoolId:      ref.id,
+          schoolName:    schoolData.name,
+          ownerCode:     ownerCode,
+          freeTrialUsed: true
+        });
       });
     });
   });
@@ -7946,6 +7959,16 @@ function deleteSchool(id, name) {
   if (!confirm(name + ' 학원을 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.')) return;
   window.fbDeleteDoc(window.fbDoc(window.fbDb, 'schools', id))
     .then(function() {
+      // schoolNames 인덱스도 함께 삭제 (유령 코드 잔존 방지) — 단, 다른 학원이 같은 키를 안 쓸 때만
+      if (name) {
+        var nameKey = normalizeSchoolKey(name);
+        var idxRef = window.fbDoc(window.fbDb, 'schoolNames', nameKey);
+        window.fbGetDoc(idxRef).then(function(snap){
+          if (snap.exists() && snap.data() && snap.data().docId === id) {
+            window.fbDeleteDoc(idxRef).catch(function(){});
+          }
+        }).catch(function(){});
+      }
       showAdminToast('' + name + ' 삭제 완료!');
       loadSchools();
     })
