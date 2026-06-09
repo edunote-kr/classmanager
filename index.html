@@ -5769,15 +5769,19 @@ function loadUserProfile(fbUser) {
       return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', currentSchoolId))
         .then(function(schoolSnap) {
           if (!schoolSnap.exists()) {
-            // schoolId가 실제 docId가 아닌(코드값) 레거시 → 인덱스로 실제 docId 찾기 (전체 스캔 제거)
+            // schoolId가 실제 docId가 아닌(코드값) 레거시 → 인덱스로 실제 docId 찾아 교정 (전체 스캔 제거)
+            // v5 규칙: 학원을 읽기 전에 user.schoolId를 realId로 먼저 교정해야 멤버로 인정되어 읽기가 허용됨
             return resolveSchoolDocId(currentSchoolId, profile.schoolName).then(function(realId) {
               if (!realId) { finishLogin(fbUser, profile); return; }
-              return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', realId)).then(function(rs) {
-                if (!rs.exists()) { finishLogin(fbUser, profile); return; }
-                window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid), { schoolId: realId }).catch(function(){});
-                currentSchoolId = realId;
-                return checkSchoolAndLogin(fbUser, profile, Object.assign({ _id: realId }, rs.data()));
-              });
+              currentSchoolId = realId;
+              return window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid), { schoolId: realId })
+                .catch(function(){})
+                .then(function() {
+                  return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', realId)).then(function(rs) {
+                    if (!rs.exists()) { finishLogin(fbUser, profile); return; }
+                    return checkSchoolAndLogin(fbUser, profile, Object.assign({ _id: realId }, rs.data()));
+                  });
+                });
             });
           }
           return checkSchoolAndLogin(fbUser, profile, Object.assign({ _id: schoolSnap.id }, schoolSnap.data()));
@@ -5929,12 +5933,17 @@ function finishLogin(fbUser, profile) {
         applySchool(sSnap.data(), sSnap.id);
         return;
       }
-      // 문서 못 찾음 → 인덱스로 실제 docId 찾아 단건 조회 (전체 스캔 제거)
+      // 문서 못 찾음 → 인덱스로 실제 docId 찾아 교정 후 단건 조회 (전체 스캔 제거)
+      // v5 규칙: 읽기 전 user.schoolId를 먼저 realId로 교정해야 멤버로 인정되어 읽기 허용
       resolveSchoolDocId(sid, data.schoolName).then(function(realId) {
         if (!realId) return;
-        window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', realId)).then(function(rs) {
-          if (rs.exists()) applySchool(rs.data(), rs.id);
-        }).catch(function(){});
+        window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', fbUser.uid), { schoolId: realId })
+          .catch(function(){})
+          .then(function() {
+            return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', realId)).then(function(rs) {
+              if (rs.exists()) applySchool(rs.data(), rs.id);
+            });
+          }).catch(function(){});
       }).catch(function(){});
     }).catch(function(){});
   }).catch(function(){});
@@ -6280,8 +6289,9 @@ function submitActivateCode() {
     if (html) resultEl.innerHTML = msg; else resultEl.textContent = msg;
   }
 
-  // schoolNames 인덱스에서 코드 조회 (schools 전체 스캔 제거).
-  // teacherCode 우선 → 없으면 ownerCode. docId로 실제 학원 문서를 단건 getDoc.
+  // schoolNames 인덱스에서 코드 조회 (schools 직접 읽기 없음 — 합류 전엔 비멤버라 규칙상 학원 문서를 읽을 수 없음).
+  // teacherCode 우선 → 없으면 ownerCode. 인덱스의 docId/name으로 바로 합류한다.
+  // 학원 만료/비활성 검증은 합류 직후 loadUserProfile(본인 학원 읽기, 허용됨)에서 수행.
   function lookupCode(field) {
     return window.fbGetDocs(window.fbQuery(
       window.fbCollection(window.fbDb, 'schoolNames'),
@@ -6290,7 +6300,7 @@ function submitActivateCode() {
       if (snap.empty) return null;
       var idx = snap.docs[0].data();
       if (!idx || !idx.docId) return null;
-      return { docId: idx.docId, role: (field === 'ownerCode' ? 'owner' : 'teacher') };
+      return { docId: idx.docId, name: idx.name || '', role: (field === 'ownerCode' ? 'owner' : 'teacher') };
     });
   }
 
@@ -6298,41 +6308,7 @@ function submitActivateCode() {
     return hit || lookupCode('ownerCode');
   }).then(function(hit) {
     if (!hit) { showErr('유효하지 않은 코드입니다.'); return; }
-
-    return window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', hit.docId)).then(function(sSnap) {
-      if (!sSnap.exists()) { showErr('유효하지 않은 코드입니다.'); return; }
-      var found = Object.assign({ _id: sSnap.id }, sSnap.data());
-
-      // 인덱스-실데이터 불일치 방어: 실제 학원 문서의 코드로 역할 재확정
-      var matchOwner   = found.ownerCode   && found.ownerCode.toUpperCase()   === code;
-      var matchTeacher = found.teacherCode && found.teacherCode.toUpperCase() === code;
-      if (!matchOwner && !matchTeacher) { showErr('유효하지 않은 코드입니다.'); return; }
-      var foundRole = matchTeacher ? 'teacher' : 'owner';
-
-      if (found.status === 'inactive') { showErr('비활성화된 학원입니다.'); return; }
-      if (found.expiresAt && new Date() > new Date(found.expiresAt)) {
-        showErr('만료된 코드입니다. (' + found.expiresAt.slice(0,10) + ')'); return;
-      }
-
-      // 인원 제한 체크 (선생님)
-      if (foundRole === 'teacher') {
-        var maxT = found.teacherCount !== undefined ? found.teacherCount : (found.maxTeachers ? found.maxTeachers - 1 : planTeacherLimit(found.plan));
-        window.fbGetDocs(window.fbQuery(
-          window.fbCollection(window.fbDb, 'users'),
-          window.fbWhere('schoolId', '==', found._id)
-        )).then(function(uSnap) {
-          var cnt = 0; uSnap.forEach(function(d) { var u = d.data(); if (u.role === 'teacher' && u.status === 'active') cnt++; });
-          return cnt;
-        }).catch(function() { return -1; }).then(function(cnt) {
-          if (cnt >= 0 && cnt >= maxT) {
-            showErr('선생님 정원이 가득 찼습니다. (' + cnt + '/' + maxT + '명)<br>추가 선생님 등록은 관리자에게 문의해주세요.', true); return;
-          }
-          activateWithCode(found, foundRole);
-        });
-      } else {
-        activateWithCode(found, foundRole);
-      }
-    });
+    activateWithCode({ _id: hit.docId, name: hit.name }, hit.role);
   }).catch(function(err) {
     showErr('오류: ' + (err && (err.code || err.message) || ''));
   });
