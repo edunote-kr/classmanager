@@ -9028,7 +9028,7 @@ ${[rec.todayContent,rec.todayContent1,rec.todayContent2,rec.todayContent3,rec.to
 
 function renderList() {
   const myRecords = records.filter(function(r){
-    if (currentUser !== ADMIN_NAME && r.teacher !== currentUser) return false;
+    if (!isOwnerOrAdmin() && r.teacher !== currentUser) return false;
     return true;
   });
   const pending = myRecords.filter(function(r){ return r.homework; });
@@ -9042,7 +9042,7 @@ function renderList() {
     teacherFilter = tSel ? tSel.value : '';
   }
   var filtered = records.filter(function(r) {
-    if (currentUser !== ADMIN_NAME && r.teacher !== currentUser) return false;
+    if (!isOwnerOrAdmin() && r.teacher !== currentUser) return false;
     if (isOwnerOrAdmin() && teacherFilter && r.teacher !== teacherFilter) return false;
     if (filterVal && r.student !== filterVal) return false;
     return true;
@@ -9138,7 +9138,7 @@ function _statsCalendarHTML(recs, ym, studentName){
 function renderStats() {
   // 관리자가 아니면 본인 기록만, 관리자는 선생님 필터 적용
   var records = window.records.filter(function(r){
-    if (currentUser !== ADMIN_NAME && r.teacher !== currentUser) return false;
+    if (!isOwnerOrAdmin() && r.teacher !== currentUser) return false;
     return true;
   });
   if (isOwnerOrAdmin()) {
@@ -9485,7 +9485,7 @@ function extractTests(r) {
 // 유효 점수가 하나라도 있는 기록만 날짜순으로
 function testRecordsFor(student, month) {
   return records.filter(function(r) {
-    if (currentUser !== ADMIN_NAME && r.teacher !== currentUser) return false;
+    if (!isOwnerOrAdmin() && r.teacher !== currentUser) return false;
     if (r.student !== student) return false;
     if (month && (r.date || '').slice(0, 7) !== month) return false;
     return extractTests(r).some(function(t) { return t.score !== null && t.score > 0; });
@@ -9632,7 +9632,7 @@ function renderWordChart() {
   if (!canvas) return;
 
   var filtered = records.filter(function(r) {
-    if (currentUser !== ADMIN_NAME && r.teacher !== currentUser) return false;
+    if (!isOwnerOrAdmin() && r.teacher !== currentUser) return false;
     if (student && r.student !== student) return false;
     var score = parseInt(String(r.wordScore).replace(/[^0-9]/g,''));
     return !isNaN(score) && score > 0;
