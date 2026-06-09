@@ -4947,8 +4947,23 @@ function toggleInputGroup(id) {
 
 
 // ── Firebase 인증 ────────────────────────────────────────────
+// 가입 폼 입력값/상태 초기화 (개인정보 잔존 방지)
+function clearSignupForm() {
+  ['signupId','signupName','signupSchool','signupSchoolCode','signupPassword','signupPasswordConfirm','signupPhone','verificationCode']
+    .forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['idCheckResult','schoolCheckResult','schoolCodeResult','codeResult'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
+  var vs=document.getElementById('verificationSection'); if(vs) vs.style.display='none';
+  var pv=document.getElementById('phoneVerified'); if(pv) pv.style.display='none';
+  var box=document.getElementById('schoolCodeBox'); if(box) box.style.display='none';
+  // 상태 플래그 리셋
+  idChecked=false; schoolChecked=false; schoolJoinMode='new'; schoolJoinInfo=null;
+  confirmationResult=null; phoneVerifiedNumber=null;
+  if(typeof verifiedSchoolInfo!=='undefined') verifiedSchoolInfo=null;
+}
+
 function switchAuthTab(tab) {
   var isLogin = tab === 'login';
+  if (!isLogin) clearSignupForm(); // 가입 탭 열 때 이전 입력 잔존 방지
   document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
   document.getElementById('signupForm').style.display = isLogin ? 'none' : 'block';
   document.getElementById('tabLogin').style.background = isLogin ? 'linear-gradient(135deg,#6366f1,#4f46e5)' : 'transparent';
@@ -5984,6 +5999,7 @@ function doLogout() {
   window._loginInProgress = false;
   localStorage.removeItem('kms_cache_user');
   localStorage.removeItem('kms_cache_school');
+  if (typeof clearSignupForm === 'function') clearSignupForm(); // 가입 폼 입력값 잔존 방지
   // 동적 입력 상태 초기화 (다음 로그인 시 깨끗하게)
   _tests = [{range:'', score:''}];
   _homeworks = [''];
