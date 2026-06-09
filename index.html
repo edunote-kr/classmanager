@@ -391,14 +391,14 @@ textarea { resize:vertical; }
 /* 카카오 실시간 상담 플로팅 버튼 반응형 */
 #kakaoFab {
   position:fixed; right:18px; bottom:18px; z-index:99990;
-  height:52px; padding:0 18px; border-radius:26px; background:#FEE500;
-  display:flex; align-items:center; gap:8px;
+  width:56px; height:56px; padding:0; border-radius:50%; background:#FEE500;
+  display:flex; align-items:center; justify-content:center; gap:0;
   box-shadow:0 4px 14px rgba(0,0,0,0.22); text-decoration:none;
   transition:transform .15s ease;
 }
 #kakaoFab .kakaoFabText { font-size:14px; font-weight:800; color:#3C1E1E; white-space:nowrap; }
 #kakaoFab .kakaoFabShort { display:none; }
-#kakaoFab svg { width:26px; height:26px; flex-shrink:0; }
+#kakaoFab svg { width:34px; height:34px; flex-shrink:0; }
 @media (max-width: 640px) {
   /* 작은 화면: 로그인/가입 모달 패딩 축소 (인증 영역 가로 넘침 방지) */
   .login-modal-box { padding:24px 16px !important; }
@@ -1257,7 +1257,7 @@ onAuthStateChanged(auth, function(user) {
         <div style="font-size:13px;font-weight:900;color:#1e293b">무료 체험</div>
         <div style="font-size:11px;color:#64748b;margin:2px 0">14일</div>
         <div style="font-size:20px;font-weight:900;color:#6366f1">0원</div>
-        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#6366f1">프로 기능 · 문자 100건</div>
+        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#6366f1">프로 기능 · 문자 100건 · 선생님 10명</div>
       </div>
 
       <div onclick="selectSubPlan('basic')" id="subplan-basic" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;cursor:pointer">
@@ -1265,7 +1265,7 @@ onAuthStateChanged(auth, function(user) {
         <div style="font-size:13px;font-weight:900;color:#1e293b">베이직</div>
         <div style="font-size:11px;color:#64748b;margin:2px 0">30일</div>
         <div style="font-size:20px;font-weight:900;color:#1e293b">10원</div>
-        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#94a3b8">알림 미포함</div>
+        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#94a3b8">알림 제외 전체기능 · 선생님 5명</div>
       </div>
 
       <div onclick="selectSubPlan('pro')" id="subplan-pro" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;cursor:pointer;position:relative">
@@ -1274,7 +1274,7 @@ onAuthStateChanged(auth, function(user) {
         <div style="font-size:13px;font-weight:900;color:#1e293b">프로</div>
         <div style="font-size:11px;color:#64748b;margin:2px 0">30일</div>
         <div style="font-size:20px;font-weight:900;color:#1e293b">10원</div>
-        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#6366f1">문자 300건/월</div>
+        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#6366f1">전체기능 · 문자 300건/월 · 선생님 10명</div>
       </div>
 
       <div onclick="selectSubPlan('premium')" id="subplan-premium" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;cursor:pointer">
@@ -1282,7 +1282,7 @@ onAuthStateChanged(auth, function(user) {
         <div style="font-size:13px;font-weight:900;color:#1e293b">프리미엄</div>
         <div style="font-size:11px;color:#64748b;margin:2px 0">30일</div>
         <div style="font-size:20px;font-weight:900;color:#1e293b">10원</div>
-        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#d97706">문자 1,000건/월</div>
+        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#d97706">전체기능 · 문자 1,000건/월 · 선생님 20명</div>
       </div>
     </div>
 
@@ -1330,12 +1330,12 @@ onAuthStateChanged(auth, function(user) {
       <div id="subFeeInfo" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:16px">
         <div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:8px">프로그램 이용료 안내</div>
         <div style="font-size:12px;color:#475569;line-height:1.9">
-          <div id="feerow-free" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>무료 체험 (쿠폰)</span><b style="color:#6366f1">0원 / 14일</b></div>
-          <div id="feerow-basic" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>베이직 (30일) · 알림 미포함</span><b>10원</b></div>
-          <div id="feerow-pro" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>프로 (30일) · 문자 300건/월</span><b>10원</b></div>
-          <div id="feerow-premium" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>프리미엄 (30일) · 문자 1,000건/월</span><b>10원</b></div>
+          <div id="feerow-free" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>무료 체험 (쿠폰) · 선생님 10명</span><b style="color:#6366f1">0원 / 14일</b></div>
+          <div id="feerow-basic" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>베이직 · 출결/과제 알림 제외 전체기능 · 선생님 5명</span><b>10원</b></div>
+          <div id="feerow-pro" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>프로 · 전체기능(알림톡/문자 300건/월) · 선생님 10명</span><b>10원</b></div>
+          <div id="feerow-premium" style="display:flex;justify-content:space-between;padding:2px 5px;border-radius:5px;transition:all .2s"><span>프리미엄 · 전체기능(알림톡/문자 1,000건/월) · 선생님 20명</span><b>10원</b></div>
         </div>
-        <div style="font-size:10px;color:#94a3b8;margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:8px">※ 결제는 계좌입금으로 진행됩니다. 신청 후 안내드립니다.</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:8px">※ 결제는 카드 또는 계좌입금으로 진행됩니다. 신청 후 안내드립니다.</div>
       </div>
 
       <div style="margin-bottom:10px">
@@ -3299,18 +3299,21 @@ async function cleanupOldAttendanceKeys() {
 async function cleanupOwnerDupRecords() {
   if (!isOwnerOrAdmin()) { showToast('원장만 사용할 수 있습니다.', 'error'); return; }
   if (!window.fbDb || !currentSchool) { showToast('학원 정보가 없습니다.', 'error'); return; }
-  if (!confirm('원장 계정에 잘못 복사된 다른 선생님 과제 사본을 정리합니다.\n(각 선생님 원본은 그대로 유지됩니다) 계속할까요?')) return;
+  if (!confirm('원장 계정에 잘못 복사된 다른 선생님 과제·알림장 사본을 정리합니다.\n(각 선생님 원본은 그대로 유지됩니다) 계속할까요?')) return;
   showLoading(true);
   try {
-    var snap = await window.fbGetDocs(window.fbCollection(window.fbDb, 'users', currentSchool, 'records'));
     var removed = 0;
-    for (var i = 0; i < snap.docs.length; i++) {
-      var d = snap.docs[i];
-      var data = d.data() || {};
-      // 본인(원장)이 작성한 기록이 아니면 = 과거 버그로 복사된 사본 → 삭제
-      if (data.teacher && data.teacher !== currentUser) {
-        await window.fbDeleteDoc(d.ref);
-        removed++;
+    var subs = ['records', 'notices'];
+    for (var si = 0; si < subs.length; si++) {
+      var snap = await window.fbGetDocs(window.fbCollection(window.fbDb, 'users', currentSchool, subs[si]));
+      for (var i = 0; i < snap.docs.length; i++) {
+        var d = snap.docs[i];
+        var data = d.data() || {};
+        // 본인(원장)이 작성한 것이 아니면 = 과거 버그로 복사된 사본 → 삭제
+        if (data.teacher && data.teacher !== currentUser) {
+          await window.fbDeleteDoc(d.ref);
+          removed++;
+        }
       }
     }
     showToast('중복 사본 정리 완료: ' + removed + '개 삭제');
@@ -3824,6 +3827,9 @@ function persistNotices() {
   if (window.fbDb && currentSchool && currentSchool.length > 10) {
     var uid = currentSchool;
     notices.forEach(function(n) {
+      // 원장은 전체 알림장을 들고 있으므로, 다른 선생님 알림장을 원장 서브컬렉션에
+      // 복사하면 중복이 생긴다 → 본인이 작성한 알림장만 본인 서브컬렉션에 저장.
+      if (isOwnerOrAdmin() && n.teacher && n.teacher !== currentUser) return;
       var ref = window.fbDoc(window.fbDb, 'users', uid, 'notices', String(n.id));
       window.fbSetDoc(ref, n).catch(function(){});
     });
@@ -3887,36 +3893,67 @@ function renderNotices() {
 
   var list = notices.filter(function(n){ return !fc || n.className === fc; });
   if (list.length === 0) {
-    el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">저장된 알림장이 없습니다.<br><span style="font-size:11px">입력 탭에서 "알림장으로 저장"을 눌러보세요.</span></div>';
+    el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">\uc800\uc7a5\ub41c \uc54c\ub9bc\uc7a5\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.<br><span style="font-size:11px">\uc785\ub825 \ud0ed\uc5d0\uc11c "\uc54c\ub9bc\uc7a5\uc73c\ub85c \uc800\uc7a5"\uc744 \ub20c\ub7ec\ubcf4\uc138\uc694.</span></div>';
     return;
   }
 
-  // 그룹핑
-  var groups = {};
-  list.forEach(function(n){
-    var key = groupBy === 'class' ? (n.className||'반 미지정') : (n.date||'날짜 미상');
-    if(!groups[key]) groups[key]=[];
-    groups[key].push(n);
-  });
-  var keys = Object.keys(groups).sort(function(a,b){ return groupBy==='date' ? b.localeCompare(a) : a.localeCompare(b,'ko'); });
-
-  var html = '';
-  keys.forEach(function(key, gi){
-    var gid = 'noticeGrp-' + gi;
-    html += '<div style="margin-bottom:8px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'
+  // \ub0a0\uc9dc \uadf8\ub8f9 1\uac1c HTML (\uc54c\ub9bc\uc7a5)
+  function _noticeGroupHTML(key, items, gid){
+    var h = '<div style="margin-bottom:8px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'
       + '<div onclick="toggleNoticeGroup(\'' + gid + '\')" style="background:#ecfeff;padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
-      + '<span style="font-size:12px;font-weight:800;color:#0891b2">' + escapeNotice(key) + ' <span style="font-weight:600;color:#94a3b8;font-size:11px">' + groups[key].length + '건</span></span>'
-      + '<span id="' + gid + '-arrow" style="color:#0891b2;font-size:11px">▼</span>'
+      + '<span style="font-size:12px;font-weight:800;color:#0891b2">' + escapeNotice(key) + ' <span style="font-weight:600;color:#94a3b8;font-size:11px">' + items.length + '\uac74</span></span>'
+      + '<span id="' + gid + '-arrow" style="color:#0891b2;font-size:11px">\u25bc</span>'
       + '</div>'
       + '<div id="' + gid + '" style="padding:10px">';
-    groups[key].forEach(function(n){
-      html += makeNoticeCard(n);
-    });
-    html += '</div></div>';
+    items.forEach(function(n){ h += makeNoticeCard(n); });
+    h += '</div></div>';
+    return h;
+  }
+
+  // \ubc18\ubcc4 \uadf8\ub8f9\uc740 \uc6d4\ubcc4 \ubb36\uc74c \uc5c6\uc774 \uae30\uc874\ub300\ub85c
+  if (groupBy === 'class') {
+    var cmap = {};
+    list.forEach(function(n){ var key=n.className||'\ubc18 \ubbf8\uc9c0\uc815'; (cmap[key]=cmap[key]||[]).push(n); });
+    var ckeys = Object.keys(cmap).sort(function(a,b){ return a.localeCompare(b,'ko'); });
+    el.innerHTML = ckeys.map(function(key,gi){ return _noticeGroupHTML(key, cmap[key], 'noticeGrp-'+gi); }).join('');
+    return;
+  }
+
+  // \u2500\u2500 \ub0a0\uc9dc \uadf8\ub8f9: \uc774\ubc88 \ub2ec\uc740 \uadf8\ub300\ub85c, \uc9c0\ub09c \ub2ec\ub4e4\uc740 \uc6d4 \ub2e8\uc704\ub85c \ubb36\uc5b4 \uc811\uae30 \u2500\u2500
+  var curYM = todayStr().slice(0,7);
+  var curMap = {}, pastByYM = {};
+  list.forEach(function(n){
+    var d = n.date || '';
+    var ym = d.slice(0,7);
+    if (ym === curYM || !ym) { (curMap[d||'\ub0a0\uc9dc \ubbf8\uc0c1']=curMap[d||'\ub0a0\uc9dc \ubbf8\uc0c1']||[]).push(n); }
+    else { (pastByYM[ym]=pastByYM[ym]||[]).push(n); }
   });
+
+  var html = '';
+  Object.keys(curMap).sort(function(a,b){return b.localeCompare(a);}).forEach(function(key,gi){
+    html += _noticeGroupHTML(key, curMap[key], 'noticeGrp-c'+gi);
+  });
+
+  Object.keys(pastByYM).sort(function(a,b){return b.localeCompare(a);}).forEach(function(ym, mi){
+    var items = pastByYM[ym];
+    var mid = 'mon-not-'+mi;
+    var label = ym.slice(0,4)+'\ub144 '+parseInt(ym.slice(5,7),10)+'\uc6d4';
+    var inner='', dMap={};
+    items.forEach(function(n){ var d=n.date||'\ub0a0\uc9dc \ubbf8\uc0c1'; (dMap[d]=dMap[d]||[]).push(n); });
+    Object.keys(dMap).sort(function(a,b){return b.localeCompare(a);}).forEach(function(key,gi){
+      inner += _noticeGroupHTML(key, dMap[key], mid+'-g'+gi);
+    });
+    html += '<div style="margin-bottom:8px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'
+      + '<div onclick="toggleMonthBox(\''+mid+'\')" style="background:#f1f5f9;padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
+      + '<span style="font-size:12px;font-weight:800;color:#475569">'+label+' <span style="font-weight:600;color:#94a3b8;font-size:11px">'+items.length+'\uac74</span></span>'
+      + '<span id="'+mid+'-arrow" style="color:#94a3b8;font-size:12px">\u25b6</span>'
+      + '</div>'
+      + '<div id="'+mid+'" style="display:none;padding:10px">'+inner+'</div>'
+      + '</div>';
+  });
+
   el.innerHTML = html;
 }
-
 function toggleNoticeGroup(gid) {
   var body = document.getElementById(gid);
   var arrow = document.getElementById(gid + '-arrow');
@@ -4365,6 +4402,14 @@ function renderAll() {
 
 var groupBy='none';
 function setGroupBy(mode){groupBy=mode;['none','date','student'].forEach(function(m){var btn=document.getElementById('grp-'+m);if(!btn)return;btn.style.background=m===mode?'linear-gradient(135deg,#6366f1,#4f46e5)':'transparent';btn.style.color=m===mode?'#fff':'#94a3b8';});renderList();}
+function toggleMonthBox(id){
+  var body=document.getElementById(id);
+  var arrow=document.getElementById(id+'-arrow');
+  if(!body)return;
+  var hidden=body.style.display==='none';
+  body.style.display=hidden?'block':'none';
+  if(arrow)arrow.textContent=hidden?'\u25bc':'\u25b6';
+}
 function toggleGroup(id){
   var body=document.getElementById('gb-'+id);
   var arrow=document.getElementById('ga-'+id);
@@ -5948,8 +5993,12 @@ function loadOwnerData(ownerUid) {
     var recPromises = memberUids.map(function(uid) {
       return getDocsTO(window.fbCollection(window.fbDb, 'users', uid, 'records'));
     });
+    // 모든 멤버 notices(알림장)도 병렬 로드 → 원장이 전체 알림장 확인
+    var notPromises = memberUids.map(function(uid) {
+      return getDocsTO(window.fbCollection(window.fbDb, 'users', uid, 'notices'));
+    });
 
-    return Promise.all([Promise.all(recPromises)]);
+    return Promise.all([Promise.all(recPromises), Promise.all(notPromises)]);
   }).then(function(results) {
     if (!results) { finishOwnerLoad(); return; }
     if (!window.currentUser) { finishOwnerLoad(); return; }
@@ -5976,10 +6025,33 @@ function loadOwnerData(ownerUid) {
     var allRecs = Object.keys(byId).map(function(k){ return byId[k].rec; });
 
     records = allRecs.map(normalizeRec);
+
+    // 알림장(notices)도 동일하게 작성자 우선 dedup
+    var nById = {};
+    (results[1] || []).forEach(function(snap, idx) {
+      var srcUid = memberUids[idx];
+      if (!snap || !snap.forEach) return;
+      snap.forEach(function(d) {
+        var n = Object.assign({ id: d.id }, d.data());
+        var rightful = uidByName[n.teacher] || ownerUid;
+        var prev = nById[n.id];
+        if (!prev) { nById[n.id] = { rec: n, src: srcUid, rightful: rightful }; return; }
+        var prevIsRightful = (prev.src === prev.rightful);
+        var newIsRightful  = (srcUid === rightful);
+        if (newIsRightful && !prevIsRightful) nById[n.id] = { rec: n, src: srcUid, rightful: rightful };
+      });
+    });
+    var allNots = Object.keys(nById).map(function(k){ return nById[k].rec; });
+    allNots.sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+    notices = allNots;
+    localStorage.setItem(noticeKey(), JSON.stringify(notices));
+
     persist();
+    persistNotices();
     loadSchoolStudents(); // 학원 공유 학생 풀 로드 (원장=전체)
     setupAdminFilter(); // 원장도 선생님 필터 사용
     renderAll(); updateLoadSelect(); updateStudentFilter(); renderStudents(); updateClassSelect();
+    if (typeof renderNotices === 'function') renderNotices();
     showToast('학원 전체 데이터 불러오기 완료!');
   }).catch(function(e) {
     if (e === 'cancelled') return;
@@ -6161,7 +6233,7 @@ function submitActivateCode() {
 
     // 인원 제한 체크 (선생님)
     if (foundRole === 'teacher') {
-      var maxT = found.teacherCount !== undefined ? found.teacherCount : (found.maxTeachers ? found.maxTeachers - 1 : 99);
+      var maxT = found.teacherCount !== undefined ? found.teacherCount : (found.maxTeachers ? found.maxTeachers - 1 : planTeacherLimit(found.plan));
       window.fbGetDocs(window.fbQuery(
         window.fbCollection(window.fbDb, 'users'),
         window.fbWhere('schoolId', '==', found._id)
@@ -6171,7 +6243,7 @@ function submitActivateCode() {
       }).catch(function() { return -1; }).then(function(cnt) {
         if (cnt >= 0 && cnt >= maxT) {
           resultEl.style.background = '#fee2e2'; resultEl.style.color = '#dc2626';
-          resultEl.textContent = '정원이 가득 찼습니다. (' + cnt + '/' + maxT + '명)'; return;
+          resultEl.innerHTML = '선생님 정원이 가득 찼습니다. (' + cnt + '/' + maxT + '명)<br>추가 선생님 등록은 관리자에게 문의해주세요.'; return;
         }
         activateWithCode(found, foundRole);
       });
@@ -6389,7 +6461,8 @@ function autoActivateFreeTrial(uid, profile, teachers, plan) {
           teacherCode: teacherCode,
           plan:        'free',
           status:      'active',
-          maxTeachers: (teachers || 0) + 1,
+          teacherCount: (plan && plan.teacherLimit) || 10,
+          maxTeachers: (((plan && plan.teacherLimit) || 10) + 1),
           expiresAt:   expiresStr,
           createdAt:   now.toISOString().slice(0, 10),
           ownerUid:    uid
@@ -6504,8 +6577,8 @@ function selectSubPlan(plan) {
   var hint = document.getElementById('subNextHint');
   if (hint) {
     hint.textContent = (plan === 'free')
-      ? '무료 체험은 바로 시작됩니다 (선생님 20명 기본)'
-      : '신청서 작성 후 입금 안내를 받으실 수 있어요';
+      ? '무료 체험은 바로 시작됩니다 (선생님 10명)'
+      : '신청서 작성 후 카드 결제 또는 입금 안내를 받으실 수 있어요';
     hint.style.color = '#6366f1';
   }
   // 요금표 안내 카드에서 선택한 플랜 행 강조
@@ -6820,11 +6893,16 @@ function submitSubscribeApply() {
 
 // ── 서비스 신청 ───────────────────────────────────────────
 var applyPlan = 'free';
+// 플랜별 기본 선생님(원장 제외) 정원. 학원 문서에 teacherCount가 없을 때 사용.
+function planTeacherLimit(plan) {
+  return ({ free: 10, basic: 5, pro: 10, premium: 20, standard: 10 })[plan] || 5;
+}
+window.planTeacherLimit = planTeacherLimit;
 var PLANS = {
-  free: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg> 무료 체험 (14일)', days: 14, price: 0, priceLabel: '무료', notify: true, smsQuota: 100, tier: 'pro' },
-  basic: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> 베이직 (30일)', days: 30, price: 10, priceLabel: '10원', notify: false, smsQuota: 0, tier: 'basic' },
-  pro: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> 프로 (30일)', days: 30, price: 10, priceLabel: '10원', notify: true, smsQuota: 300, tier: 'pro' },
-  premium: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> 프리미엄 (30일)', days: 30, price: 10, priceLabel: '10원', notify: true, smsQuota: 1000, tier: 'premium' }
+  free: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg> 무료 체험 (14일)', days: 14, price: 0, priceLabel: '무료', notify: true, smsQuota: 100, tier: 'pro', teacherLimit: 10 },
+  basic: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> 베이직 (30일)', days: 30, price: 10, priceLabel: '10원', notify: false, smsQuota: 0, tier: 'basic', teacherLimit: 5 },
+  pro: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> 프로 (30일)', days: 30, price: 10, priceLabel: '10원', notify: true, smsQuota: 300, tier: 'pro', teacherLimit: 10 },
+  premium: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> 프리미엄 (30일)', days: 30, price: 10, priceLabel: '10원', notify: true, smsQuota: 1000, tier: 'premium', teacherLimit: 20 }
 };
 
 function openApplyModal(plan) {
@@ -7275,9 +7353,24 @@ function loadSchoolData() {
       });
 
       return Promise.all([Promise.all(recordPromises), Promise.all(noticePromises)]).then(function(res) {
-        var records = [].concat.apply([], res[0]);
+        // 같은 doc id가 여러 멤버 서브컬렉션에서 올 수 있음(과거 복사본). 작성자(_teacher) 본인의
+        // 서브컬렉션 것을 우선해 id별 1개만 유지 → 학원에서 삭제한 항목이 잔존/중복되지 않음.
+        function dedupByAuthor(arr) {
+          var map = {};
+          arr.forEach(function(it) {
+            var key = String(it._id);
+            var prev = map[key];
+            if (!prev) { map[key] = it; return; }
+            // it._teacher = 이 사본이 들어있던 멤버 이름. it.teacher = 실제 작성자.
+            var prevRight = (prev._teacher === prev.teacher);
+            var newRight  = (it._teacher === it.teacher);
+            if (newRight && !prevRight) map[key] = it;
+          });
+          return Object.keys(map).map(function(k){ return map[k]; });
+        }
+        var records = dedupByAuthor([].concat.apply([], res[0]));
         records.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
-        var schoolNotices = [].concat.apply([], res[1]);
+        var schoolNotices = dedupByAuthor([].concat.apply([], res[1]));
         schoolNotices.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
         renderAdminSchoolData(schoolName, members, records, schoolNotices);
       });
@@ -7489,6 +7582,7 @@ function loadSchoolStats() {
       var maxTeachers  = s.teacherCount !== undefined ? s.teacherCount : (s.maxTeachers ? s.maxTeachers - 1 : 0);
       var usageRate    = maxTeachers > 0 ? Math.round(teacherCount / maxTeachers * 100) : 0;
       var isActive     = s.status === 'active';
+      var couponUsed   = members.some(function(u){ return u.role === 'owner' && u.freeTrialUsed; });
 
       return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:16px;background:#fff">'
         // 학원명 + 상태
@@ -7496,6 +7590,7 @@ function loadSchoolStats() {
         + '<div>'
         + '<div style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>' + s.name + '</div>'
         + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + (s.plan||'basic') + ' · 생성: ' + (s.createdAt ? s.createdAt.slice(0,10) : '-') + '</div>'
+        + '<div style="margin-top:4px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:' + (couponUsed ? '#fef3c7' : '#f1f5f9') + ';color:' + (couponUsed ? '#d97706' : '#94a3b8') + '">무료체험 쿠폰 ' + (couponUsed ? '사용됨' : '미사용') + '</span></div>'
         + '</div>'
         + '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:' + (isActive ? '#dcfce7' : '#fee2e2') + ';color:' + (isActive ? '#16a34a' : '#dc2626') + '">' + (isActive ? '활성' : '비활성') + '</span>'
         + '</div>'
@@ -9140,37 +9235,64 @@ function renderList() {
     return true;
   });
   if(filtered.length===0){container.innerHTML='<div class="empty"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> 해당 학생의 기록이 없습니다</div>';return;}
-  if(groupBy==='none'){
-    // 날짜별로 묶어서 오늘만 펼치기
-    var gmap0={};
-    filtered.forEach(function(rec){
-      var key=rec.date||'날짜 없음';
-      if(!gmap0[key])gmap0[key]=[];
-      gmap0[key].push(rec);
+  // 날짜별 그룹 1개 HTML (오늘이면 펼침)
+  function _recGroupHTML(key, recs, gid, isToday){
+    var bodyClass = isToday ? 'group-body' : 'group-body collapsed';
+    var arrowClass = isToday ? 'group-arrow open' : 'group-arrow';
+    var bodyStyle = isToday ? 'max-height:9999px' : 'max-height:0';
+    var calIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>';
+    var saveBtn = '<button onclick="event.stopPropagation();saveAllByDate(\'' + key + '\');" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.6);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;margin-left:8px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> \uc804\uccb4\uc800\uc7a5</button>';
+    return '<div style="margin-bottom:10px"><div class="group-header" onclick="toggleGroup(\'' + gid + '\')"><span>' + calIcon + ' ' + esc(key) + ' <span style="font-weight:400;opacity:0.8;font-size:11px;margin-left:6px">' + recs.length + '\uac1c \uae30\ub85d</span></span><span style="display:flex;align-items:center;gap:8px">' + saveBtn + '<span class="' + arrowClass + '" id="ga-' + gid + '">\u25b6</span></span></div><div class="' + bodyClass + '" id="gb-' + gid + '" style="' + bodyStyle + '">' + recs.map(makeCard).join('') + '</div></div>';
+  }
+
+  // \ud559\uc0dd\ubcc4 \uadf8\ub8f9 (\uadf8\ub8f9\ubaa8\ub4dc student)
+  if (groupBy === 'student') {
+    var smap = {};
+    filtered.forEach(function(rec){ var key=(rec.className?'['+rec.className+'] ':'')+(rec.student||'\uc774\ub984 \uc5c6\uc74c'); if(!smap[key])smap[key]=[]; smap[key].push(rec); });
+    var skeys = Object.keys(smap).sort(function(a,b){ return a.localeCompare(b,'ko'); });
+    container.innerHTML = skeys.map(function(key,i){
+      var recs=smap[key], gid='g'+i;
+      var personIcon='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+      return '<div style="margin-bottom:10px"><div class="group-header" onclick="toggleGroup(\''+gid+'\')"><span>'+personIcon+' '+esc(key)+' <span style="font-weight:400;opacity:0.8;font-size:11px;margin-left:6px">'+recs.length+'\uac1c \uae30\ub85d</span></span><span style="display:flex;align-items:center;gap:8px"><span class="group-arrow" id="ga-'+gid+'">\u25b6</span></span></div><div class="group-body collapsed" id="gb-'+gid+'" style="max-height:0">'+recs.map(makeCard).join('')+'</div></div>';
+    }).join('');
+    return;
+  }
+
+  // \u2500\u2500 \ub0a0\uc9dc \uadf8\ub8f9: \uc774\ubc88 \ub2ec\uc740 \uadf8\ub300\ub85c(\uc624\ub298 \ud3bc\uce68), \uc9c0\ub09c \ub2ec\ub4e4\uc740 \uc6d4 \ub2e8\uc704\ub85c \ubb36\uc5b4 \uc811\uae30 \u2500\u2500
+  var curYM = todayStr().slice(0,7);
+  var curList = [], pastByYM = {};
+  filtered.forEach(function(rec){
+    var ym = (rec.date||'').slice(0,7);
+    if (ym === curYM || !ym) { curList.push(rec); }
+    else { (pastByYM[ym] = pastByYM[ym] || []).push(rec); }
+  });
+
+  var html = '';
+  var curMap = {};
+  curList.forEach(function(rec){ var k=rec.date||'\ub0a0\uc9dc \uc5c6\uc74c'; (curMap[k]=curMap[k]||[]).push(rec); });
+  Object.keys(curMap).sort(function(a,b){return b.localeCompare(a);}).forEach(function(key,i){
+    html += _recGroupHTML(key, curMap[key], 'c'+i, key===todayStr());
+  });
+
+  Object.keys(pastByYM).sort(function(a,b){return b.localeCompare(a);}).forEach(function(ym, mi){
+    var monRecs = pastByYM[ym];
+    var mid = 'mon-rec-'+mi;
+    var label = ym.slice(0,4)+'\ub144 '+parseInt(ym.slice(5,7),10)+'\uc6d4';
+    var inner='', mMap={};
+    monRecs.forEach(function(rec){ var k=rec.date||'\ub0a0\uc9dc \uc5c6\uc74c'; (mMap[k]=mMap[k]||[]).push(rec); });
+    Object.keys(mMap).sort(function(a,b){return b.localeCompare(a);}).forEach(function(key,i){
+      inner += _recGroupHTML(key, mMap[key], mid+'-'+i, false);
     });
-    var keys0=Object.keys(gmap0).sort(function(a,b){return b.localeCompare(a);});
-    container.innerHTML=keys0.map(function(key,i){
-      var recs=gmap0[key],gid='n'+i;
-      var isToday=key===todayStr();
-      var bodyClass=isToday?'group-body':'group-body collapsed';
-      var arrowClass=isToday?'group-arrow open':'group-arrow';
-      var bodyStyle=isToday?'max-height:9999px':'max-height:0';
-      return '<div style="margin-bottom:10px"><div class="group-header" onclick="toggleGroup(\''+gid+'\')"><span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> '+esc(key)+' <span style="font-weight:400;opacity:0.8;font-size:11px;margin-left:6px">'+recs.length+'개 기록</span></span><span style="display:flex;align-items:center;gap:8px"><button onclick="event.stopPropagation();saveAllByDate(\''+key+'\');" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.6);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;margin-left:8px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> 전체저장</button><span class="'+arrowClass+'" id="ga-'+gid+'">▶</span></div><div class="'+bodyClass+'" id="gb-'+gid+'" style="'+bodyStyle+'">'+recs.map(makeCard).join('')+'</div></div>';
-    }).join('');
-  }
-  else{
-    var gmap={};
-    filtered.forEach(function(rec){var key=groupBy==='date'?(rec.date||'날짜 없음'):((rec.className?'['+rec.className+'] ':'')+(rec.student||'이름 없음'));if(!gmap[key])gmap[key]=[];gmap[key].push(rec);});
-    var keys=Object.keys(gmap).sort(function(a,b){return groupBy==='date'?b.localeCompare(a):a.localeCompare(b);});
-    container.innerHTML=keys.map(function(key,i){var recs=gmap[key],gid='g'+i,icon=groupBy==='date'?'<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>':'<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
-      var saveBtn=groupBy==='date'?'<button onclick="event.stopPropagation();saveAllByDate(\''+key+'\');" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.6);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;margin-left:8px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> 전체저장</button>':'';
-      var isToday = groupBy==='date' && key===todayStr();
-      var bodyClass = isToday ? 'group-body' : 'group-body collapsed';
-      var arrowClass = isToday ? 'group-arrow open' : 'group-arrow';
-      var bodyStyle = isToday ? 'max-height:9999px' : 'max-height:0';
-      return '<div style="margin-bottom:10px"><div class="group-header" onclick="toggleGroup(\''+gid+'\')"><span>'+icon+' '+esc(key)+' <span style="font-weight:400;opacity:0.8;font-size:11px;margin-left:6px">'+recs.length+'개 기록</span>an></span><span style="display:flex;align-items:center;gap:8px">'+saveBtn+'<span class="'+arrowClass+'" id="ga-'+gid+'">▶</span></span></div>><div class="'+bodyClass+'" id="gb-'+gid+'" style="'+bodyStyle+'">'+recs.map(makeCard).join('')+'</div></div>';
-    }).join('');
-  }
+    html += '<div style="margin-bottom:10px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'
+      + '<div onclick="toggleMonthBox(\''+mid+'\')" style="background:#f1f5f9;padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
+      + '<span style="font-size:12px;font-weight:800;color:#475569">'+label+' <span style="font-weight:600;color:#94a3b8;font-size:11px">'+monRecs.length+'\uac1c</span></span>'
+      + '<span id="'+mid+'-arrow" style="color:#94a3b8;font-size:12px">\u25b6</span>'
+      + '</div>'
+      + '<div id="'+mid+'" style="display:none;padding:10px">'+inner+'</div>'
+      + '</div>';
+  });
+
+  container.innerHTML = html;
 }
 
 function _statsCalendarHTML(recs, ym, studentName){
@@ -10588,11 +10710,9 @@ function showToast(msg, type='success') {
 
 <!-- 카카오톡 실시간 문의 플로팅 버튼 (모든 화면 우하단) -->
 <a id="kakaoFab" href="http://pf.kakao.com/_XFxbGX/chat" target="_blank" rel="noopener"
-   title="문의하기" aria-label="카카오톡 문의하기"
+   title="카카오톡 문의" aria-label="카카오톡 문의"
    onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.86 1.9 5.37 4.76 6.78-.21.77-.76 2.8-.87 3.23-.14.54.2.53.42.39.17-.11 2.71-1.84 3.81-2.59.6.09 1.23.13 1.88.13 5.52 0 10-3.58 10-8s-4.48-8-10-8z"/></svg>
-  <span class="kakaoFabText kakaoFabLong">문의하기</span>
-  <span class="kakaoFabText kakaoFabShort">문의</span>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.86 1.9 5.37 4.76 6.78-.21.77-.76 2.8-.87 3.23-.14.54.2.53.42.39.17-.11 2.71-1.84 3.81-2.59.6.09 1.23.13 1.88.13 5.52 0 10-3.58 10-8s-4.48-8-10-8z" fill="#3C1E1E"/><text x="12" y="11.4" text-anchor="middle" dominant-baseline="middle" font-size="6" font-weight="900" fill="#FEE500" font-family="Arial,Helvetica,sans-serif" letter-spacing="0.1">TALK</text></svg>
 </a>
 
 </body>
