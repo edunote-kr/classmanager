@@ -1705,6 +1705,9 @@ onAuthStateChanged(auth, function(user) {
       <select id="noticeFilterClass" onchange="renderNotices()" style="flex:1;min-width:120px;padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;background:#fff">
         <option value="">전체 반</option>
       </select>
+      <select id="noticeFilterTeacher" onchange="renderNotices()" style="display:none;flex:1;min-width:120px;padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;background:#fff">
+        <option value="">전체 선생님</option>
+      </select>
       <select id="noticeGroupBy" onchange="renderNotices()" style="padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;background:#fff">
         <option value="date">날짜별</option>
         <option value="class">반별</option>
@@ -3883,15 +3886,36 @@ function updateNoticeClassFilter() {
 
 function escapeNotice(s){ if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// 알림장 선생님 필터 (원장/관리자만 노출)
+function updateNoticeTeacherFilter() {
+  var sel = document.getElementById('noticeFilterTeacher');
+  if (!sel) return;
+  if (!isOwnerOrAdmin()) { sel.style.display = 'none'; sel.value = ''; return; }
+  sel.style.display = '';
+  var prev = sel.value;
+  var teachers = {};
+  notices.forEach(function(n){ if(n.teacher) teachers[n.teacher] = true; });
+  var opts = '<option value="">전체 선생님</option>';
+  Object.keys(teachers).sort().forEach(function(t){ opts += '<option value="'+t.replace(/"/g,'&quot;')+'">'+escapeNotice(t)+' 선생님</option>'; });
+  sel.innerHTML = opts;
+  if (prev) sel.value = prev;
+}
+
 // 알림장 목록 렌더링 (반별/날짜별 그룹)
 function renderNotices() {
   updateNoticeClassFilter();
+  updateNoticeTeacherFilter();
   var el = document.getElementById('noticeList');
   if (!el) return;
   var fc = (document.getElementById('noticeFilterClass')||{value:''}).value;
+  var ft = (isOwnerOrAdmin() ? (document.getElementById('noticeFilterTeacher')||{value:''}).value : '');
   var groupBy = (document.getElementById('noticeGroupBy')||{value:'date'}).value;
 
-  var list = notices.filter(function(n){ return !fc || n.className === fc; });
+  var list = notices.filter(function(n){
+    if (fc && n.className !== fc) return false;
+    if (ft && n.teacher !== ft) return false;
+    return true;
+  });
   if (list.length === 0) {
     el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px;font-size:13px">\uc800\uc7a5\ub41c \uc54c\ub9bc\uc7a5\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.<br><span style="font-size:11px">\uc785\ub825 \ud0ed\uc5d0\uc11c "\uc54c\ub9bc\uc7a5\uc73c\ub85c \uc800\uc7a5"\uc744 \ub20c\ub7ec\ubcf4\uc138\uc694.</span></div>';
     return;
@@ -3967,7 +3991,7 @@ function makeNoticeCard(n) {
   return '<div id="notice-card-' + n.id + '" style="background:#f0fdff;border:1.5px solid #a5f3fc;border-radius:10px;padding:12px;margin-bottom:8px">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
     + '<span style="font-size:13px;font-weight:800;color:#0e7490"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0e7490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>' + escapeNotice(n.className) + '</span>'
-    + '<span style="font-size:11px;color:#94a3b8">' + escapeNotice(n.date) + '</span>'
+    + '<span style="font-size:11px;color:#94a3b8">' + (isOwnerOrAdmin() && n.teacher ? '<span style="color:#0891b2;font-weight:700;margin-right:6px">' + escapeNotice(n.teacher) + ' 선생님</span>' : '') + escapeNotice(n.date) + '</span>'
     + '</div>'
     + (n.homework ? '<div style="font-size:12px;color:#334155;margin-bottom:6px;white-space:pre-wrap"><b style="color:#0891b2">오늘 과제</b><br>' + escapeNotice(n.homework) + '</div>' : '')
     + (n.memo ? '<div style="font-size:12px;color:#334155;white-space:pre-wrap"><b style="color:#0891b2">특이사항</b><br>' + escapeNotice(n.memo) + '</div>' : '')
