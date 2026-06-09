@@ -5457,29 +5457,26 @@ function verifySchoolCode() {
     if (foundRole === 'teacher') {
       var maxT = found.teacherCount !== undefined ? found.teacherCount : (found.maxTeachers ? found.maxTeachers - 1 : 99);
       // 현재 등록된 선생님 수 조회
-      window.fbGetDocs(window.fbCollection(window.fbDb, 'users')).then(function(uSnap) {
-        var currentTeachers = 0;
-        uSnap.forEach(function(d) {
-          var u = d.data();
-          if (u.role !== 'teacher') return;
-          if (u.schoolId === found.docId || u.schoolId === found.ownerCode || u.schoolId === found.teacherCode ||
-              (u.schoolName && u.schoolName.trim() === found.name.trim())) {
-            currentTeachers++;
-          }
-        });
-
-        if (currentTeachers >= maxT) {
+      // 정원 체크: 해당 학원 소속(schoolId==문서ID)만 조회. 권한/네트워크로 못 세면 생략하고 통과.
+      window.fbGetDocs(window.fbQuery(
+        window.fbCollection(window.fbDb, 'users'),
+        window.fbWhere('schoolId', '==', found.docId)
+      )).then(function(uSnap) {
+        var c = 0; uSnap.forEach(function(d) { if (d.data().role === 'teacher') c++; });
+        return c;
+      }).catch(function() { return -1; }).then(function(currentTeachers) {
+        if (currentTeachers >= 0 && currentTeachers >= maxT) {
           resultEl.style.color = '#ef4444';
           resultEl.textContent = '정원이 가득 찼습니다. (' + currentTeachers + '/' + maxT + '명)';
           return;
         }
-
         // 통과
         verifiedSchoolInfo = { schoolDocId: found.docId, role: foundRole, name: found.name };
         document.getElementById('signupSchool').value = found.name;
         var dDay = found.expiresAt ? ' · 만료: ' + found.expiresAt.slice(0,10) : '';
+        var cntTxt = (currentTeachers >= 0) ? ' · ' + (currentTeachers+1) + '/' + maxT + '명' : '';
         resultEl.style.color = '#16a34a';
-        resultEl.textContent = '' + found.name + ' (' + (foundRole==='owner'?'원장':'선생님') + ')' + dDay + ' · ' + (currentTeachers+1) + '/' + maxT + '명';
+        resultEl.textContent = '' + found.name + ' (' + (foundRole==='owner'?'원장':'선생님') + ')' + dDay + cntTxt;
       });
     } else {
       // 원장 코드는 인원 체크 없이 통과
@@ -6178,14 +6175,14 @@ function submitActivateCode() {
     // 인원 제한 체크 (선생님)
     if (foundRole === 'teacher') {
       var maxT = found.teacherCount !== undefined ? found.teacherCount : (found.maxTeachers ? found.maxTeachers - 1 : 99);
-      window.fbGetDocs(window.fbCollection(window.fbDb, 'users')).then(function(uSnap) {
-        var cnt = 0;
-        uSnap.forEach(function(d) {
-          var u = d.data();
-          if (u.role === 'teacher' && u.status === 'active' &&
-              (u.schoolId === found._id || u.schoolName === found.name)) cnt++;
-        });
-        if (cnt >= maxT) {
+      window.fbGetDocs(window.fbQuery(
+        window.fbCollection(window.fbDb, 'users'),
+        window.fbWhere('schoolId', '==', found._id)
+      )).then(function(uSnap) {
+        var cnt = 0; uSnap.forEach(function(d) { var u = d.data(); if (u.role === 'teacher' && u.status === 'active') cnt++; });
+        return cnt;
+      }).catch(function() { return -1; }).then(function(cnt) {
+        if (cnt >= 0 && cnt >= maxT) {
           resultEl.style.background = '#fee2e2'; resultEl.style.color = '#dc2626';
           resultEl.textContent = '정원이 가득 찼습니다. (' + cnt + '/' + maxT + '명)'; return;
         }
