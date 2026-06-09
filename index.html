@@ -828,6 +828,7 @@ onAuthStateChanged(auth, function(user) {
             <input type="text" id="signupSchoolCode" placeholder="선생님 코드" style="flex:1 1 auto;min-width:0;padding:9px 11px;border:1.5px solid #fde047;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;text-transform:uppercase">
             <button onclick="verifySchoolCode()" style="flex:0 0 auto;width:90px;padding:9px 0;background:#ca8a04;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">코드 확인</button>
           </div>
+          <button onclick="skipSchoolCode()" style="width:100%;margin-top:6px;padding:8px 0;background:#fff;color:#854d0e;border:1.5px solid #fde047;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">코드 없이 진행 (비활성 계정으로 가입)</button>
           <div id="schoolCodeResult" style="display:none;font-size:11px;font-weight:700;margin-top:5px"></div>
         </div>
       </div>
@@ -5261,6 +5262,7 @@ function checkIdDuplicate() {
 var schoolChecked = false;          // 학원명 확인 완료 여부
 var schoolJoinMode = 'new';         // 'new'(신규 학원) | 'join'(기존 학원 합류)
 var schoolJoinInfo = null;          // 합류 시 { schoolKey, teacherCode, docId }
+var schoolJoinNoCode = false;       // '코드 없이 진행' 선택 여부 (true면 비활성으로 가입)
 
 // 학원명 정규화: 공백 제거 + 소문자 (키 충돌 방지). Firestore 키 금지문자 제거
 function normalizeSchoolKey(name) {
@@ -5271,6 +5273,7 @@ function resetSchoolCheck() {
   schoolChecked = false;
   schoolJoinMode = 'new';
   schoolJoinInfo = null;
+  schoolJoinNoCode = false;
   var r = document.getElementById('schoolCheckResult'); if (r) r.style.display = 'none';
   var box = document.getElementById('schoolCodeBox'); if (box) box.style.display = 'none';
   var cr = document.getElementById('schoolCodeResult'); if (cr) cr.style.display = 'none';
@@ -5362,6 +5365,7 @@ function checkSchoolOrCode() {
         // 코드 검증까지 한 번에 처리
         schoolChecked = true;
         schoolJoinMode = 'join';
+        schoolJoinNoCode = false;
         schoolJoinInfo = Object.assign({ schoolKey: normalizeSchoolKey(realName) }, data);
         resultEl.style.color='#16a34a';
         resultEl.textContent='✓ ' + realName + ' — 선생님 코드 확인됩니다. 이 학원 소속으로 가입됩니다.';
@@ -5384,7 +5388,7 @@ function checkSchoolName() {
   var name = document.getElementById('signupSchool').value.trim();
   var resultEl = document.getElementById('schoolCheckResult');
   var box = document.getElementById('schoolCodeBox');
-  schoolChecked = false; schoolJoinMode = 'new'; schoolJoinInfo = null;
+  schoolChecked = false; schoolJoinMode = 'new'; schoolJoinInfo = null; schoolJoinNoCode = false;
   if (box) box.style.display = 'none';
 
   if (!name) {
@@ -5436,10 +5440,30 @@ function verifySchoolCode() {
     resultEl.textContent='확인되었습니다. 같은 학원 소속으로 가입됩니다.';
     schoolChecked = true;
     schoolJoinMode = 'join';
+    schoolJoinNoCode = false;
   } else {
     resultEl.style.color='#ef4444';
     resultEl.textContent='코드가 일치하지 않습니다.';
     schoolChecked = false;
+  }
+}
+
+// 코드 없이 진행 → 비활성 계정으로 가입 (가입 후 코드 입력/관리자 승인 필요)
+function skipSchoolCode() {
+  var resultEl = document.getElementById('schoolCodeResult');
+  if (!schoolJoinInfo) {
+    if (resultEl) { resultEl.style.display='block'; resultEl.style.color='#ef4444'; resultEl.textContent='먼저 학원명 확인을 해주세요.'; }
+    return;
+  }
+  schoolChecked = true;
+  schoolJoinMode = 'join';
+  schoolJoinNoCode = true;
+  var codeEl = document.getElementById('signupSchoolCode');
+  if (codeEl) codeEl.value = '';
+  if (resultEl) {
+    resultEl.style.display='block';
+    resultEl.style.color='#d97706';
+    resultEl.innerHTML = '코드 없이 진행합니다. 가입 후 <b>비활성 상태</b>로 시작하며, 코드 입력 또는 관리자 승인 후 이용할 수 있어요.';
   }
 }
 
@@ -5543,7 +5567,9 @@ function doFirebaseSignup() {
   window.fbCreateUser(window.fbAuth, email, pw)
     .then(function(cred) {
       var uid = cred.user.uid;
-      // 기존 학원 합류면 그 학원의 schoolId를 연결 (선생님으로)
+      // 코드 확인까지 끝낸 합류면 즉시 활성 교사로 생성, 그 외(코드없이 진행/신규 학원)는 비활성
+      var joinDocId = (schoolJoinInfo && (schoolJoinInfo.docId || schoolJoinInfo.schoolId)) || null;
+      var codeVerified = (schoolJoinMode === 'join' && !schoolJoinNoCode && !!schoolJoinInfo);
       var userDoc = {
         userId:    id,
         name:      name,
@@ -5551,13 +5577,14 @@ function doFirebaseSignup() {
         email:     email,
         phone:     phoneVerifiedNumber,
         role:      'teacher',
-        status:    'inactive', // 관리자 승인 후 active로 변경
+        status:    codeVerified ? 'active' : 'inactive', // 코드 확인 시 즉시 활성, 아니면 관리자 승인 후 active
         createdAt: new Date().toISOString()
       };
-      if (schoolJoinMode === 'join' && schoolJoinInfo) {
-        userDoc.schoolId = schoolJoinInfo.docId || schoolJoinInfo.schoolId || null;
+      if (codeVerified && joinDocId) {
+        userDoc.schoolId = joinDocId;
         userDoc.joinedViaCode = true;
       }
+      window._signupActive = codeVerified;
       return window.fbSetDoc(window.fbDoc(window.fbDb, 'users', uid), userDoc).then(function() {
         // 아이디 중복확인용 경량 문서 (미인증 조회 가능)
         return window.fbSetDoc(window.fbDoc(window.fbDb, 'userIds', id), {
@@ -5570,7 +5597,7 @@ function doFirebaseSignup() {
       showAuthError('');
       document.getElementById('loginScreen').style.display = 'none';
       window._freshLogin = true; // 가입 직후 바로 비활성 계정 안내 화면 표시
-      showToast('회원가입이 완료되었습니다!');
+      showToast(window._signupActive ? '회원가입 완료! 바로 이용하실 수 있어요.' : '회원가입이 완료되었습니다!');
       // 바로 로그인 처리 → 비활성 안내(showActivateScreen) 표시
       if (window.fbAuth.currentUser) loadUserProfile(window.fbAuth.currentUser);
     })
