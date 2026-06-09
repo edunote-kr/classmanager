@@ -1257,7 +1257,7 @@ onAuthStateChanged(auth, function(user) {
         <div style="font-size:13px;font-weight:900;color:#1e293b">무료 체험</div>
         <div style="font-size:11px;color:#64748b;margin:2px 0">14일</div>
         <div style="font-size:20px;font-weight:900;color:#6366f1">0원</div>
-        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#6366f1">프로 기능 체험</div>
+        <div style="font-size:10px;font-weight:700;margin-top:5px;color:#6366f1">프로 기능 · 문자 100건</div>
       </div>
 
       <div onclick="selectSubPlan('basic')" id="subplan-basic" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;cursor:pointer">
@@ -3051,6 +3051,10 @@ function persist() {
   if (window.fbDb && currentSchool && currentSchool.length > 10) {
     var uid = currentSchool;
     records.forEach(function(rec) {
+      // 원장은 학원 전체 기록을 메모리에 들고 있으므로, 다른 선생님이 작성한 기록을
+      // 원장 본인 서브컬렉션에 복사하면 다음 로드 때 중복(원본+복사본)이 발생한다.
+      // → 본인이 작성한 기록만 본인 서브컬렉션에 저장. (쓰기 권한도 본인 것만 허용됨)
+      if (isOwnerOrAdmin() && rec.teacher && rec.teacher !== currentUser) return;
       var ref = window.fbDoc(window.fbDb, 'users', uid, 'records', String(rec.id));
       window.fbSetDoc(ref, rec).catch(function(){});
     });
@@ -3289,6 +3293,35 @@ async function cleanupOldAttendanceKeys() {
     showLoading(false);
   }
 }
+
+// [중복정리] 과거 persist 버그로 원장 본인 서브컬렉션에 복사된 다른 선생님 기록(사본) 삭제.
+// 원본은 각 선생님 계정(users/{teacherUid}/records)에 그대로 유지됨. 콘솔에서 1회 실행 권장.
+async function cleanupOwnerDupRecords() {
+  if (!isOwnerOrAdmin()) { showToast('원장만 사용할 수 있습니다.', 'error'); return; }
+  if (!window.fbDb || !currentSchool) { showToast('학원 정보가 없습니다.', 'error'); return; }
+  if (!confirm('원장 계정에 잘못 복사된 다른 선생님 과제 사본을 정리합니다.\n(각 선생님 원본은 그대로 유지됩니다) 계속할까요?')) return;
+  showLoading(true);
+  try {
+    var snap = await window.fbGetDocs(window.fbCollection(window.fbDb, 'users', currentSchool, 'records'));
+    var removed = 0;
+    for (var i = 0; i < snap.docs.length; i++) {
+      var d = snap.docs[i];
+      var data = d.data() || {};
+      // 본인(원장)이 작성한 기록이 아니면 = 과거 버그로 복사된 사본 → 삭제
+      if (data.teacher && data.teacher !== currentUser) {
+        await window.fbDeleteDoc(d.ref);
+        removed++;
+      }
+    }
+    showToast('중복 사본 정리 완료: ' + removed + '개 삭제');
+    if (currentRole === 'owner') loadOwnerData(currentSchool);
+  } catch (e) {
+    showToast('정리 실패: ' + e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+window.cleanupOwnerDupRecords = cleanupOwnerDupRecords;
 
 // record 삭제 시 그 record(rid)가 만든 출결 세션 1개 제거 + 대표상태/카운트 재계산
 function removeClassAttendanceSession(rec) {
@@ -5883,6 +5916,8 @@ function loadOwnerData(ownerUid) {
     _pendingTimers = [];
     showLoading(false);
   }
+  var memberUids = [ownerUid]; // 원장 본인 포함 (두 번째 then에서도 사용)
+  var uidByName = {};          // 이름→uid (중복 제거 시 작성자 본인 서브컬렉션 우선용)
   // 같은 schoolId를 가진 모든 사용자 조회
   var usersRef = window.fbCollection(window.fbDb, 'users');
   var q = window.fbQuery(usersRef, window.fbWhere('schoolId', '==', currentSchoolId));
@@ -5892,8 +5927,9 @@ function loadOwnerData(ownerUid) {
     if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) {
       finishOwnerLoad(); return Promise.reject('cancelled');
     }
-    var memberUids = [ownerUid]; // 원장 본인 포함
     snap.forEach(function(d) {
+      var u = d.data() || {};
+      if (u.name) uidByName[u.name] = d.id;
       if (d.id !== ownerUid) memberUids.push(d.id);
     });
 
@@ -5920,10 +5956,24 @@ function loadOwnerData(ownerUid) {
     if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid !== expectedUid) {
       finishOwnerLoad(); return;
     }
-    var allRecs = [];
-    results[0].forEach(function(snap) {
-      snap.forEach(function(d) { allRecs.push(Object.assign({id: d.id}, d.data())); });
+    // 같은 record id가 여러 서브컬렉션에서 올 수 있음(과거 persist 버그로 원장 서브컬렉션에
+    // 다른 선생님 기록이 복사된 경우). id별로 1개만 유지하되, 작성자(teacher) 본인의
+    // 서브컬렉션에서 온 것을 우선 채택해 stale 복사본이 이기지 않게 한다.
+    var byId = {};
+    (results[0] || []).forEach(function(snap, idx) {
+      var srcUid = memberUids[idx];
+      if (!snap || !snap.forEach) return;
+      snap.forEach(function(d) {
+        var r = Object.assign({ id: d.id }, d.data());
+        var rightful = uidByName[r.teacher] || ownerUid; // 이 기록의 정당한 작성자 uid
+        var prev = byId[r.id];
+        if (!prev) { byId[r.id] = { rec: r, src: srcUid, rightful: rightful }; return; }
+        var prevIsRightful = (prev.src === prev.rightful);
+        var newIsRightful  = (srcUid === rightful);
+        if (newIsRightful && !prevIsRightful) byId[r.id] = { rec: r, src: srcUid, rightful: rightful };
+      });
     });
+    var allRecs = Object.keys(byId).map(function(k){ return byId[k].rec; });
 
     records = allRecs.map(normalizeRec);
     persist();
@@ -6209,7 +6259,7 @@ function submitActivateApply() {
       // 이미 무료체험 사용함 → 자동 활성화 불가
       resultEl.style.display = 'block';
       resultEl.style.color = '#ef4444';
-      resultEl.textContent = '이미 무료 체험을 사용하셨습니다. 유료 플랜을 신청해주세요.';
+      resultEl.textContent = '이미 무료 체험을 사용하셨습니다.';
       return;
     }
     // 신규 → 즉시 자동 활성화 (14일)
@@ -6263,55 +6313,97 @@ function _unusedActivateApplySave() {
   });
 }
 
-// 무료체험 자동 활성화: 학원 생성/연결 + 사용자 활성화 + freeTrialUsed 기록
+// 무료체험 자동 활성화/연장: freeTrialUsed 1회 제한.
+//  - 이미 사용 → 차단(공통 메시지)
+//  - 미사용 + 본인 소유 학원 있음 → 새 학원 X, 기존 학원 만료일 +plan.days 연장
+//  - 미사용 + 학원 없음 → 새 학원 생성
 function autoActivateFreeTrial(uid, profile, teachers, plan) {
   var now = new Date();
-  var expires = new Date(now.getTime() + plan.days * 24 * 60 * 60 * 1000);
+  var addDays = plan && plan.days ? plan.days : 14;
+  var expires = new Date(now.getTime() + addDays * 24 * 60 * 60 * 1000);
   var expiresStr = expires.toISOString().slice(0, 10);
 
   var schoolName = profile.schoolName || (profile.name + ' 학원');
   var nameKey = normalizeSchoolKey(schoolName);
 
-  // 동일 학원명이 이미 등록돼 있으면 새로 만들지 않음(중복 학원 방지)
-  return window.fbGetDoc(window.fbDoc(window.fbDb, 'schoolNames', nameKey)).then(function(idxSnap) {
-    if (idxSnap.exists() && idxSnap.data() && idxSnap.data().docId) {
-      return Promise.reject({ code: 'school-name-taken', message: '이미 등록된 학원명입니다. 같은 학원이면 선생님 코드로 가입해주세요.' });
-    }
-    // 고유 코드 생성을 위해 전체 학원 코드 수집
-    return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snap) {
-      var allCodes = [];
-      snap.forEach(function(d) {
-        var s = d.data();
-        if (s.ownerCode) allCodes.push(s.ownerCode);
-        if (s.teacherCode) allCodes.push(s.teacherCode);
-      });
-      var ownerCode   = generateUniqueCode(6, allCodes);
-      allCodes.push(ownerCode);
-      var teacherCode = generateUniqueCode(6, allCodes);
+  // 사용자 문서(freeTrialUsed) + 본인이 원장인 학원 동시 조회
+  return Promise.all([
+    window.fbGetDoc(window.fbDoc(window.fbDb, 'users', uid)),
+    window.fbGetDocs(window.fbQuery(
+      window.fbCollection(window.fbDb, 'schools'),
+      window.fbWhere('ownerUid', '==', uid)
+    ))
+  ]).then(function(res) {
+    var udata = (res[0] && res[0].exists()) ? res[0].data() : {};
+    var ownSnap = res[1];
 
-      // 새 학원 문서 생성
-      var schoolData = {
-        name:        schoolName,
-        ownerCode:   ownerCode,
-        teacherCode: teacherCode,
-        plan:        'free',
-        status:      'active',
-        maxTeachers: (teachers || 0) + 1,
-        expiresAt:   expiresStr,
-        createdAt:   now.toISOString().slice(0, 10),
-        ownerUid:    uid
-      };
-      return window.fbAddDoc(window.fbCollection(window.fbDb, 'schools'), schoolData).then(function(ref) {
-        // schoolNames 인덱스 기록 (다음 가입자가 이 학원을 찾을 수 있게 → 중복 생성 방지)
-        writeSchoolNameIndex(schoolName, teacherCode, ref.id);
-        // 사용자 활성화 + 학원 연결 + 무료체험 사용 기록
-        return window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), {
-          status:        'active',
-          role:          'owner',
-          schoolId:      ref.id,
-          schoolName:    schoolData.name,
-          ownerCode:     ownerCode,
-          freeTrialUsed: true
+    // [공통] 이미 무료체험을 사용한 계정은 차단
+    if (udata.freeTrialUsed || (profile && profile.freeTrialUsed)) {
+      return Promise.reject({ code: 'free-trial-used', message: '이미 무료 체험을 사용하셨습니다.' });
+    }
+
+    // [케이스 2] 이미 본인 소유 학원이 있으면 → 새로 만들지 않고 기존 학원 만료일 연장
+    var existing = null;
+    if (ownSnap && ownSnap.forEach) {
+      ownSnap.forEach(function(d) {
+        var s = d.data();
+        if (!existing) { existing = { id: d.id, data: s }; return; }
+        // 학원이 여러 개면 만료일이 가장 늦은 학원을 연장 대상으로
+        var a = existing.data.expiresAt || '';
+        var b = s.expiresAt || '';
+        if (b > a) existing = { id: d.id, data: s };
+      });
+    }
+    if (existing) {
+      var exStr = existing.data.expiresAt || '';
+      var exDate = exStr ? new Date(exStr) : now;
+      // 만료 전이면 기존 만료일 기준 +addDays, 이미 만료면 오늘 기준 +addDays
+      var base = (exDate.getTime() > now.getTime()) ? exDate : now;
+      var newExp = new Date(base.getTime() + addDays * 24 * 60 * 60 * 1000);
+      var newExpStr = newExp.toISOString().slice(0, 10);
+      return Promise.all([
+        window.fbUpdateDoc(window.fbDoc(window.fbDb, 'schools', existing.id), { expiresAt: newExpStr }),
+        window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), { freeTrialUsed: true })
+      ]);
+    }
+
+    // [케이스 신규] 학원 없음 → 동일 학원명 인덱스 체크 후 새 학원 생성
+    return window.fbGetDoc(window.fbDoc(window.fbDb, 'schoolNames', nameKey)).then(function(idxSnap) {
+      if (idxSnap.exists() && idxSnap.data() && idxSnap.data().docId) {
+        return Promise.reject({ code: 'school-name-taken', message: '이미 등록된 학원명입니다. 같은 학원이면 선생님 코드로 가입해주세요.' });
+      }
+      return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')).then(function(snap) {
+        var allCodes = [];
+        snap.forEach(function(d) {
+          var s = d.data();
+          if (s.ownerCode) allCodes.push(s.ownerCode);
+          if (s.teacherCode) allCodes.push(s.teacherCode);
+        });
+        var ownerCode   = generateUniqueCode(6, allCodes);
+        allCodes.push(ownerCode);
+        var teacherCode = generateUniqueCode(6, allCodes);
+
+        var schoolData = {
+          name:        schoolName,
+          ownerCode:   ownerCode,
+          teacherCode: teacherCode,
+          plan:        'free',
+          status:      'active',
+          maxTeachers: (teachers || 0) + 1,
+          expiresAt:   expiresStr,
+          createdAt:   now.toISOString().slice(0, 10),
+          ownerUid:    uid
+        };
+        return window.fbAddDoc(window.fbCollection(window.fbDb, 'schools'), schoolData).then(function(ref) {
+          writeSchoolNameIndex(schoolName, teacherCode, ref.id);
+          return window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), {
+            status:        'active',
+            role:          'owner',
+            schoolId:      ref.id,
+            schoolName:    schoolData.name,
+            ownerCode:     ownerCode,
+            freeTrialUsed: true
+          });
         });
       });
     });
@@ -6574,7 +6666,7 @@ function proceedToApplyForm() {
     if (!subscribeUser || !subscribeUser.fbUser) { showToast('로그인이 필요합니다.', 'error'); return; }
     if (profile.freeTrialUsed) {
       var hint2 = document.getElementById('subNextHint');
-      if (hint2) { hint2.textContent = '이미 무료 체험을 사용하셨습니다. 유료 플랜을 선택해주세요.'; hint2.style.color = '#ef4444'; }
+      if (hint2) { hint2.textContent = '이미 무료 체험을 사용하셨습니다.'; hint2.style.color = '#ef4444'; }
       return;
     }
     var btn = document.getElementById('subNextBtn');
@@ -6588,7 +6680,7 @@ function proceedToApplyForm() {
       })
       .catch(function(err) {
         if (btn) { btn.disabled = false; btn.textContent = '선택한 요금제로 신청하기 →'; btn.style.opacity = '1'; }
-        showToast('활성화 오류: ' + (err && (err.code||err.message) || ''), 'error');
+        showToast('' + (err && (err.message||err.code) || '활성화 오류'), 'error');
       });
     return;
   }
@@ -6642,7 +6734,7 @@ function submitSubscribeApply() {
     // 이미 무료체험을 사용한 계정은 차단
     if (profile.freeTrialUsed || (subscribeUser.profile && subscribeUser.profile.freeTrialUsed)) {
       if (btn) { btn.disabled = false; btn.textContent = '신청하기'; btn.style.opacity = '1'; }
-      showErr('이미 무료 체험을 사용하셨습니다. 유료 플랜을 선택해주세요.');
+      showErr('이미 무료 체험을 사용하셨습니다.');
       return;
     }
     autoActivateFreeTrial(uid, { schoolName: profile.schoolName || school, name: name }, teachers, p)
@@ -6663,7 +6755,7 @@ function submitSubscribeApply() {
       })
       .catch(function(err) {
         if (btn) { btn.disabled = false; btn.textContent = '신청하기'; btn.style.opacity = '1'; }
-        showErr('활성화 오류: ' + (err && (err.code||err.message) || ''));
+        showErr('' + (err && (err.message||err.code) || '활성화 오류'));
       });
     return;
   }
@@ -6729,7 +6821,7 @@ function submitSubscribeApply() {
 // ── 서비스 신청 ───────────────────────────────────────────
 var applyPlan = 'free';
 var PLANS = {
-  free: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg> 무료 체험 (14일)', days: 14, price: 0, priceLabel: '무료', notify: true, smsQuota: 300, tier: 'pro' },
+  free: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg> 무료 체험 (14일)', days: 14, price: 0, priceLabel: '무료', notify: true, smsQuota: 100, tier: 'pro' },
   basic: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> 베이직 (30일)', days: 30, price: 10, priceLabel: '10원', notify: false, smsQuota: 0, tier: 'basic' },
   pro: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> 프로 (30일)', days: 30, price: 10, priceLabel: '10원', notify: true, smsQuota: 300, tier: 'pro' },
   premium: { label: '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> 프리미엄 (30일)', days: 30, price: 10, priceLabel: '10원', notify: true, smsQuota: 1000, tier: 'premium' }
