@@ -271,6 +271,43 @@ textarea { resize:vertical; }
 .sidebar-tab:hover { background: rgba(255,255,255,0.08); color: #fff; }
 .sidebar-tab.active { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #fff; box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
 .sidebar-tab .tab-icon { font-size: 18px; width: 24px; text-align: center; }
+/* ===== 2단 네비게이션 (1-A) ===== */
+.tabs{flex-direction:column!important;align-items:stretch!important;overflow-x:hidden!important;gap:6px!important;padding-bottom:6px!important}
+.nav-group-row,.nav-sub-row{display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav-group-row::-webkit-scrollbar,.nav-sub-row::-webkit-scrollbar{display:none}
+.nav-gchip{flex:0 0 auto;border:1px solid #e2e8f0;border-radius:9px;padding:7px 11px;font-size:11px;font-weight:800;color:#64748b;background:#f8fafc;cursor:pointer;font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:4px;transition:all .15s}
+.nav-gchip.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-color:transparent;color:#fff}
+.nav-sub-row{padding-left:2px}
+.nav-schip{flex:0 0 auto;border:none;border-radius:8px;padding:6px 11px;font-size:11px;font-weight:700;color:#94a3b8;background:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.nav-schip.active{color:#4f46e5;background:#eef2ff}
+.nav-cnt{display:inline-block;min-width:16px;text-align:center;background:#e2e8f0;color:#475569;font-size:10px;font-weight:800;padding:0 5px;border-radius:9px}
+.nav-schip.active .nav-cnt{background:#c7d2fe;color:#4338ca}
+.nav-soon{font-size:9px;font-weight:700;color:#a78bfa;background:#f5f3ff;border:1px solid #ede9fe;padding:0 5px;border-radius:8px}
+/* 사이드바 아코디언 */
+.sb-group{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,0.72);font-size:13px;font-weight:800;cursor:pointer;border:none;background:none;font-family:inherit;text-align:left;width:100%;transition:all .15s}
+.sb-group:hover{background:rgba(255,255,255,0.07);color:#fff}
+.sb-group.active{color:#fff}
+.sb-group .sb-ico{width:22px;text-align:center;flex:0 0 22px}
+.sb-group .sb-chev{margin-left:auto;font-size:10px;opacity:.7;transition:transform .15s}
+.sb-group.open .sb-chev{transform:rotate(90deg)}
+.sb-sub{display:flex;flex-direction:column;gap:2px;margin:1px 0 4px 8px;padding-left:8px;border-left:1px solid rgba(255,255,255,0.1)}
+.sb-leaf{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;color:rgba(255,255,255,0.55);font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;font-family:inherit;text-align:left;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-leaf:hover{background:rgba(255,255,255,0.08);color:#fff}
+.sb-leaf.active{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-weight:700;box-shadow:0 3px 10px rgba(99,102,241,0.35)}
+.sb-leaf .nav-cnt{margin-left:auto;background:rgba(255,255,255,0.18);color:#fff}
+.sb-leaf .nav-soon{margin-left:auto;background:rgba(255,255,255,0.1);border-color:transparent;color:rgba(255,255,255,0.6)}
+/* 대시보드 */
+.dash-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:640px){.dash-grid{grid-template-columns:repeat(2,1fr)}}
+.dash-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 14px;text-align:center}
+.dash-card.total{background:linear-gradient(135deg,#eef2ff,#f5f3ff);border-color:#c7d2fe}
+.dash-num{font-size:30px;font-weight:900;color:#4f46e5;line-height:1}
+.dash-lab{font-size:12px;font-weight:700;color:#64748b;margin-top:6px}
+.dash-bar-row{display:flex;align-items:center;gap:10px;margin:9px 0}
+.dash-bar-lab{width:48px;font-size:12px;font-weight:700;color:#475569;flex:0 0 48px}
+.dash-bar-track{flex:1;background:#f1f5f9;border-radius:8px;height:22px;overflow:hidden}
+.dash-bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#6366f1,#8b5cf6);min-width:2px;transition:width .4s}
+.dash-bar-val{width:40px;text-align:right;font-size:12px;font-weight:800;color:#4f46e5;flex:0 0 40px}
 .sidebar-bottom {
   padding: 16px 12px;
   border-top: 1px solid rgba(255,255,255,0.08);
@@ -1407,16 +1444,11 @@ onAuthStateChanged(auth, function(user) {
 <div id="toast"></div>
 
 <!-- TABS (모바일용 유지) -->
-<div class="tabs">
-  <button class="tab active" id="tab-input" onclick="navSwitchTab('input')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 수업내용 입력</button>
-  <button class="tab"        id="tab-list"  onclick="navSwitchTab('list')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg> 과제 목록 (<span id="listCount">0</span>)</button>
-  <button class="tab"        id="tab-notice"   onclick="navSwitchTab('notice')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> 알림장</button>
-  <button class="tab"        id="tab-stats"    onclick="navSwitchTab('stats')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg> 학생 통계</button>
-  <button class="tab"        id="tab-students" onclick="navSwitchTab('students')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 원생 목록</button>
-  <button class="tab" id="tab-teachers" onclick="navSwitchTab('teachers')" style="display:none"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 선생님 관리</button>
-  <button class="tab soon"   id="tab-message"  onclick="navSwitchTab('message')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> 메세지 전송 (예정)</button>
-  <button class="tab" id="tab-attendance" onclick="navSwitchTab('attendance')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 출결관리</button>
-  <button class="tab soon"   id="tab-billing"  onclick="navSwitchTab('billing')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> 수납관리 (예정)</button>
+<div class="tabs" id="mobileNav">
+  <div id="navGroupRow" class="nav-group-row"></div>
+  <div id="navSubRow" class="nav-sub-row"></div>
+  <span id="listCount" style="display:none">0</span>
+  <span id="sidebarListCount" style="display:none">0</span>
 </div>
 
 <!-- PC 사이드바 -->
@@ -1432,38 +1464,7 @@ onAuthStateChanged(auth, function(user) {
   </div>
 
   <!-- 네비게이션 -->
-  <nav class="sidebar-nav">
-    <button class="sidebar-tab active" id="stab-input" onclick="navSwitchTab('input')">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></span> 수업내용 입력
-    </button>
-    <button class="sidebar-tab" id="stab-list" onclick="navSwitchTab('list')">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg></span> 과제 목록
-      <span class="sidebar-count" id="sidebarListCount">0</span>
-    </button>
-    <button class="sidebar-tab" id="stab-notice" onclick="navSwitchTab('notice')">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span> 알림장
-    </button>
-    <button class="sidebar-tab" id="stab-stats" onclick="navSwitchTab('stats')">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg></span> 학생 통계
-    </button>
-    <button class="sidebar-tab" id="stab-students" onclick="navSwitchTab('students')">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> 원생 목록
-    </button>
-    <button class="sidebar-tab" id="stab-teachers" onclick="navSwitchTab('teachers')" style="display:none">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> 선생님 관리
-    </button>
-    <button class="sidebar-tab" id="stab-message" onclick="navSwitchTab('message')" style="color:#cbd5e1">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></span> 메세지 전송
-      <span style="font-size:9px;background:#f1f5f9;color:#94a3b8;padding:1px 6px;border-radius:10px;margin-left:4px">예정</span>
-    </button>
-    <button class="sidebar-tab" id="stab-attendance" onclick="navSwitchTab('attendance')">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span> 출결관리
-    </button>
-    <button class="sidebar-tab" id="stab-billing" onclick="navSwitchTab('billing')" style="color:#cbd5e1">
-      <span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg></span> 수납관리
-      <span style="font-size:9px;background:#f1f5f9;color:#94a3b8;padding:1px 6px;border-radius:10px;margin-left:4px">예정</span>
-    </button>
-  </nav>
+  <nav class="sidebar-nav" id="sidebarNav"></nav>
 </div>
 
 <div class="content" id="mainContent">
@@ -1491,7 +1492,7 @@ onAuthStateChanged(auth, function(user) {
   </div>
 
   <!-- INPUT PANEL -->
-  <div class="panel active" id="panel-input">
+  <div class="panel" id="panel-input">
     <div class="card" style="background:#ede9fe;border-color:#c4b5fd">
       <div class="card-title" style="color:#6366f1;font-size:13px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg> 기존 목록 불러오기</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
@@ -1912,6 +1913,28 @@ onAuthStateChanged(auth, function(user) {
     </div>
   </div>
 
+  <!-- DASHBOARD PANEL (기본 화면) -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="card">
+      <div class="card-title" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:5px"><path d="M3 3v18h18"/><rect width="4" height="7" x="7" y="10" rx="1"/><rect width="4" height="12" x="15" y="5" rx="1"/></svg> 재원생 현황</div>
+      <div class="dash-grid" id="dashCards"></div>
+      <div style="margin-top:18px;border-top:1px solid #f1f5f9;padding-top:14px">
+        <div style="font-size:12px;font-weight:800;color:#475569;margin-bottom:8px">학교급별 분포</div>
+        <div id="dashBars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 공용 준비중 패널 -->
+  <div class="panel" id="panel-soon">
+    <div class="card" style="text-align:center;padding:48px 20px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <div id="soonTitle" style="font-size:17px;font-weight:800;color:#475569;margin-bottom:6px">준비 중</div>
+      <div style="font-size:13px;color:#94a3b8;line-height:1.6">해당 기능을 준비하고 있어요.<br>곧 만나요!</div>
+      <div style="display:inline-block;margin-top:14px;font-size:11px;font-weight:700;color:#8b5cf6;background:#f5f3ff;border:1px solid #ddd6fe;padding:4px 12px;border-radius:20px">준비 중 (예정)</div>
+    </div>
+  </div>
+
 </div>
 
 <!-- 인쇄 오버레이 -->
@@ -2078,7 +2101,7 @@ function normalizeRec(r) {
 var records = [];
 var notices = []; // 알림장 (반·오늘 과제·특이사항)
 let editId    = null;
-let activeTab = 'input';
+let activeTab = 'dashboard';
 
 function exportData() {
   var myRecs = records.filter(function(r){ return isOwnerOrAdmin() || r.teacher === currentUser; });
@@ -3752,20 +3775,20 @@ document.addEventListener('change', function(e){ if(!(e.target && e.target.close
 
 function switchTab(tab) {
   activeTab = tab;
-  ['input','list','notice','stats','students','teachers','message','attendance','billing'].forEach(t => {
-    var panel = document.getElementById('panel-'+t);
-    if (panel) panel.classList.toggle('active', t===tab);
-    var topTab = document.getElementById('tab-'+t);
-    if (topTab) topTab.classList.toggle('active', t===tab);
-    // 사이드바 탭도 동기화
-    var stab = document.getElementById('stab-'+t);
-    if (stab) stab.classList.toggle('active', t===tab);
-  });
+  var meta = navLeafMeta(tab);
+  // 액션 리프(마이페이지 등)는 패널 전환 없이 동작만
+  if (meta && meta.action) { if (typeof window[meta.action]==='function') window[meta.action](); return; }
+  var panelKey = navPanelKey(tab);
+  var mc = document.getElementById('mainContent');
+  if (mc) { var ps=mc.querySelectorAll(':scope > .panel'); for (var i=0;i<ps.length;i++) ps[i].classList.remove('active'); }
+  var tp = document.getElementById('panel-'+panelKey);
+  if (tp) tp.classList.add('active');
+  if (panelKey==='soon') { var st0=document.getElementById('soonTitle'); if(st0) st0.textContent=(meta&&meta.label)||'준비 중'; }
   document.body.classList.toggle('tab-input', tab==='input');
   if(tab!=='input'){ if(_lessonPreviewOpen) closeLessonPreview(); if(_mobileSheetOpen) closeMobileSheet(); }
   else { if(_lessonPreviewOpen) setTimeout(renderLessonPreview,50); }
-  var _isOwnerTab = isOwnerOrAdmin();
-  ['tab-teachers','stab-teachers'].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.display = _isOwnerTab ? '' : 'none'; });
+  navSyncActive(tab);
+  if (tab==='dashboard') renderDashboard();
   if (tab==='list')     { updateStudentFilter(); renderList(); }
   if (tab==='notice')   renderNotices();
   if (tab==='stats')    loadClassAttendance(renderStats);
@@ -3785,7 +3808,7 @@ function updateAttitude() {}
 /* ===== 브라우저 뒤로/앞으로가기 내비게이션 ===== */
 var _navOverlays = [];
 var _navSuppressPop = false;
-var NAV_INITIAL_TAB = 'input';
+var NAV_INITIAL_TAB = 'dashboard';
 function _navCloseFor(id) {
   switch (id) {
     case 'assignStudentModal': return closeAssignStudent;
@@ -3818,10 +3841,19 @@ function navOnOverlayClosed(id) {
     _navOverlays.splice(idx,1);
   }
 }
-function navSwitchTab(tab) {
+function navSwitchTab(tab) { navSelectLeaf(tab); }
+function navSelectLeaf(tab) {
+  var meta = navLeafMeta(tab);
+  if (meta && meta.action) { if (typeof window[meta.action]==='function') window[meta.action](); return; }
   if (tab === activeTab) { switchTab(tab); return; }
   switchTab(tab);
   try { history.pushState({ navTab:tab }, ''); } catch(e) {}
+}
+function navSelectGroup(gid) {
+  _navOpenGroup = gid;
+  var g = NAV_GROUPS.filter(function(x){return x.id===gid;})[0];
+  if (g && g.leaves && g.leaves.length) navSelectLeaf(g.leaves[0].id);
+  else { renderNav(); }
 }
 function closeUserModal() {
   var m = document.getElementById('userModal');
@@ -4445,7 +4477,8 @@ function deleteRecord(id) {
 
 function renderAll() {
   var _cnt = records.filter(function(r){ return isOwnerOrAdmin()||r.teacher===currentUser; }).length;
-  document.getElementById('listCount').textContent = _cnt;
+  var _lc=document.getElementById('listCount'); if(_lc) _lc.textContent = _cnt;
+  if(activeTab==='dashboard' && typeof renderDashboard==='function') renderDashboard();
   if (isOwnerOrAdmin()) updateTeacherFilter();
   if (activeTab==='list')  { updateStudentFilter(); renderList(); }
   if (activeTab==='stats') renderStats();
@@ -5885,7 +5918,8 @@ function finishLogin(fbUser, profile) {
   var lb = document.getElementById('logoutBtn');
   if (lb) lb.style.display = 'inline-block';
   var mb = document.getElementById('myPageBtn');
-  if (mb) mb.style.display = 'inline-block';
+  if (mb) mb.style.display = 'none'; // 마이페이지는 탭으로 이동
+  if (typeof renderNav==='function') renderNav();
   var msgB = document.getElementById('myMsgBtn');
   if (msgB) msgB.style.display = 'inline-flex'; // 쪽지함 버튼 항상 표시
 
@@ -9198,6 +9232,7 @@ function updateSidebarCount() {
   var cnt = document.getElementById('sidebarListCount');
   var listCnt = document.getElementById('listCount');
   if (cnt && listCnt) cnt.textContent = listCnt.textContent;
+  if (typeof updateNavCounts==='function') updateNavCounts();
   setTimeout(updateSidebarCount, 2000);
 }
 
@@ -9420,7 +9455,7 @@ function renderList() {
     return true;
   });
   const pending = myRecords.filter(function(r){ return r.homework; });
-  document.getElementById('listCount').textContent = myRecords.length;
+  var _lc2=document.getElementById('listCount'); if(_lc2) _lc2.textContent = myRecords.length;
   const container = document.getElementById('recordList');
   if (records.length===0) { container.innerHTML='<div class="empty"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> 기록이 없습니다</div>'; return; }
   const filterVal = (document.getElementById('filterStudent')||{}).value || '';
@@ -10915,6 +10950,156 @@ function showToast(msg, type='success') {
    onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.86 1.9 5.37 4.76 6.78-.21.77-.76 2.8-.87 3.23-.14.54.2.53.42.39.17-.11 2.71-1.84 3.81-2.59.6.09 1.23.13 1.88.13 5.52 0 10-3.58 10-8s-4.48-8-10-8z" fill="#3C1E1E"/><text x="12" y="11.4" text-anchor="middle" dominant-baseline="middle" font-size="6" font-weight="900" fill="#FEE500" font-family="Arial,Helvetica,sans-serif" letter-spacing="0.1">TALK</text></svg>
 </a>
+
+<script>
+/* ===== 2단 네비게이션 엔진 (Phase 1-A) ===== */
+(function(){
+  function I(p){ return '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">'+p+'</svg>'; }
+  window.NAV_GROUPS = [
+    { id:'home', label:'현황', icon:I('<path d="M3 3v18h18"/><rect width="4" height="7" x="7" y="10" rx="1"/><rect width="4" height="12" x="15" y="5" rx="1"/>'), leaves:[
+        {id:'dashboard', label:'재원생 현황'} ]},
+    { id:'lesson', label:'수업관리', icon:I('<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>'), leaves:[
+        {id:'input', label:'수업내용 입력'},
+        {id:'list', label:'과제 목록', count:'list'},
+        {id:'notice', label:'알림장', count:'notice'},
+        {id:'stats', label:'통계'} ]},
+    { id:'attend', label:'출결관리', icon:I('<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'), leaves:[
+        {id:'checkin', label:'출결 처리', soon:true},
+        {id:'checkinlog', label:'출결 이력', soon:true},
+        {id:'attendance', label:'월별 출석부'} ]},
+    { id:'students', label:'원생관리', icon:I('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'), leaves:[
+        {id:'students', label:'원생 목록'},
+        {id:'leavers', label:'휴·퇴원생 목록', soon:true} ]},
+    { id:'billing', label:'수납관리', icon:I('<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>'), leaves:[
+        {id:'bill-list', label:'수납 내역', soon:true},
+        {id:'bill-del', label:'수납 삭제 이력', soon:true},
+        {id:'bill-receipt', label:'영수증 관리', soon:true},
+        {id:'bill-receipt-tax', label:'영수증(소득공제)', soon:true},
+        {id:'bill-cash', label:'현금영수증 발급내역', soon:true},
+        {id:'bill-pay', label:'결제하기(단말기)', soon:true},
+        {id:'bill-payhist', label:'결제이력(단말기)', soon:true},
+        {id:'bill-sales', label:'월별 매출내역', soon:true} ]},
+    { id:'message', label:'메세지관리', icon:I('<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>'), leaves:[
+        {id:'msg-send', label:'문자/알림톡 발송', soon:true},
+        {id:'msg-sms-log', label:'문자 발송 이력', soon:true},
+        {id:'msg-alim-log', label:'알림톡 발송 이력', soon:true},
+        {id:'msg-charge', label:'충전/충전설정', soon:true},
+        {id:'msg-charge-log', label:'충전 내역', soon:true} ]},
+    { id:'work', label:'업무관리', owner:true, icon:I('<rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'), leaves:[
+        {id:'teachers', label:'선생님 관리'},
+        {id:'classassign', label:'반배정 관리', soon:true} ]},
+    { id:'mypage', label:'마이페이지', icon:I('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>'), leaves:[
+        {id:'mp-school', label:'학원 정보', action:'showMyPage'},
+        {id:'mp-account', label:'개인정보 수정', action:'showMyPage'},
+        {id:'mp-code', label:'학원코드 관리', action:'showMyPage'},
+        {id:'mp-plan', label:'플랜 변경/연장', action:'showMyPage'} ]},
+    { id:'support', label:'고객센터', icon:I('<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>'), leaves:[
+        {id:'sup-notice', label:'공지사항', soon:true},
+        {id:'sup-inquiry', label:'1:1 문의', action:'showMyPage'} ]}
+  ];
+
+  var NAV_REAL_PANELS = {dashboard:1,input:1,list:1,notice:1,stats:1,attendance:1,students:1,teachers:1};
+  window._navOpenGroup = 'home';
+
+  window.navLeafMeta = function(id){
+    for (var i=0;i<NAV_GROUPS.length;i++){ var g=NAV_GROUPS[i];
+      for (var j=0;j<g.leaves.length;j++){ var l=g.leaves[j];
+        if (l.id===id) return {groupId:g.id, label:l.label, soon:!!l.soon, action:l.action||null}; } }
+    return null;
+  };
+  window.navGroupOf = function(id){ var m=navLeafMeta(id); return m?m.groupId:null; };
+  window.navPanelKey = function(id){ return NAV_REAL_PANELS[id]?id:'soon'; };
+  function visibleGroups(){
+    var owner = (typeof isOwnerOrAdmin==='function') ? isOwnerOrAdmin() : true;
+    return NAV_GROUPS.filter(function(g){ return !g.owner || owner; });
+  }
+  function leafExtra(l){
+    if (l.count) return '<span class="nav-cnt js-navcnt" data-leaf="'+l.count+'">0</span>';
+    if (l.soon)  return '<span class="nav-soon">예정</span>';
+    return '';
+  }
+  function curGid(){ return navGroupOf(activeTab) || _navOpenGroup; }
+
+  function renderGroupRow(){
+    var row=document.getElementById('navGroupRow'); if(!row) return;
+    var cur=curGid();
+    row.innerHTML = visibleGroups().map(function(g){
+      return '<button class="nav-gchip'+(g.id===cur?' active':'')+'" onclick="navSelectGroup(\''+g.id+'\')">'+g.icon+'<span>'+g.label+'</span></button>';
+    }).join('');
+  }
+  function renderSubRow(){
+    var row=document.getElementById('navSubRow'); if(!row) return;
+    var g=NAV_GROUPS.filter(function(x){return x.id===curGid();})[0];
+    if(!g){ row.innerHTML=''; return; }
+    row.innerHTML = g.leaves.map(function(l){
+      return '<button class="nav-schip'+(l.id===activeTab?' active':'')+'" onclick="navSelectLeaf(\''+l.id+'\')">'+l.label+leafExtra(l)+'</button>';
+    }).join('');
+  }
+  function renderSidebar(){
+    var nav=document.getElementById('sidebarNav'); if(!nav) return;
+    var cur=curGid(), html='';
+    visibleGroups().forEach(function(g){
+      var open=(g.id===cur);
+      html += '<button class="sb-group'+(open?' open active':'')+'" onclick="navSelectGroup(\''+g.id+'\')"><span class="sb-ico">'+g.icon+'</span><span>'+g.label+'</span><span class="sb-chev">&#9656;</span></button>';
+      if(open){
+        html += '<div class="sb-sub">';
+        g.leaves.forEach(function(l){
+          html += '<button class="sb-leaf'+(l.id===activeTab?' active':'')+'" onclick="navSelectLeaf(\''+l.id+'\')"><span>'+l.label+'</span>'+leafExtra(l)+'</button>';
+        });
+        html += '</div>';
+      }
+    });
+    nav.innerHTML = html;
+  }
+  window.navSyncActive = function(tab){
+    var gid=navGroupOf(tab); if(gid) _navOpenGroup=gid;
+    renderGroupRow(); renderSubRow(); renderSidebar(); updateNavCounts();
+  };
+  window.renderNav = function(){ renderGroupRow(); renderSubRow(); renderSidebar(); updateNavCounts(); };
+
+  function noticeCountVal(){
+    try{
+      if (typeof notices==='undefined' || !notices) return 0;
+      if (typeof isOwnerOrAdmin==='function' && isOwnerOrAdmin()) return notices.length;
+      return notices.filter(function(n){ return n && n.teacher===currentUser; }).length;
+    }catch(e){ return 0; }
+  }
+  function setCnt(leaf,val){
+    var els=document.querySelectorAll('.js-navcnt[data-leaf="'+leaf+'"]');
+    for(var i=0;i<els.length;i++) els[i].textContent=val;
+  }
+  window.updateNavCounts = function(){
+    var lc=document.getElementById('listCount');
+    setCnt('list', lc ? (lc.textContent||'0') : '0');
+    setCnt('notice', String(noticeCountVal()));
+    if (activeTab==='dashboard') renderDashboard();
+  };
+
+  function dashCounts(){
+    var arr = (typeof students!=='undefined' && students && students.length) ? students : [];
+    arr = arr.filter(function(s){ if(!s) return false; var st=s.status; return !st||st==='active'||st==='재원'; });
+    var b={t:arr.length, 초등:0, 중등:0, 고등:0, 기타:0};
+    arr.forEach(function(s){ var g=(typeof gradeLevel==='function')?gradeLevel(s.grade):'기타'; if(b[g]!==undefined) b[g]++; });
+    return b;
+  }
+  function _dashCard(cls,lab,n){ return '<div class="dash-card '+cls+'"><div class="dash-num">'+n+'</div><div class="dash-lab">'+lab+'</div></div>'; }
+  window.renderDashboard = function(){
+    var b=dashCounts();
+    var cards=document.getElementById('dashCards');
+    if(cards) cards.innerHTML = _dashCard('total','전체',b.t)+_dashCard('','초등',b.초등)+_dashCard('','중등',b.중등)+_dashCard('','고등',b.고등)+_dashCard('','기타',b.기타);
+    var bars=document.getElementById('dashBars');
+    if(bars){
+      var rows=[['초등',b.초등],['중등',b.중등],['고등',b.고등],['기타',b.기타]];
+      var mx=Math.max(1,b.초등,b.중등,b.고등,b.기타);
+      bars.innerHTML = rows.map(function(r){ var w=Math.round(r[1]/mx*100);
+        return '<div class="dash-bar-row"><div class="dash-bar-lab">'+r[0]+'</div><div class="dash-bar-track"><div class="dash-bar-fill" style="width:'+w+'%"></div></div><div class="dash-bar-val">'+r[1]+'</div></div>';
+      }).join('');
+    }
+  };
+
+  try { renderNav(); } catch(e){ console.warn('nav init', e); }
+})();
+</script>
 
 </body>
 </html>
