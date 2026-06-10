@@ -1680,6 +1680,7 @@ onAuthStateChanged(auth, function(user) {
       <div id="studentLevelChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
       <input type="text" id="studentSearch" oninput="filterStudentList()" placeholder="학생 검색 (이름, 반, 학년, 번호...)" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:10px">
       
+      <datalist id="classListData"></datalist>
       <div id="studentList">
         <!-- 컬럼 헤더 -->
         <div class="stu-header-row" style="display:none;grid-template-columns:2fr 1fr 1.5fr 1.5fr 1.5fr 1.5fr auto;padding:6px 10px;gap:6px;font-size:11px;font-weight:700;color:#94a3b8;border-bottom:1.5px solid #e2e8f0;margin-bottom:6px">
@@ -1901,8 +1902,15 @@ onAuthStateChanged(auth, function(user) {
       <div class="mp-pane" id="mp-pane-account">
 <!-- 연락처 (원장만) -->
     <div id="myPhoneSection" style="display:none;margin-bottom:14px">
-      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">연락처</label>
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">휴대폰번호</label>
       <input type="tel" id="myPhone" placeholder="010-0000-0000" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px">상담·알림 연락처로 사용됩니다.</div>
+    </div>
+    <!-- 학원번호 (발신번호, 원장만) -->
+    <div id="mySenderSection" style="display:none;margin-bottom:14px">
+      <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">학원번호 (발신번호)</label>
+      <input type="tel" id="mySenderPhone" placeholder="02-000-0000 또는 010-0000-0000" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px;line-height:1.5">문자/알림톡 발송 시 <b style="color:#64748b">발신번호</b>로 표시됩니다. 발송 전 통신사 <b style="color:#64748b">발신번호 사전등록</b>이 필요합니다.</div>
     </div>
 
     <!-- 비밀번호 변경 (로그인 사용자 전체) -->
@@ -1981,6 +1989,19 @@ onAuthStateChanged(auth, function(user) {
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.86 1.9 5.37 4.76 6.78-.21.77-.76 2.8-.87 3.23-.14.54.2.53.42.39.17-.11 2.71-1.84 3.81-2.59.6.09 1.23.13 1.88.13 5.52 0 10-3.58 10-8s-4.48-8-10-8z"/></svg>
       카카오톡 실시간 문의
     </a>
+    </div>
+  </div>
+
+  <!-- 휴·퇴원생 목록 패널 -->
+  <div class="panel" id="panel-leavers">
+    <div class="card">
+      <div class="card-title" style="color:#b45309"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:5px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/></svg> 휴·퇴원생 목록</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <input id="leaverSearch" oninput="renderLeavers()" placeholder="학생 검색 (이름·반)" style="flex:2;min-width:140px;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+        <select id="leaverFilter" onchange="renderLeavers()" style="flex:1;min-width:96px;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box"><option value="">전체</option><option value="leave">휴원</option><option value="withdrawn">퇴원</option></select>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;line-height:1.5">휴·퇴원 처리해도 기존 과제·출결·통계 기록은 그대로 유지됩니다. <b style="color:#15803d">복원</b> 시 재원생으로 돌아갑니다.</div>
+      <div id="leaverList"></div>
     </div>
   </div>
 
@@ -2794,9 +2815,10 @@ function renderStudents() {
   var note = document.getElementById('studentTeacherNote');
   if (note) note.style.display = isOwner ? 'none' : 'block';
   renderStudentLevelChips();
+  var _act = students.filter(isActiveStu);
 
-  if (students.length === 0) {
-    el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">' + (isOwner ? '등록된 학생이 없습니다' : '배정된 학생이 없습니다') + '</div>';
+  if (_act.length === 0) {
+    el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">' + (isOwner ? '등록된 재원생이 없습니다' : '배정된 학생이 없습니다') + '</div>';
     return;
   }
 
@@ -2812,7 +2834,7 @@ function renderStudents() {
       + '<div id="assignSummaryBody" style="padding:10px 12px">';
     // 각 선생님별 배정 학생
     _schoolTeachers.forEach(function(t){
-      var assigned = students.filter(function(s){ return Array.isArray(s.assignedTo) && s.assignedTo.indexOf(t.uid) !== -1; });
+      var assigned = _act.filter(function(s){ return Array.isArray(s.assignedTo) && s.assignedTo.indexOf(t.uid) !== -1; });
       html += '<div style="margin-bottom:8px">'
         + '<div style="font-size:12px;font-weight:700;color:#0e7490;margin-bottom:3px">' + escapeNotice(t.name) + ' <span style="color:#94a3b8;font-weight:600">' + assigned.length + '명</span></div>';
       if (assigned.length === 0) {
@@ -2825,7 +2847,7 @@ function renderStudents() {
       html += '</div>';
     });
     // 미배정 학생
-    var unassigned = students.filter(function(s){ return !Array.isArray(s.assignedTo) || s.assignedTo.length === 0; });
+    var unassigned = _act.filter(function(s){ return !Array.isArray(s.assignedTo) || s.assignedTo.length === 0; });
     html += '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e2e8f0">'
       + '<div style="font-size:12px;font-weight:700;color:#b45309;margin-bottom:3px">미배정 <span style="color:#94a3b8;font-weight:600">' + unassigned.length + '명</span></div>'
       + (unassigned.length > 0
@@ -2837,7 +2859,7 @@ function renderStudents() {
 
   // 반별 그룹핑 (원장/선생님 동일)
   const groups = {};
-  students.forEach(s => {
+  _act.forEach(s => {
     const g = s.className || '반 미지정';
     if (!groups[g]) groups[g] = [];
     groups[g].push(s);
@@ -2852,6 +2874,7 @@ function renderStudents() {
   });
 
   el.innerHTML = html;
+  var _dl=document.getElementById('classListData'); if(_dl){ var _sn={}, _op=''; _act.forEach(function(s){ var c=s.className; if(c&&!_sn[c]){_sn[c]=1; _op+='<option value="'+String(c).replace(/"/g,'')+'">';} }); _dl.innerHTML=_op; }
   filterStudentList();
 }
 
@@ -2933,8 +2956,9 @@ function gradeLevel(g){ g=String(g||''); if(/초/.test(g))return '초등'; if(/�
 function setStuLevel(lv){ _stuLevelFilter=lv; renderStudentLevelChips(); filterStudentList(); }
 function renderStudentLevelChips(){
   var box=document.getElementById('studentLevelChips'); if(!box) return;
-  var c={'전체':students.length,'초등':0,'중등':0,'고등':0};
-  students.forEach(function(s){ var L=gradeLevel(s.grade); if(c[L]!==undefined) c[L]++; });
+  var _a=(typeof activeStudents==='function')?activeStudents():students.filter(function(s){return !s.status||s.status==='active';});
+  var c={'전체':_a.length,'초등':0,'중등':0,'고등':0};
+  _a.forEach(function(s){ var L=gradeLevel(s.grade); if(c[L]!==undefined) c[L]++; });
   var levels=['전체','초등','중등','고등'];
   box.innerHTML=levels.map(function(lv){
     var on=_stuLevelFilter===lv;
@@ -2993,6 +3017,7 @@ function makeStudentRow(s) {
         var isOwner = (currentRole === 'owner' || currentRole === 'superadmin');
         if (!isOwner) return ''; // 선생님: 읽기 전용 (버튼 없음)
         return '<button onclick="startEditStudent(\'' + s.id + '\')" style="background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">수정</button>'
+          + stuStatusButtons(s)
           + '<button onclick="deleteStudent(\'' + s.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">삭제</button>';
       })()
     + '</div></div>'
@@ -3016,7 +3041,7 @@ function makeStudentRow(s) {
     // 수정 폼
     + '<div id="student-edit-' + s.id + '" style="display:none;padding:10px;background:#f0f9ff;border-top:1.5px solid #bae6fd">'
     + '<div style="display:flex;gap:6px;margin-bottom:6px">'
-    + '<input id="edit-class-'  + s.id + '" value="' + (s.className||'') + '" placeholder="반" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
+    + '<input id="edit-class-'  + s.id + '" value="' + (s.className||'') + '" placeholder="반" list="classListData" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
     + '<input id="edit-name-'   + s.id + '" value="' + (s.name||'') + '" placeholder="이름" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
     + '<input id="edit-grade-'  + s.id + '" value="' + (s.grade||'') + '" placeholder="학년" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
     + '</div>'
@@ -3083,14 +3108,14 @@ function updateStudentFilter() {
   if (!sel) return;
   const cur = sel.value;
   sel.innerHTML = '<option value=""> 전체 학생</option>';
-  students.forEach(s => {
+  activeStudents().forEach(s => {
     const opt = document.createElement('option');
     opt.value = s.name;
     opt.textContent = (s.className ? '['+s.className+'] ' : '') + s.name;
     sel.appendChild(opt);
   });
   // 기록에만 있고 학생 목록에 없는 학생도 표시
-  const registered = new Set(students.map(s => s.name));
+  const registered = new Set(activeStudents().map(s => s.name));
   const fromRecords = [...new Set(records.map(r => r.student).filter(n => n && !registered.has(n)))];
   fromRecords.forEach(name => {
     const opt = document.createElement('option');
@@ -3841,6 +3866,7 @@ function switchTab(tab) {
   if (tab==='checkin')    enterCheckinManage();
   if (tab==='checkinlog') enterCheckinHistory();
   if (tab && tab.indexOf('mp-')===0) { mpShowPane(tab); populateMyPage(); }
+  if (tab==='leavers' && typeof renderLeavers==='function') renderLeavers();
   if (tab==='list')     { updateStudentFilter(); renderList(); }
   if (tab==='notice')   renderNotices();
   if (tab==='stats')    loadClassAttendance(renderStats);
@@ -4575,7 +4601,7 @@ function updateClassSelect() {
   var cur = sel.value;
   sel.innerHTML = '<option value="">-- 선택 --</option>';
   var seen = {};
-  students.forEach(function(s) {
+  activeStudents().forEach(function(s) {
     var cls = s.className || '';
     if (cls && !seen[cls]) {
       seen[cls] = true;
@@ -4595,7 +4621,7 @@ function updateStudentSelect() {
   var cls = clsSel ? clsSel.value : '';
   var cur = stuSel.value;
   stuSel.innerHTML = '<option value="">-- 선택 --</option>';
-  students.filter(function(s){ return !cls || s.className === cls; })
+  activeStudents().filter(function(s){ return !cls || s.className === cls; })
     .forEach(function(s) {
       var opt = document.createElement('option');
       opt.value = s.id;                                   // 값 = 학생 고유 id (연동 키)
@@ -6043,7 +6069,7 @@ function finishLogin(fbUser, profile) {
   watchUserStatus(fbUser.uid);
   initSidebar(profile);
   startAutoLogoutTimer();
-  switchTab('input'); // 로그인 시 항상 수업내용 입력 탭으로
+  switchTab('dashboard'); // 로그인 시 항상 현황 탭으로
   // 동적 수업 블록 초기 렌더링
   setTimeout(function(){ resetLessonBlocks(); resetHomeworks(); resetLastHomeworks(); resetTests(); }, 300);
 }
@@ -8614,7 +8640,8 @@ function populateMyPage() {
     document.getElementById('myLogoSection').style.display = isOwner ? 'block' : 'none';
     document.getElementById('mySchoolNameSection').style.display = isOwner ? 'block' : 'none';
     document.getElementById('myPhoneSection').style.display = isOwner ? 'block' : 'none';
-    document.getElementById('mySaveBtn').style.display = isOwner ? 'block' : 'none';
+    var _ss=document.getElementById('mySenderSection'); if(_ss) _ss.style.display = isOwner ? 'block' : 'none';
+    window._mpIsOwner = isOwner; if (typeof mpUpdateSaveBtn==='function') mpUpdateSaveBtn();
 
     if (isOwner) {
       document.getElementById('mySchoolName').value = data.schoolName || '';
@@ -8652,7 +8679,7 @@ function loadMySchoolCodes(schoolId) {
       var d = snap.data();
       document.getElementById('myOwnerCode').textContent = d.ownerCode || '------';
       document.getElementById('myTeacherCode').textContent = d.teacherCode || '------';
-      showMyExpiry(d.expiresAt, d.notif);
+      showMyExpiry(d.expiresAt, d.notif); var _sp_=document.getElementById('mySenderPhone'); if(_sp_) _sp_.value=d.senderPhone||'';
       return;
     }
     // 문서 못 찾음 → 인덱스로 실제 docId 찾아 단건 조회 (전체 스캔 제거)
@@ -8664,7 +8691,7 @@ function loadMySchoolCodes(schoolId) {
         var d = rs.data();
         document.getElementById('myOwnerCode').textContent = d.ownerCode || '------';
         document.getElementById('myTeacherCode').textContent = d.teacherCode || '------';
-        showMyExpiry(d.expiresAt, d.notif);
+        showMyExpiry(d.expiresAt, d.notif); var _sp_=document.getElementById('mySenderPhone'); if(_sp_) _sp_.value=d.senderPhone||'';
       }).catch(function(){});
     }).catch(function(){});
   });
@@ -9090,6 +9117,7 @@ function deleteLogo() {
 function saveMyPage() {
   var schoolName = document.getElementById('mySchoolName').value.trim();
   var phone = document.getElementById('myPhone').value.trim();
+  var senderPhone = (document.getElementById('mySenderPhone')||{value:''}).value.trim();
   if (!schoolName) { showToast('학원명을 입력해주세요.', 'error'); return; }
   if (!window.fbDb || !window.fbAuth || !window.fbAuth.currentUser) return;
 
@@ -9124,7 +9152,7 @@ function saveMyPage() {
           var schoolId = profile.schoolId;
           if (!schoolId) return;
 
-          var schoolUpdate = { name: schoolName, phone: phone };
+          var schoolUpdate = { name: schoolName, phone: phone, senderPhone: senderPhone };
           if (myLogoBase64) schoolUpdate.logo = myLogoBase64;
           else if (_logoCleared) schoolUpdate.logo = '';
 
@@ -10722,7 +10750,7 @@ function updateLoadStudents() {
   var stuSel = document.getElementById('loadStudentFilter');
   if (stuSel) {
     var curStu = stuSel.value;
-    var list = students.filter(function(s){
+    var list = activeStudents().filter(function(s){
       if (cls && s.className !== cls) return false;
       if (kw && (s.name||'').toLowerCase().indexOf(kw) === -1) return false;
       return true;
@@ -11031,7 +11059,7 @@ function showToast(msg, type='success') {
         {id:'attendance', label:'월별 출석부'} ]},
     { id:'students', label:'원생관리', icon:I('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'), leaves:[
         {id:'students', label:'원생 목록'},
-        {id:'leavers', label:'휴·퇴원생 목록', soon:true, owner:true} ]},
+        {id:'leavers', label:'휴·퇴원생 목록', owner:true} ]},
     { id:'billing', label:'수납관리', owner:true, icon:I('<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>'), leaves:[
         {id:'bill-list', label:'수납 내역', soon:true},
         {id:'bill-del', label:'수납 삭제 이력', soon:true},
@@ -11060,7 +11088,7 @@ function showToast(msg, type='success') {
         {id:'sup-inquiry', label:'1:1 문의'} ]}
   ];
 
-  var NAV_REAL_PANELS = {dashboard:1,input:1,list:1,notice:1,stats:1,attendance:1,students:1,teachers:1,checkin:1,checkinlog:1};
+  var NAV_REAL_PANELS = {dashboard:1,input:1,list:1,notice:1,stats:1,attendance:1,students:1,teachers:1,checkin:1,checkinlog:1,leavers:1};
   window._navOpenGroup = 'home';
   window._navCollapsed = false;
 
@@ -11072,7 +11100,8 @@ function showToast(msg, type='success') {
   };
   window.navGroupOf = function(id){ var m=navLeafMeta(id); return m?m.groupId:null; };
   window.navPanelKey = function(id){ if(id&&id.indexOf('mp-')===0) return 'mypage'; if(id==='sup-inquiry') return 'inquiry'; return NAV_REAL_PANELS[id]?id:'soon'; };
-  window.mpShowPane = function(tab){ ['school','account','code','plan'].forEach(function(k){ var p=document.getElementById('mp-pane-'+k); if(p) p.classList.toggle('active', tab==='mp-'+k); }); };
+  window.mpShowPane = function(tab){ ['school','account','code','plan'].forEach(function(k){ var p=document.getElementById('mp-pane-'+k); if(p) p.classList.toggle('active', tab==='mp-'+k); }); mpUpdateSaveBtn(); };
+  window.mpUpdateSaveBtn = function(){ var btn=document.getElementById('mySaveBtn'); if(!btn) return; var onSave=(activeTab==='mp-school'||activeTab==='mp-account'); btn.style.display=(window._mpIsOwner && onSave)?'block':'none'; var r=document.getElementById('myPageResult'); if(r && !onSave) r.style.display='none'; };
   function visibleGroups(){
     var owner = (typeof isOwnerOrAdmin==='function') ? isOwnerOrAdmin() : true;
     return NAV_GROUPS.filter(function(g){ return !g.owner || owner; });
@@ -11085,6 +11114,10 @@ function showToast(msg, type='success') {
     if (l.count) return '<span class="nav-cnt js-navcnt" data-leaf="'+l.count+'">0</span>';
     if (l.soon)  return '<span class="nav-soon">예정</span>';
     return '';
+  }
+  function leafLabel(l){
+    if (l.id==='dashboard'){ var owner=(typeof isOwnerOrAdmin==='function')?isOwnerOrAdmin():true; return owner?'재원생 현황':'반배정 현황'; }
+    return l.label;
   }
   function curGid(){ return navGroupOf(activeTab) || _navOpenGroup; }
 
@@ -11100,7 +11133,7 @@ function showToast(msg, type='success') {
     var g=NAV_GROUPS.filter(function(x){return x.id===curGid();})[0];
     if(!g || _navCollapsed){ row.innerHTML=''; return; }
     row.innerHTML = visibleLeaves(g).map(function(l){
-      return '<button class="nav-schip'+(l.id===activeTab?' active':'')+'" onclick="navSelectLeaf(\''+l.id+'\')">'+l.label+leafExtra(l)+'</button>';
+      return '<button class="nav-schip'+(l.id===activeTab?' active':'')+'" onclick="navSelectLeaf(\''+l.id+'\')">'+leafLabel(l)+leafExtra(l)+'</button>';
     }).join('');
   }
   function renderSidebar(){
@@ -11113,7 +11146,7 @@ function showToast(msg, type='success') {
       if(open){
         html += '<div class="sb-sub">';
         visibleLeaves(g).forEach(function(l){
-          html += '<button class="sb-leaf'+(l.id===activeTab?' active':'')+'" onclick="navSelectLeaf(\''+l.id+'\')"><span>'+l.label+'</span>'+leafExtra(l)+'</button>';
+          html += '<button class="sb-leaf'+(l.id===activeTab?' active':'')+'" onclick="navSelectLeaf(\''+l.id+'\')"><span>'+leafLabel(l)+'</span>'+leafExtra(l)+'</button>';
         });
         html += '</div>';
       }
@@ -11317,5 +11350,68 @@ function showToast(msg, type='success') {
 })();
 </script>
 
+
+<script>
+/* ===== Phase 2: 학생 재원/휴원/퇴원 상태 ===== */
+(function(){
+  function esc(x){ return (typeof escapeNotice==='function')?escapeNotice(x):String(x==null?'':x); }
+  function _today(){ return (typeof todayStr==='function')?todayStr():new Date().toISOString().slice(0,10); }
+
+  window.stuStatus = function(s){ return (s && s.status) || 'active'; };
+  window.isActiveStu = function(s){ return stuStatus(s)==='active'; };
+  window.activeStudents = function(){ return (typeof students!=='undefined'&&students?students:[]).filter(isActiveStu); };
+
+  // 학생 행 휴원/퇴원 버튼 (원장 전용 영역에서만 호출됨)
+  window.stuStatusButtons = function(s){
+    return '<button onclick="setStudentStatus(\''+s.id+'\',\'leave\')" style="background:#fef9c3;color:#a16207;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">휴원</button>'
+         + '<button onclick="setStudentStatus(\''+s.id+'\',\'withdrawn\')" style="background:#ffedd5;color:#c2410c;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">퇴원</button>';
+  };
+
+  window.setStudentStatus = function(id, status){
+    if (currentRole!=='owner' && currentRole!=='superadmin'){ showToast('원장만 가능합니다.','error'); return; }
+    var s=(typeof students!=='undefined'&&students?students:[]).find(function(x){ return String(x.id)===String(id); });
+    if(!s) return;
+    var label={leave:'휴원', withdrawn:'퇴원', active:'재원'}[status]||status;
+    if(status!=='active'){
+      if(!confirm(s.name+' 학생을 '+label+' 처리할까요?\n기존 과제·출결·통계 기록은 그대로 유지됩니다.')) return;
+    }
+    s.status=status;
+    if(status==='active'){ s.leaveDate=''; }
+    else { s.leaveDate=_today(); }
+    if(typeof persistStudents==='function') persistStudents();
+    if(typeof renderStudents==='function') renderStudents();
+    if(typeof renderLeavers==='function') renderLeavers();
+    if(typeof updateStudentFilter==='function') updateStudentFilter();
+    if(typeof updateClassSelect==='function') updateClassSelect();
+    if(typeof activeTab!=='undefined' && activeTab==='dashboard' && typeof renderDashboard==='function') renderDashboard();
+    showToast(s.name+' → '+label+' 처리됨');
+  };
+  window.restoreStudent = function(id){ window.setStudentStatus(id,'active'); };
+
+  window.renderLeavers = function(){
+    var el=document.getElementById('leaverList'); if(!el) return;
+    var q=((document.getElementById('leaverSearch')||{}).value||'').trim().toLowerCase();
+    var fv=((document.getElementById('leaverFilter')||{}).value||'');
+    var arr=(typeof students!=='undefined'&&students?students:[]).filter(function(s){ return s && stuStatus(s)!=='active'; });
+    if(fv) arr=arr.filter(function(s){ return stuStatus(s)===fv; });
+    if(q) arr=arr.filter(function(s){ return ((s.name||'')+' '+(s.className||'')).toLowerCase().indexOf(q)>=0; });
+    arr.sort(function(a,b){ return String(b.leaveDate||'').localeCompare(String(a.leaveDate||'')); });
+    if(!arr.length){ el.innerHTML='<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">휴·퇴원생이 없습니다.</div>'; return; }
+    el.innerHTML=arr.map(function(s){
+      var st=stuStatus(s); var lab=st==='leave'?'휴원':'퇴원';
+      var c=st==='leave'?'#a16207':'#c2410c'; var bg=st==='leave'?'#fef9c3':'#ffedd5';
+      var enroll=(s.createdAt||'').slice(0,10)||'-'; var ld=(s.leaveDate||'').slice(0,10)||'-';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:130px"><div style="font-size:14px;font-weight:800;color:#1e293b">'+esc(s.name)+' <span style="font-size:11px;font-weight:800;color:'+c+';background:'+bg+';padding:1px 7px;border-radius:8px;margin-left:4px">'+lab+'</span></div>'
+        +'<div style="font-size:11px;color:#94a3b8">'+esc(s.className||'반 미지정')+(s.grade?(' · '+esc(s.grade)):'')+'</div></div>'
+        +'<div style="font-size:11px;color:#64748b;text-align:right;min-width:104px"><div>입학 '+enroll+'</div><div>'+lab+' '+ld+'</div></div>'
+        +'<div style="display:flex;gap:5px">'
+        +'<button onclick="restoreStudent(\''+s.id+'\')" style="background:#dcfce7;color:#15803d;border:none;border-radius:7px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">복원</button>'
+        +'<button onclick="deleteStudent(\''+s.id+'\')" style="background:#f1f5f9;color:#64748b;border:none;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">영구삭제</button>'
+        +'</div></div>';
+    }).join('');
+  };
+})();
+</script>
 </body>
 </html>
