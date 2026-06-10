@@ -1811,10 +1811,10 @@ onAuthStateChanged(auth, function(user) {
   <!-- DASHBOARD PANEL (기본 화면) -->
   <div class="panel active" id="panel-dashboard">
     <div class="card">
-      <div class="card-title" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:5px"><path d="M3 3v18h18"/><rect width="4" height="7" x="7" y="10" rx="1"/><rect width="4" height="12" x="15" y="5" rx="1"/></svg> 재원생 현황</div>
+      <div class="card-title" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:5px"><path d="M3 3v18h18"/><rect width="4" height="7" x="7" y="10" rx="1"/><rect width="4" height="12" x="15" y="5" rx="1"/></svg> <span id="dashTitle">재원생 현황</span></div>
       <div class="dash-grid" id="dashCards"></div>
       <div style="margin-top:18px;border-top:1px solid #f1f5f9;padding-top:14px">
-        <div style="font-size:12px;font-weight:800;color:#475569;margin-bottom:8px">학교급별 분포</div>
+        <div style="font-size:12px;font-weight:800;color:#475569;margin-bottom:8px" id="dashBarLabel">학교급별 분포</div>
         <div id="dashBars"></div>
       </div>
     </div>
@@ -3905,7 +3905,9 @@ function navSelectGroup(gid) {
   if (_navOpenGroup===gid && navGroupOf(activeTab)===gid) { _navCollapsed = !_navCollapsed; renderNav(); return; }
   _navCollapsed = false; _navOpenGroup = gid;
   var g = NAV_GROUPS.filter(function(x){return x.id===gid;})[0];
-  if (g && g.leaves && g.leaves.length) navSelectLeaf(g.leaves[0].id);
+  var _ow = (typeof isOwnerOrAdmin==='function') ? isOwnerOrAdmin() : true;
+  var _lv = g ? (g.leaves||[]).filter(function(l){ return _ow || !l.owner; }) : [];
+  if (_lv.length) navSelectLeaf(_lv[0].id);
   else { renderNav(); }
 }
 function closeUserModal() {
@@ -11029,8 +11031,8 @@ function showToast(msg, type='success') {
         {id:'attendance', label:'월별 출석부'} ]},
     { id:'students', label:'원생관리', icon:I('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'), leaves:[
         {id:'students', label:'원생 목록'},
-        {id:'leavers', label:'휴·퇴원생 목록', soon:true} ]},
-    { id:'billing', label:'수납관리', icon:I('<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>'), leaves:[
+        {id:'leavers', label:'휴·퇴원생 목록', soon:true, owner:true} ]},
+    { id:'billing', label:'수납관리', owner:true, icon:I('<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>'), leaves:[
         {id:'bill-list', label:'수납 내역', soon:true},
         {id:'bill-del', label:'수납 삭제 이력', soon:true},
         {id:'bill-receipt', label:'영수증 관리', soon:true},
@@ -11043,8 +11045,8 @@ function showToast(msg, type='success') {
         {id:'msg-send', label:'문자/알림톡 발송', soon:true},
         {id:'msg-sms-log', label:'문자 발송 이력', soon:true},
         {id:'msg-alim-log', label:'알림톡 발송 이력', soon:true},
-        {id:'msg-charge', label:'충전/충전설정', action:'openChargeFromNav'},
-        {id:'msg-charge-log', label:'충전 내역', soon:true} ]},
+        {id:'msg-charge', label:'충전/충전설정', action:'openChargeFromNav', owner:true},
+        {id:'msg-charge-log', label:'충전 내역', soon:true, owner:true} ]},
     { id:'work', label:'업무관리', owner:true, icon:I('<rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'), leaves:[
         {id:'teachers', label:'선생님 관리'},
         {id:'classassign', label:'반배정 관리', soon:true} ]},
@@ -11075,6 +11077,10 @@ function showToast(msg, type='success') {
     var owner = (typeof isOwnerOrAdmin==='function') ? isOwnerOrAdmin() : true;
     return NAV_GROUPS.filter(function(g){ return !g.owner || owner; });
   }
+  function visibleLeaves(g){
+    var owner = (typeof isOwnerOrAdmin==='function') ? isOwnerOrAdmin() : true;
+    return (g.leaves||[]).filter(function(l){ return !l.owner || owner; });
+  }
   function leafExtra(l){
     if (l.count) return '<span class="nav-cnt js-navcnt" data-leaf="'+l.count+'">0</span>';
     if (l.soon)  return '<span class="nav-soon">예정</span>';
@@ -11093,7 +11099,7 @@ function showToast(msg, type='success') {
     var row=document.getElementById('navSubRow'); if(!row) return;
     var g=NAV_GROUPS.filter(function(x){return x.id===curGid();})[0];
     if(!g || _navCollapsed){ row.innerHTML=''; return; }
-    row.innerHTML = g.leaves.map(function(l){
+    row.innerHTML = visibleLeaves(g).map(function(l){
       return '<button class="nav-schip'+(l.id===activeTab?' active':'')+'" onclick="navSelectLeaf(\''+l.id+'\')">'+l.label+leafExtra(l)+'</button>';
     }).join('');
   }
@@ -11106,7 +11112,7 @@ function showToast(msg, type='success') {
       html += '<button class="sb-group'+(open?' open':'')+(isActive?' active':'')+'" onclick="navSelectGroup(\''+g.id+'\')"><span class="sb-ico">'+g.icon+'</span><span>'+g.label+'</span><span class="sb-chev">&#9656;</span></button>';
       if(open){
         html += '<div class="sb-sub">';
-        g.leaves.forEach(function(l){
+        visibleLeaves(g).forEach(function(l){
           html += '<button class="sb-leaf'+(l.id===activeTab?' active':'')+'" onclick="navSelectLeaf(\''+l.id+'\')"><span>'+l.label+'</span>'+leafExtra(l)+'</button>';
         });
         html += '</div>';
@@ -11148,14 +11154,40 @@ function showToast(msg, type='success') {
   }
   function _dashCard(cls,lab,n){ return '<div class="dash-card '+cls+'"><div class="dash-num">'+n+'</div><div class="dash-lab">'+lab+'</div></div>'; }
   window.renderDashboard = function(){
-    var b=dashCounts();
+    var owner = (typeof isOwnerOrAdmin==='function') ? isOwnerOrAdmin() : true;
+    var titleEl=document.getElementById('dashTitle');
+    var barLabEl=document.getElementById('dashBarLabel');
     var cards=document.getElementById('dashCards');
-    if(cards) cards.innerHTML = _dashCard('total','전체',b.t)+_dashCard('','초등',b.초등)+_dashCard('','중등',b.중등)+_dashCard('','고등',b.고등)+_dashCard('','기타',b.기타);
     var bars=document.getElementById('dashBars');
+    function esc(x){ return (typeof escapeNotice==='function')?escapeNotice(x):String(x==null?'':x); }
+    if(!owner){
+      // 선생님: 본인 배정 학생(이미 students에 배정분만 로드됨)을 반별로
+      var nm=((document.getElementById('sidebarUser')||{}).textContent||'').trim() || (typeof currentUser!=='undefined'&&currentUser) || '선생님';
+      if(titleEl) titleEl.textContent = nm+' 선생님 반배정 현황';
+      if(barLabEl) barLabEl.textContent = '반별 학생 수';
+      var arr=(typeof students!=='undefined'&&students)?students:[];
+      arr=arr.filter(function(s){ if(!s) return false; var st=s.status; return !st||st==='active'||st==='재원'; });
+      var byC={}; arr.forEach(function(s){ var c=(s.className||'미배정'); byC[c]=(byC[c]||0)+1; });
+      var cls=Object.keys(byC).sort(function(a,b){return String(a).localeCompare(String(b),'ko');});
+      if(cards) cards.innerHTML=_dashCard('total','담당 학생',arr.length)+_dashCard('','담당 반',cls.length+'개');
+      if(bars){
+        if(!cls.length){ bars.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:14px">배정된 반이 없습니다.</div>'; return; }
+        var mx=1; cls.forEach(function(c){ if(byC[c]>mx) mx=byC[c]; });
+        bars.innerHTML=cls.map(function(c){ var w=Math.round(byC[c]/mx*100);
+          return '<div class="dash-bar-row"><div class="dash-bar-lab" style="width:auto;flex:0 0 auto;min-width:56px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c)+'</div><div class="dash-bar-track"><div class="dash-bar-fill" style="width:'+w+'%"></div></div><div class="dash-bar-val">'+byC[c]+'</div></div>';
+        }).join('');
+      }
+      return;
+    }
+    // 원장/관리자: 재원생 현황
+    if(titleEl) titleEl.textContent='재원생 현황';
+    if(barLabEl) barLabEl.textContent='학교급별 분포';
+    var b=dashCounts();
+    if(cards) cards.innerHTML = _dashCard('total','전체',b.t)+_dashCard('','초등',b.초등)+_dashCard('','중등',b.중등)+_dashCard('','고등',b.고등)+_dashCard('','기타',b.기타);
     if(bars){
       var rows=[['초등',b.초등],['중등',b.중등],['고등',b.고등],['기타',b.기타]];
-      var mx=Math.max(1,b.초등,b.중등,b.고등,b.기타);
-      bars.innerHTML = rows.map(function(r){ var w=Math.round(r[1]/mx*100);
+      var mx2=Math.max(1,b.초등,b.중등,b.고등,b.기타);
+      bars.innerHTML = rows.map(function(r){ var w=Math.round(r[1]/mx2*100);
         return '<div class="dash-bar-row"><div class="dash-bar-lab">'+r[0]+'</div><div class="dash-bar-track"><div class="dash-bar-fill" style="width:'+w+'%"></div></div><div class="dash-bar-val">'+r[1]+'</div></div>';
       }).join('');
     }
