@@ -1266,12 +1266,12 @@ onAuthStateChanged(auth, function(user) {
 
     <!-- 결제수단 선택 (유료 플랜) -->
     <div id="subPayChoice" style="display:none;background:#fff;border-radius:14px;padding:20px;border:1px solid #e2e8f0;margin-bottom:16px">
-      <button type="button" onclick="backToPlanSelect()" style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;font-family:inherit;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m15 18-6-6 6-6"/></svg> 요금제 목록으로</button>
+      <button type="button" id="subPayBackBtn" onclick="payChoiceBack()" style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;font-family:inherit;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m15 18-6-6 6-6"/></svg> <span id="subPayBackLabel">요금제 목록으로</span></button>
       <div style="font-size:15px;font-weight:900;color:#1e293b;text-align:center;margin-bottom:4px">결제 방법 선택</div>
       <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:14px">결제 방법을 선택해주세요</div>
       <div id="subPayPlanLabel" style="background:#ede9fe;border-radius:8px;padding:10px;text-align:center;font-size:13px;font-weight:700;color:#6366f1;margin-bottom:16px"></div>
-      <button onclick="planCardPay()" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:8px">카드결제</button>
-      <button onclick="planBankTransfer()" style="width:100%;padding:13px;background:#fff;border:1.5px solid #6366f1;color:#6366f1;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">무통장입금</button>
+      <button onclick="payChoiceCard()" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:8px">카드결제</button>
+      <button onclick="payChoiceBank()" style="width:100%;padding:13px;background:#fff;border:1.5px solid #6366f1;color:#6366f1;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">무통장입금</button>
     </div>
 
     <!-- 신청 폼 (2단계, 무료는 건너뜀) -->
@@ -6782,10 +6782,10 @@ function selectCharge(channel, count) {
   var chanName = channel === 'sms' ? '문자' : '알림톡';
   var sel = document.getElementById('subPlanSelected');
   if (sel) sel.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> ' + chanName + ' ' + count.toLocaleString() + '건 충전 (' + selectedCharge.amount.toLocaleString() + '원) 선택됨';
-  var _t=document.getElementById('subFormTitle'); if(_t) _t.textContent='크레딧 충전 신청';
-  var _bl=document.getElementById('subFormBackLabel'); if(_bl) _bl.textContent='문자/알림톡 목록으로';
-  var box = document.getElementById('subscribeFormBox');
-  if (box) { box.style.display = 'block'; box.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  var _lbl = document.getElementById('subPayPlanLabel'); if (_lbl && sel) _lbl.innerHTML = sel.innerHTML;
+  var _pbl = document.getElementById('subPayBackLabel'); if (_pbl) _pbl.textContent = '문자/알림톡 목록으로';
+  var pay = document.getElementById('subPayChoice');
+  if (pay) { pay.style.display = 'block'; pay.scrollIntoView({ behavior:'smooth', block:'start' }); }
 }
 
 // ── 크레딧 금액 선택 ──
@@ -6886,10 +6886,27 @@ function submitCreditApply() {
   });
 }
 
-// 신청폼 뒤로가기: 크레딧이면 충전표로, 플랜이면 요금제 목록으로
-function applyFormBack() { if (typeof creditMode!=='undefined' && creditMode) { backToChargeList(); } else { backToPlanSelect(); } }
+// 결제수단 선택(subPayChoice) 분기 — 크레딧/플랜
+function payChoiceCard() { if (typeof creditMode!=='undefined' && creditMode) { showToast('카드결제는 준비 중입니다. 무통장입금을 이용해주세요.', 'info'); } else { planCardPay(); } }
+function payChoiceBank() { if (typeof creditMode!=='undefined' && creditMode) { showCreditApplyForm(); } else { planBankTransfer(); } }
+function payChoiceBack() { if (typeof creditMode!=='undefined' && creditMode) { backToChargeList(); } else { backToPlanSelect(); } }
+function showCreditApplyForm() {
+  var pay=document.getElementById('subPayChoice'); if(pay) pay.style.display='none';
+  var fee=document.getElementById('subFeeInfo'); if(fee) fee.style.display='none';
+  var _t=document.getElementById('subFormTitle'); if(_t) _t.textContent='크레딧 충전 신청';
+  var _bl=document.getElementById('subFormBackLabel'); if(_bl) _bl.textContent='카드/무통장 선택으로';
+  var box=document.getElementById('subscribeFormBox'); if(box){ box.style.display='block'; box.scrollIntoView({behavior:'smooth',block:'start'}); }
+}
+function backToPayChoice() {
+  var box=document.getElementById('subscribeFormBox'); if(box) box.style.display='none';
+  var pay=document.getElementById('subPayChoice'); if(pay){ pay.style.display='block'; pay.scrollIntoView({behavior:'smooth',block:'start'}); }
+}
+
+// 신청폼 뒤로가기: 크레딧이면 결제수단 선택으로, 플랜이면 요금제 목록으로
+function applyFormBack() { if (typeof creditMode!=='undefined' && creditMode) { backToPayChoice(); } else { backToPlanSelect(); } }
 function backToChargeList() {
   var box=document.getElementById('subscribeFormBox'); if(box) box.style.display='none';
+  var pay=document.getElementById('subPayChoice'); if(pay) pay.style.display='none';
   var res=document.getElementById('subResult'); if(res) res.style.display='none';
   var cpb=document.getElementById('creditPurchaseBox'); if(cpb){ cpb.style.display='block'; cpb.scrollIntoView({behavior:'smooth',block:'start'}); }
 }
@@ -6958,6 +6975,7 @@ function proceedToApplyForm() {
   // 선택 요금제 표기를 결제수단 화면에 복사
   var lbl = document.getElementById('subPayPlanLabel'); var sel = document.getElementById('subPlanSelected');
   if (lbl && sel) lbl.innerHTML = sel.innerHTML;
+  var _pbl0 = document.getElementById('subPayBackLabel'); if (_pbl0) _pbl0.textContent = '요금제 목록으로';
   var pay = document.getElementById('subPayChoice');
   if (pay) { pay.style.display = 'block'; pay.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 }
