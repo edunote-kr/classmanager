@@ -1089,6 +1089,12 @@ onAuthStateChanged(auth, function(user) {
       <div style="font-size:15px;font-weight:800;color:#1e293b" id="myTeacherName"></div>
       <div style="font-size:12px;color:#64748b;margin-top:4px" id="myTeacherSchool"></div>
       <div style="font-size:11px;color:#94a3b8;margin-top:8px">학원 설정은 원장 계정에서 가능합니다</div>
+      <!-- 잔여 크레딧 (학원 공유 풀 — 선생님도 표시) -->
+      <div id="myTeacherCreditLine" style="display:none;font-size:12px;margin-top:12px;font-weight:800;color:#0891b2;background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:8px;text-align:left">
+        <div style="margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> 문자 · <span id="myTeacherCreditSms">0건</span></div>
+        <div><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> 알림톡 · <span id="myTeacherCreditAlimtalk">0건</span></div>
+      </div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:6px;line-height:1.5">학원 공동 크레딧입니다. 충전·결제는 원장 계정에서 가능합니다</div>
     </div>
 
     <!-- 로고 업로드 (원장만) -->
@@ -1154,7 +1160,10 @@ onAuthStateChanged(auth, function(user) {
         <div style="font-size:11px;color:#64748b;margin-bottom:4px">서비스 만료일</div>
         <div id="myExpiryDate" style="font-size:16px;font-weight:900"></div>
         <div id="myExpiryDday" style="font-size:12px;margin-top:4px;font-weight:700"></div>
-        <div id="myCreditLine" style="font-size:12px;margin-top:8px;font-weight:800;color:#0891b2;background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:6px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> 남은 크레딧 (문자) · <span id="myCreditCount">0</span>건</div>
+        <div id="myCreditLine" style="font-size:12px;margin-top:8px;font-weight:800;color:#0891b2;background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:8px;text-align:left">
+          <div style="margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> 문자 · <span id="myCreditSms">0건</span></div>
+          <div><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> 알림톡 · <span id="myCreditAlimtalk">0건</span></div>
+        </div>
         <button id="myRenewBtn" onclick="openPlanExtend()" style="margin-top:8px;width:100%;padding:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:none"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> 플랜 연장/변경 또는 크레딧 구매</button>
         <div style="font-size:10px;color:#94a3b8;margin-top:6px;line-height:1.5">플랜 연장 · 크레딧(문자 발송) 추가 구매는 계좌/카드 결제로 신청하실 수 있어요</div>
       </div>
@@ -1299,17 +1308,30 @@ onAuthStateChanged(auth, function(user) {
     <!-- 크레딧 구매창 -->
     <div id="creditPurchaseBox" style="display:none;background:#fff;border-radius:14px;padding:20px;border:1px solid #e2e8f0;margin-bottom:16px">
       <button type="button" onclick="backToPlanSelect()" style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;font-family:inherit;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m15 18-6-6 6-6"/></svg> 요금제 목록으로</button>
-      <div style="font-size:15px;font-weight:900;color:#1e293b;text-align:center;margin-bottom:4px">크레딧(문자) 구매</div>
-      <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:14px">1크레딧 = 1원 · 문자 1건당 00크레딧 차감</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div onclick="selectCredit(10000)" id="credit-10000" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer"><div style="font-size:16px;font-weight:900;color:#1e293b">10,000원</div><div style="font-size:11px;color:#0891b2;font-weight:700;margin-top:2px">10,000 크레딧</div></div>
-        <div onclick="selectCredit(30000)" id="credit-30000" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer"><div style="font-size:16px;font-weight:900;color:#1e293b">30,000원</div><div style="font-size:11px;color:#0891b2;font-weight:700;margin-top:2px">30,000 크레딧</div></div>
-        <div onclick="selectCredit(50000)" id="credit-50000" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer"><div style="font-size:16px;font-weight:900;color:#1e293b">50,000원</div><div style="font-size:11px;color:#0891b2;font-weight:700;margin-top:2px">50,000 크레딧</div></div>
-        <div onclick="selectCredit(100000)" id="credit-100000" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer"><div style="font-size:16px;font-weight:900;color:#1e293b">100,000원</div><div style="font-size:11px;color:#0891b2;font-weight:700;margin-top:2px">100,000 크레딧</div></div>
+      <div style="font-size:15px;font-weight:900;color:#1e293b;text-align:center;margin-bottom:4px">크레딧 충전 (문자/알림톡)</div>
+      <div style="font-size:11px;color:#94a3b8;text-align:center;margin-bottom:14px">건수 단위로 충전합니다 · 발송 시 무료분 먼저 차감</div>
+
+      <!-- 현재 잔여 (문자/알림톡) -->
+      <div id="chargeCurrentInfo" style="margin-bottom:14px"></div>
+
+      <!-- 자동충전 (PG 연동 후 제공) -->
+      <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:12px;margin-bottom:14px;opacity:0.75">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;font-weight:800;color:#475569">자동충전</span>
+          <span style="font-size:10px;font-weight:700;color:#fff;background:#94a3b8;border-radius:6px;padding:2px 8px">PG 연동 후 제공</span>
+        </div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.5">잔여 건수가 일정 미만으로 떨어지면 자동 충전(결제)되는 기능입니다. 결제수단 연동 후 제공됩니다.</div>
       </div>
-      <button onclick="creditCardPay()" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:8px">카드결제</button>
-      <button onclick="creditBankTransfer()" style="width:100%;padding:13px;background:#fff;border:1.5px solid #6366f1;color:#6366f1;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">무통장입금</button>
-      <div id="creditHint" style="font-size:11px;color:#94a3b8;text-align:center;margin-top:8px">금액을 선택해주세요</div>
+
+      <!-- 문자 충전 -->
+      <div style="font-size:13px;font-weight:800;color:#1e293b;margin:0 0 6px 2px">문자 충전</div>
+      <div id="chargeRowsSms" style="margin-bottom:14px"></div>
+
+      <!-- 알림톡 충전 -->
+      <div style="font-size:13px;font-weight:800;color:#1e293b;margin:0 0 6px 2px">알림톡 충전</div>
+      <div id="chargeRowsAlimtalk" style="margin-bottom:8px"></div>
+
+      <div id="creditHint" style="font-size:11px;color:#94a3b8;text-align:center;margin-top:8px">충전할 건수를 선택하면 신청 화면으로 이동합니다</div>
     </div>
 
 
@@ -6557,18 +6579,93 @@ function selectSubPlan(plan) {
 }
 
 // 1단계 → 2단계: 무료는 즉시 활성화, 유료는 신청 폼 표시
-// ── 크레딧 구매: 구매창 열기 ──
+// ── 크레딧 충전 (문자/알림톡, 건수 단위) ──
+var PRICING = { rateSMS: 18.7, rateAlimtalk: 11 };  // 임시 단가(원/건) — config/pricing 로드 시 갱신
+var CHARGE_TIERS = [100, 200, 500, 1000, 3000, 5000, 10000];
+var selectedCharge = null;  // { channel, count, amount }
+
+function loadPricing() {
+  return window.fbGetDoc(window.fbDoc(window.fbDb, 'config', 'pricing')).then(function(s){
+    if (s.exists()) {
+      var d = s.data();
+      if (typeof d.rateSMS === 'number') PRICING.rateSMS = d.rateSMS;
+      if (typeof d.rateAlimtalk === 'number') PRICING.rateAlimtalk = d.rateAlimtalk;
+    }
+  }).catch(function(){});
+}
+function chargeAmount(channel, count) {
+  var rate = channel === 'sms' ? PRICING.rateSMS : PRICING.rateAlimtalk;
+  return Math.round(rate * count);
+}
+function renderChargeBalances(notif) {
+  var el = document.getElementById('chargeCurrentInfo'); if (!el) return;
+  function card(title, c) {
+    return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px">'
+      + '<div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:4px">' + title + '</div>'
+      + '<div style="font-size:12px;color:#475569">잔여 <b style="color:#0891b2">' + c.total + '건</b> <span style="color:#94a3b8">(무료 ' + c.free + ' · 충전 ' + c.paid + ')</span></div>'
+      + '</div>';
+  }
+  el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    + card('문자', notifChan(notif, 'sms')) + card('알림톡', notifChan(notif, 'alimtalk')) + '</div>';
+}
+function renderChargeTables() {
+  ['sms','alimtalk'].forEach(function(channel){
+    var box = document.getElementById(channel === 'sms' ? 'chargeRowsSms' : 'chargeRowsAlimtalk');
+    if (!box) return;
+    var rate = channel === 'sms' ? PRICING.rateSMS : PRICING.rateAlimtalk;
+    var rows = CHARGE_TIERS.map(function(count){
+      var amt = chargeAmount(channel, count);
+      return '<div style="display:flex;align-items:center;justify-content:space-between;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:6px">'
+        + '<span style="font-size:13px;font-weight:700;color:#1e293b;min-width:64px">' + count.toLocaleString() + '건</span>'
+        + '<span style="font-size:13px;color:#475569;flex:1;text-align:center">' + amt.toLocaleString() + ' 원</span>'
+        + '<button onclick="selectCharge(\'' + channel + '\',' + count + ')" style="background:' + (channel==='sms'?'#0891b2':'#f59e0b') + ';color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">신청</button>'
+        + '</div>';
+    }).join('');
+    box.innerHTML = rows + '<div style="font-size:10px;color:#94a3b8;text-align:right;margin-top:2px">건당 ' + rate + '원 (부가세 포함)</div>';
+  });
+}
+function loadChargeBalancesFor(schoolId, schoolName) {
+  if (!schoolId) { renderChargeBalances(null); return; }
+  window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', schoolId)).then(function(snap){
+    if (snap.exists()) { renderChargeBalances(snap.data().notif); return; }
+    resolveSchoolDocId(schoolId, schoolName).then(function(realId){
+      if (!realId) return;
+      window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', realId)).then(function(rs){
+        if (rs.exists()) renderChargeBalances(rs.data().notif);
+      }).catch(function(){});
+    }).catch(function(){});
+  }).catch(function(){});
+}
+
+// ── 크레딧 충전: 구매창 열기 ──
 function openCreditPurchase() {
   var cards = document.getElementById('subPlanCards'); if (cards) cards.style.display = 'none';
   var nextBtn = document.getElementById('subNextBtn'); if (nextBtn) nextBtn.style.display = 'none';
   var nextHint = document.getElementById('subNextHint'); if (nextHint) nextHint.style.display = 'none';
   var cbtn = document.getElementById('subCreditBtn'); if (cbtn) cbtn.style.display = 'none';
   var box = document.getElementById('subscribeFormBox'); if (box) box.style.display = 'none';
-  selectedCredit = 0;
-  ['10000','30000','50000','100000'].forEach(function(a){ var el=document.getElementById('credit-'+a); if(el){el.style.border='1.5px solid #e2e8f0';el.style.background='#fff';} });
-  var hint = document.getElementById('creditHint'); if (hint) { hint.textContent='금액을 선택해주세요'; hint.style.color='#94a3b8'; }
+  selectedCharge = null;
+  var prof = (subscribeUser && subscribeUser.profile) || {};
+  renderChargeBalances(null);                                // 0으로 먼저 표시
+  renderChargeTables();                                      // 임시 단가로 먼저
+  loadPricing().then(function(){ renderChargeTables(); });   // 단가 로드 후 금액 갱신
+  loadChargeBalancesFor(prof.schoolId, prof.schoolName);
+  var hint = document.getElementById('creditHint'); if (hint) { hint.textContent='충전할 건수를 선택하면 신청 화면으로 이동합니다'; hint.style.color='#94a3b8'; }
   var cpb = document.getElementById('creditPurchaseBox');
   if (cpb) { cpb.style.display = 'block'; cpb.scrollIntoView({ behavior:'smooth', block:'start' }); }
+}
+
+// ── 충전 건수 선택 → 신청 폼으로 ──
+function selectCharge(channel, count) {
+  selectedCharge = { channel: channel, count: count, amount: chargeAmount(channel, count) };
+  creditMode = true;
+  var cpb = document.getElementById('creditPurchaseBox'); if (cpb) cpb.style.display = 'none';
+  var fee = document.getElementById('subFeeInfo'); if (fee) fee.style.display = 'none';
+  var chanName = channel === 'sms' ? '문자' : '알림톡';
+  var sel = document.getElementById('subPlanSelected');
+  if (sel) sel.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> ' + chanName + ' ' + count.toLocaleString() + '건 충전 (' + selectedCharge.amount.toLocaleString() + '원) 선택됨';
+  var box = document.getElementById('subscribeFormBox');
+  if (box) { box.style.display = 'block'; box.scrollIntoView({ behavior:'smooth', block:'start' }); }
 }
 
 // ── 크레딧 금액 선택 ──
@@ -6615,7 +6712,7 @@ function creditBankTransfer() {
   if (box) { box.style.display = 'block'; box.scrollIntoView({ behavior:'smooth', block:'start' }); }
 }
 
-// ── 크레딧 신청 제출 (무통장입금) ──
+// ── 크레딧 충전 신청 제출 (무통장입금) ──
 function submitCreditApply() {
   var profile  = subscribeUser.profile || {};
   var resultEl = document.getElementById('subResult');
@@ -6626,32 +6723,34 @@ function submitCreditApply() {
   var userId    = (document.getElementById('subUserId')||{value:''}).value.trim();
   var phone     = (document.getElementById('subPhone')||{value:''}).value.trim();
   var teachType = (document.getElementById('subTeachType')||{value:''}).value;
-  if (!selectedCredit) { showErr('구매할 크레딧 금액을 선택해주세요.'); return; }
+  if (!selectedCharge) { showErr('충전할 건수를 선택해주세요.'); return; }
   if (!name)   { showErr('신청자 이름을 입력해주세요.'); return; }
   if (!userId) { showErr('등록한 아이디를 입력해주세요.'); return; }
   if (!phone)  { showErr('휴대폰 번호를 입력해주세요.'); return; }
   var btn = document.querySelector('#subscribeScreen button[onclick="submitSubscribeApply()"]');
   if (btn) { btn.disabled = true; btn.textContent = '처리 중...'; btn.style.opacity = '0.6'; }
   var uid = subscribeUser.fbUser.uid;
-  var amt = selectedCredit;
+  var channel = selectedCharge.channel, count = selectedCharge.count, amount = selectedCharge.amount;
+  var chanName = channel === 'sms' ? '문자' : '알림톡';
   window.fbAddDoc(window.fbCollection(window.fbDb, 'applications'), {
-    schoolName: profile.schoolName || '', name: name, depositor: depositor || name,
+    schoolName: profile.schoolName || '', schoolId: profile.schoolId || '',
+    name: name, depositor: depositor || name,
     userId: userId, phone: phone, teachType: teachType, uid: uid,
-    type: 'credit', credit: amt, price: amt,
-    plan: 'credit', planLabel: '크레딧 ' + amt.toLocaleString() + '원 (' + amt.toLocaleString() + ' 크레딧)',
+    type: 'credit', channel: channel, count: count, amount: amount, price: amount,
+    plan: 'credit', planLabel: chanName + ' ' + count.toLocaleString() + '건 충전 (' + amount.toLocaleString() + '원)',
     status: 'pending', createdAt: new Date().toISOString()
   }).then(function() {
-    showToast('크레딧 구매 신청이 완료되었습니다!');
+    showToast('충전 신청이 완료되었습니다!');
     var box = document.getElementById('subscribeFormBox');
     if (box) {
       box.innerHTML =
         '<div style="text-align:center;padding:14px 6px">'
         + '<div style="width:60px;height:60px;margin:0 auto 14px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>'
-        + '<div style="font-size:18px;font-weight:900;color:#1e293b;margin-bottom:6px">크레딧 구매 신청 완료!</div>'
+        + '<div style="font-size:18px;font-weight:900;color:#1e293b;margin-bottom:6px">충전 신청 완료!</div>'
         + '<div style="font-size:13px;color:#475569;line-height:1.6;margin-bottom:16px">아래 계좌로 입금해주시면<br>확인 후 크레딧이 충전됩니다.</div>'
         + '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:16px;text-align:left;margin-bottom:14px">'
-        + '<div style="display:flex;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed #e2e8f0"><span style="font-size:13px;color:#64748b">구매 크레딧</span><span style="font-size:13px;font-weight:800;color:#1e293b">' + amt.toLocaleString() + ' 크레딧</span></div>'
-        + '<div style="display:flex;justify-content:space-between;margin-bottom:14px"><span style="font-size:13px;color:#64748b">입금 금액</span><span style="font-size:16px;font-weight:900;color:#0891b2">' + amt.toLocaleString() + '원</span></div>'
+        + '<div style="display:flex;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed #e2e8f0"><span style="font-size:13px;color:#64748b">충전 내용</span><span style="font-size:13px;font-weight:800;color:#1e293b">' + chanName + ' ' + count.toLocaleString() + '건</span></div>'
+        + '<div style="display:flex;justify-content:space-between;margin-bottom:14px"><span style="font-size:13px;color:#64748b">입금 금액</span><span style="font-size:16px;font-weight:900;color:#0891b2">' + amount.toLocaleString() + '원</span></div>'
         + '<div style="background:#fff;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;color:#94a3b8;margin-bottom:4px">입금 계좌</div><div style="font-size:15px;font-weight:900;color:#1e293b;letter-spacing:0.5px">국민은행 00-000-000</div><div style="font-size:13px;color:#475569;margin-top:2px">예금주: 김민석</div></div>'
         + '</div>'
         + '<button onclick="location.reload()" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">확인</button>'
@@ -7032,6 +7131,7 @@ function loadApplications() {
       var statusBg   = isPending ? '#fef9c3' : (isApproved ? '#dcfce7' : '#fee2e2');
       var statusColor= isPending ? '#92400e' : (isApproved ? '#16a34a' : '#dc2626');
       var statusText = isPending ? '대기' : (isApproved ? '승인' : '거절');
+      var isCredit   = a.type === 'credit';
 
       return '<div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:14px;background:#f8fafc">'
         + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
@@ -7048,12 +7148,16 @@ function loadApplications() {
         + '</div>'
         + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'
         + '<span style="background:#ede9fe;color:#6d28d9;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + (a.planLabel||a.plan||'') + '</span>'
-        + '<span style="background:#f1f5f9;color:#475569;font-size:11px;padding:3px 10px;border-radius:6px">선생님 ' + (a.teacherCount||0) + '명</span>'
+        + (isCredit
+            ? '<span style="background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + (a.channel==='sms'?'문자':'알림톡') + ' ' + (a.count||0) + '건</span>'
+            : '<span style="background:#f1f5f9;color:#475569;font-size:11px;padding:3px 10px;border-radius:6px">선생님 ' + (a.teacherCount||0) + '명</span>')
         + '<span style="background:#f1f5f9;color:#475569;font-size:11px;padding:3px 10px;border-radius:6px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>' + (a.price===0?'무료':(a.price||0)+'원') + '</span>'
         + '</div>'
         + (isPending ? '<div style="display:flex;gap:8px">'
-          + '<button onclick="approveApplication(\'' + a.id + '\',\'' + (a.schoolName||'').replace(/'/g,"\\'") + '\',' + (a.days||14) + ',' + (a.teacherCount||0) + ')" '
-          + 'style="flex:1;padding:8px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> 승인 + 코드발급</button>'
+          + (isCredit
+             ? '<button onclick="approveCreditApplication(\'' + a.id + '\')" style="flex:1;padding:8px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> 크레딧 적립 승인</button>'
+             : '<button onclick="approveApplication(\'' + a.id + '\',\'' + (a.schoolName||'').replace(/'/g,"\\'") + '\',' + (a.days||14) + ',' + (a.teacherCount||0) + ')" '
+               + 'style="flex:1;padding:8px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> 승인 + 코드발급</button>')
           + '<button onclick="rejectApplication(\'' + a.id + '\')" '
           + 'style="padding:8px 14px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> 거절</button>'
           + '</div>' : '')
@@ -7209,6 +7313,66 @@ function approveApplication(appId, schoolName, days, teacherCount) {
     loadSchools();
   }).catch(function(err) { showAdminToast('오류: ' + err.message, 'error'); });
 }
+
+// ── 크레딧 충전 신청 승인 (슈퍼관리자) → notif[channel].paid += count ──
+function approveCreditApplication(appId) {
+  if (!confirm('이 크레딧 충전 신청을 승인할까요?\n승인 시 해당 학원에 크레딧이 적립됩니다.')) return;
+  window.fbGetDoc(window.fbDoc(window.fbDb, 'applications', appId)).then(function(s) {
+    if (!s.exists()) { showAdminToast('신청을 찾을 수 없습니다.', 'error'); return; }
+    var a = s.data();
+    var channel = a.channel, count = parseInt(a.count) || 0;
+    if ((channel !== 'sms' && channel !== 'alimtalk') || count <= 0) {
+      showAdminToast('잘못된 충전 신청입니다.', 'error'); return;
+    }
+    // schoolId 확보: 신청서에 있으면 사용, 없으면 신청자 uid → user.schoolId
+    var sidStep = a.schoolId
+      ? Promise.resolve(a.schoolId)
+      : (a.uid
+          ? window.fbGetDoc(window.fbDoc(window.fbDb, 'users', a.uid)).then(function(u){ return u.exists() ? (u.data().schoolId || '') : ''; })
+          : Promise.resolve(''));
+    return sidStep.then(function(schoolId) {
+      if (!schoolId) { showAdminToast('학원을 찾을 수 없습니다(schoolId 없음).', 'error'); return; }
+      var ref = window.fbDoc(window.fbDb, 'schools', schoolId);
+      return window.fbGetDoc(ref).then(function(ss) {
+        if (!ss.exists()) { showAdminToast('학원 문서를 찾을 수 없습니다.', 'error'); return; }
+        var notif = ss.data().notif || {};
+        var ch = notif[channel] || { free: 0, paid: 0 };
+        var newNotif = Object.assign({}, notif);
+        newNotif[channel] = { free: ch.free || 0, paid: (ch.paid || 0) + count };
+        return window.fbUpdateDoc(ref, { notif: newNotif }).then(function() {
+          return window.fbUpdateDoc(window.fbDoc(window.fbDb, 'applications', appId), {
+            status: 'approved', approvedAt: new Date().toISOString()
+          });
+        }).then(function() {
+          showAdminToast('충전 승인! ' + (channel === 'sms' ? '문자' : '알림톡') + ' ' + count + '건 적립');
+          loadApplications();
+          loadSchools();
+        });
+      });
+    });
+  }).catch(function(err) { showAdminToast('오류: ' + (err && (err.code||err.message) || ''), 'error'); });
+}
+
+// ── 무료 쿠폰 지급 (슈퍼관리자) → notif[channel].free += count ──
+// 콘솔 호출: grantFreeCoupon('<schoolId>', 'sms'|'alimtalk', 건수)
+function grantFreeCoupon(schoolId, channel, count) {
+  count = parseInt(count) || 0;
+  if (!schoolId || (channel !== 'sms' && channel !== 'alimtalk') || count <= 0) {
+    console.log('사용법: grantFreeCoupon("schoolId", "sms"|"alimtalk", 건수)'); return;
+  }
+  var ref = window.fbDoc(window.fbDb, 'schools', schoolId);
+  return window.fbGetDoc(ref).then(function(ss) {
+    if (!ss.exists()) { console.log('학원을 찾을 수 없습니다:', schoolId); return; }
+    var notif = ss.data().notif || {};
+    var ch = notif[channel] || { free: 0, paid: 0 };
+    var newNotif = Object.assign({}, notif);
+    newNotif[channel] = { free: (ch.free || 0) + count, paid: ch.paid || 0 };
+    return window.fbUpdateDoc(ref, { notif: newNotif }).then(function() {
+      console.log('무료쿠폰 지급 완료: ' + channel + ' 무료 +' + count + '건');
+    });
+  }).catch(function(e) { console.log('오류:', e.code || e.message); });
+}
+if (typeof window !== 'undefined') window.grantFreeCoupon = grantFreeCoupon;
 
 function rejectApplication(appId) {
   if (!confirm('신청을 거절하시겠습니까?')) return;
@@ -8383,6 +8547,11 @@ function showMyPage() {
     document.getElementById('myTeacherInfo').style.display = isOwner ? 'none' : 'block';
     document.getElementById('myTeacherName').textContent = data.name || '';
     document.getElementById('myTeacherSchool').textContent = data.schoolName || '';
+
+    // 선생님: 학원 공유 크레딧 잔액 표시 (코드/결제 버튼은 원장 전용 유지)
+    if (!isOwner && data.schoolId) {
+      loadMyTeacherCredits(data.schoolId, data.schoolName);
+    }
   });
 }
 
@@ -8392,7 +8561,7 @@ function loadMySchoolCodes(schoolId) {
       var d = snap.data();
       document.getElementById('myOwnerCode').textContent = d.ownerCode || '------';
       document.getElementById('myTeacherCode').textContent = d.teacherCode || '------';
-      showMyExpiry(d.expiresAt, d.credits);
+      showMyExpiry(d.expiresAt, d.notif);
       return;
     }
     // 문서 못 찾음 → 인덱스로 실제 docId 찾아 단건 조회 (전체 스캔 제거)
@@ -8404,14 +8573,47 @@ function loadMySchoolCodes(schoolId) {
         var d = rs.data();
         document.getElementById('myOwnerCode').textContent = d.ownerCode || '------';
         document.getElementById('myTeacherCode').textContent = d.teacherCode || '------';
-        showMyExpiry(d.expiresAt, d.credits);
+        showMyExpiry(d.expiresAt, d.notif);
       }).catch(function(){});
     }).catch(function(){});
   });
 }
 
-function showMyExpiry(expiresAt, credits) {
-  var _cc=document.getElementById('myCreditCount'); if(_cc) _cc.textContent = (credits!=null?credits:0);
+// notif 지갑에서 채널별 {free, paid, total} 안전 추출
+function notifChan(notif, chan) {
+  var c = (notif && notif[chan]) || {};
+  var free = c.free || 0, paid = c.paid || 0;
+  return { free: free, paid: paid, total: free + paid };
+}
+function fmtNotifCell(c) {
+  return c.total + '건 (무료 ' + c.free + ' · 충전 ' + c.paid + ')';
+}
+
+// 선생님용: 소속 학원 문서에서 공유 크레딧(문자/알림톡) 잔액만 읽어 표시
+function loadMyTeacherCredits(schoolId, schoolName) {
+  function show(notif) {
+    var s = document.getElementById('myTeacherCreditSms');
+    if (s) s.textContent = fmtNotifCell(notifChan(notif, 'sms'));
+    var a = document.getElementById('myTeacherCreditAlimtalk');
+    if (a) a.textContent = fmtNotifCell(notifChan(notif, 'alimtalk'));
+    var line = document.getElementById('myTeacherCreditLine');
+    if (line) line.style.display = 'block';
+  }
+  window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', schoolId)).then(function(snap) {
+    if (snap.exists()) { show(snap.data().notif); return; }
+    // 문서 못 찾음 → 인덱스로 실제 docId 찾아 단건 조회
+    resolveSchoolDocId(schoolId, schoolName).then(function(realId) {
+      if (!realId) return;
+      window.fbGetDoc(window.fbDoc(window.fbDb, 'schools', realId)).then(function(rs) {
+        if (rs.exists()) show(rs.data().notif);
+      }).catch(function(){});
+    }).catch(function(){});
+  }).catch(function(){});
+}
+
+function showMyExpiry(expiresAt, notif) {
+  var _s=document.getElementById('myCreditSms'); if(_s) _s.textContent = fmtNotifCell(notifChan(notif,'sms'));
+  var _a=document.getElementById('myCreditAlimtalk'); if(_a) _a.textContent = fmtNotifCell(notifChan(notif,'alimtalk'));
   var sec = document.getElementById('myExpirySection');
   if (!sec) return;
   if (!expiresAt) { sec.style.display = 'none'; return; }
