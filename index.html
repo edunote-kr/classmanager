@@ -4069,6 +4069,7 @@ function setComp(field, val) {
   }
   if (field === 'lastCompletion') updateRing();
   else updateSubRing(field.replace('Comp',''));
+  if (typeof _scheduleLessonPreview === 'function') _scheduleLessonPreview(); // 이행도 변경 즉시 미리보기 반영
 }
 
 function setCompVal(field, val) {
@@ -4629,6 +4630,7 @@ function setLastHWComp(i, val) {
   if (_lastHomeworks[i]) {
     _lastHomeworks[i].comp = val;
     renderLastHomeworks();
+    if (typeof _scheduleLessonPreview === 'function') _scheduleLessonPreview(); // 이행도 변경 즉시 미리보기 반영
   }
 }
 
@@ -4973,6 +4975,7 @@ function setLessonComp(bi, ii, val) {
   if (_lessonBlocks[bi] && _lessonBlocks[bi].items[ii] !== undefined) {
     _lessonBlocks[bi].items[ii].comp = val;
     renderLessonBlocks();
+    if (typeof _scheduleLessonPreview === 'function') _scheduleLessonPreview(); // 이행도 변경 즉시 미리보기 반영
   }
 }
 
