@@ -5283,44 +5283,29 @@ function resetSchoolCheck() {
   var cr = document.getElementById('schoolCodeResult'); if (cr) cr.style.display = 'none';
 }
 
-// 학원명 인덱스 기록 (중복확인/코드합류용). 학원 생성·코드 갱신 시 호출
+// 학원명 인덱스 기록 (학원명 중복확인 전용). 학원 생성·코드 갱신 시 호출.
+// [보안] 코드(ownerCode/teacherCode)는 더 이상 인덱스에 저장하지 않는다.
+//   schoolNames 는 read 공개라, 코드를 두면 누구나 전 학원 코드를 덤프해 무단 합류할 수 있었음.
+//   코드 대조/합류는 전부 서버(Cloud Function joinByCode)에서 수행한다.
+//   (인자 teacherCode/ownerCode 는 호출부 호환을 위해 남겨두되 사용하지 않음)
 function writeSchoolNameIndex(name, teacherCode, schoolId, ownerCode) {
   if (!name) return Promise.resolve();
   var key = normalizeSchoolKey(name);
   return window.fbSetDoc(window.fbDoc(window.fbDb, 'schoolNames', key), {
     name: name,
-    teacherCode: (teacherCode||'').toUpperCase(),
-    ownerCode: (ownerCode||'').toUpperCase(),
     docId: schoolId || null,
     updatedAt: new Date().toISOString()
   }).catch(function(){ /* 실패해도 학원 생성은 진행 */ });
 }
 
 // schoolId가 실제 docId가 아닌(코드값/구값) 레거시 계정 교정용.
-// schools 전체 스캔 없이 공개 인덱스(schoolNames)로 실제 docId를 찾는다.
-// 1) 학원명으로 인덱스 직접 조회 → 2) 코드값으로 인덱스 쿼리(teacherCode→ownerCode)
+// [보안] 코드는 인덱스에서 제거됐으므로 학원명으로만 docId를 찾는다.
+//   (코드 기반 교정이 필요하면 서버 함수로 처리)
 function resolveSchoolDocId(codeVal, schoolName) {
-  var byName = schoolName
-    ? window.fbGetDoc(window.fbDoc(window.fbDb, 'schoolNames', normalizeSchoolKey(schoolName)))
-        .then(function(s){ return (s.exists() && s.data() && s.data().docId) ? s.data().docId : null; })
-        .catch(function(){ return null; })
-    : Promise.resolve(null);
-  return byName.then(function(id){
-    if (id) return id;
-    if (!codeVal) return null;
-    var cv = String(codeVal).toUpperCase();
-    function q(field){
-      return window.fbGetDocs(window.fbQuery(
-        window.fbCollection(window.fbDb, 'schoolNames'),
-        window.fbWhere(field, '==', cv)
-      )).then(function(snap){
-        if (snap.empty) return null;
-        var d = snap.docs[0].data();
-        return (d && d.docId) ? d.docId : null;
-      }).catch(function(){ return null; });
-    }
-    return q('teacherCode').then(function(r){ return r || q('ownerCode'); });
-  });
+  if (!schoolName) return Promise.resolve(null);
+  return window.fbGetDoc(window.fbDoc(window.fbDb, 'schoolNames', normalizeSchoolKey(schoolName)))
+    .then(function(s){ return (s.exists() && s.data() && s.data().docId) ? s.data().docId : null; })
+    .catch(function(){ return null; });
 }
 
 // 기존 학원 전체의 schoolNames 인덱스 일괄 재생성 (슈퍼관리자)
@@ -5375,43 +5360,23 @@ function checkSchoolOrCode() {
   // 코드 형식 판별: 영문+숫자만으로 5~8자
   var isCodeFormat = /^[A-Za-z0-9]{5,8}$/.test(val);
   if (isCodeFormat) {
-    // 코드로 바로 조회
+    // [보안] 코드는 더 이상 클라이언트에서 조회/검증하지 않는다(인덱스에 코드 없음).
+    //   가입(inactive 생성) 직후 서버 함수 joinByCode 가 코드를 대조·합류시킨다.
+    //   학원명을 노출하지 않아 코드 유효성 oracle 도 막는다.
     var resultEl = document.getElementById('schoolCheckResult');
     var box = document.getElementById('schoolCodeBox');
-    resultEl.style.display='block'; resultEl.style.color='#94a3b8'; resultEl.textContent='코드 확인 중...';
     if (box) box.style.display='none';
-    var code = val.toUpperCase();
-    // schoolNames 전체에서 teacherCode가 일치하는 것 찾기
-    window.fbGetDocs(window.fbQuery(
-      window.fbCollection(window.fbDb, 'schoolNames'),
-      window.fbWhere('teacherCode', '==', code)
-    )).then(function(snap){
-      if (!snap.empty) {
-        var data = snap.docs[0].data();
-        var realName = data.name || '';
-        // 실제 학원명으로 입력란 자동 채우기
-        document.getElementById('signupSchool').value = realName;
-        // signupSchoolCode에도 코드 자동 입력
-        var codeEl = document.getElementById('signupSchoolCode');
-        if (codeEl) codeEl.value = code;
-        // 코드 검증까지 한 번에 처리
-        schoolChecked = true;
-        schoolJoinMode = 'join';
-        schoolJoinNoCode = false;
-        schoolJoinInfo = Object.assign({ schoolKey: normalizeSchoolKey(realName) }, data);
-        resultEl.style.color='#16a34a';
-        resultEl.textContent='✓ ' + realName + ' — 선생님 코드 확인됩니다. 이 학원 소속으로 가입됩니다.';
-      } else {
-        // 코드가 없음 → 학원명으로 재시도
-        document.getElementById('signupSchool').value = val;
-        checkSchoolName();
-      }
-    }).catch(function(){
-      // 쿼리 실패 시 학원명으로 fallback
-      checkSchoolName();
-    });
+    window._signupJoinCode = val.toUpperCase();
+    schoolChecked = true;
+    schoolJoinMode = 'join';
+    schoolJoinNoCode = false;
+    schoolJoinInfo = { byCode: true };
+    resultEl.style.display='block';
+    resultEl.style.color='#16a34a';
+    resultEl.textContent='코드가 입력되었습니다. 가입을 완료하면 해당 학원에 자동으로 합류합니다.';
   } else {
     // 학원명으로 처리
+    window._signupJoinCode = null;
     checkSchoolName();
   }
 }
@@ -5457,27 +5422,18 @@ function verifySchoolCode() {
   var resultEl = document.getElementById('schoolCodeResult');
   var code = (codeEl ? codeEl.value : '').trim().toUpperCase();
   if (!code) {
-    resultEl.style.display='block'; resultEl.style.color='#ef4444'; resultEl.textContent='선생님 코드를 입력해주세요.';
+    resultEl.style.display='block'; resultEl.style.color='#ef4444'; resultEl.textContent='코드를 입력해주세요.';
     return;
   }
-  if (!schoolJoinInfo) {
-    resultEl.style.display='block'; resultEl.style.color='#ef4444'; resultEl.textContent='먼저 학원명 중복확인을 해주세요.';
-    return;
-  }
-  // 인덱스에 저장된 teacherCode와 비교
-  var tc = (schoolJoinInfo.teacherCode||'').toUpperCase();
+  // [보안] 클라이언트에서 코드를 검증하지 않는다(인덱스에 코드 없음).
+  //   입력값만 보관하고, 가입 직후 서버(joinByCode)가 대조·합류시킨다.
+  window._signupJoinCode = code;
+  schoolChecked = true;
+  schoolJoinMode = 'join';
+  schoolJoinNoCode = false;
   resultEl.style.display='block';
-  if (tc && code === tc) {
-    resultEl.style.color='#16a34a';
-    resultEl.textContent='확인되었습니다. 같은 학원 소속으로 가입됩니다.';
-    schoolChecked = true;
-    schoolJoinMode = 'join';
-    schoolJoinNoCode = false;
-  } else {
-    resultEl.style.color='#ef4444';
-    resultEl.textContent='코드가 일치하지 않습니다.';
-    schoolChecked = false;
-  }
+  resultEl.style.color='#16a34a';
+  resultEl.textContent='코드가 입력되었습니다. 가입을 완료하면 해당 학원에 자동으로 합류합니다.';
 }
 
 // 코드 없이 진행 → 비활성 계정으로 가입 (가입 후 코드 입력/관리자 승인 필요)
@@ -5599,9 +5555,9 @@ function doFirebaseSignup() {
   window.fbCreateUser(window.fbAuth, email, pw)
     .then(function(cred) {
       var uid = cred.user.uid;
-      // 코드 확인까지 끝낸 합류면 즉시 활성 교사로 생성, 그 외(코드없이 진행/신규 학원)는 비활성
-      var joinDocId = (schoolJoinInfo && (schoolJoinInfo.docId || schoolJoinInfo.schoolId)) || null;
-      var codeVerified = (schoolJoinMode === 'join' && !schoolJoinNoCode && !!schoolJoinInfo);
+      // [보안] 가입 시점엔 항상 비활성(inactive) teacher 로만 생성한다.
+      //   코드 합류는 가입 직후 서버 함수(joinByCode)가 코드 대조·만료·정원 검증 후
+      //   active 로 전환한다. (클라이언트가 role/status/schoolId 를 직접 쓰지 않음)
       var userDoc = {
         userId:    id,
         name:      name,
@@ -5609,14 +5565,9 @@ function doFirebaseSignup() {
         email:     email,
         phone:     phoneVerifiedNumber,
         role:      'teacher',
-        status:    codeVerified ? 'active' : 'inactive', // 코드 확인 시 즉시 활성, 아니면 관리자 승인 후 active
+        status:    'inactive',
         createdAt: new Date().toISOString()
       };
-      if (codeVerified && joinDocId) {
-        userDoc.schoolId = joinDocId;
-        userDoc.joinedViaCode = true;
-      }
-      window._signupActive = codeVerified;
       return window.fbSetDoc(window.fbDoc(window.fbDb, 'users', uid), userDoc).then(function() {
         // 아이디 중복확인용 경량 문서 (미인증 조회 가능)
         return window.fbSetDoc(window.fbDoc(window.fbDb, 'userIds', id), {
@@ -5625,12 +5576,31 @@ function doFirebaseSignup() {
       });
     })
     .then(function() {
+      // 코드가 입력돼 있으면 서버 합류 시도 (성공 시 active 전환)
+      var joinCode = window._signupJoinCode;
+      window._signupJoinCode = null;
+      window._signupActive = false;
+      window._signupJoinErr = null;
+      if (joinCode && window.fbCallable) {
+        return window.fbCallable('joinByCode')({ code: joinCode })
+          .then(function(){ window._signupActive = true; })
+          .catch(function(e){ window._signupJoinErr = (e && e.message) || '코드 합류에 실패했습니다.'; });
+      }
+    })
+    .then(function() {
       showLoading(false);
       showAuthError('');
       document.getElementById('loginScreen').style.display = 'none';
-      window._freshLogin = true; // 가입 직후 바로 비활성 계정 안내 화면 표시
-      showToast(window._signupActive ? '회원가입 완료! 바로 이용하실 수 있어요.' : '회원가입이 완료되었습니다!');
-      // 바로 로그인 처리 → 비활성 안내(showActivateScreen) 표시
+      window._freshLogin = true; // 가입 직후 안내/앱 화면 표시
+      if (window._signupActive) {
+        showToast('회원가입 완료! 학원에 합류했어요. 바로 이용하실 수 있어요.');
+      } else if (window._signupJoinErr) {
+        showToast('가입은 완료됐어요. 합류 실패: ' + window._signupJoinErr + ' 코드를 다시 확인해 합류해주세요.');
+        window._signupJoinErr = null;
+      } else {
+        showToast('회원가입이 완료되었습니다!');
+      }
+      // 바로 로그인 처리 → active 면 앱, 아니면 비활성 안내(showActivateScreen)
       if (window.fbAuth.currentUser) loadUserProfile(window.fbAuth.currentUser);
     })
     .catch(function(err) {
@@ -6293,28 +6263,24 @@ function submitActivateCode() {
     if (html) resultEl.innerHTML = msg; else resultEl.textContent = msg;
   }
 
-  // schoolNames 인덱스에서 코드 조회 (schools 직접 읽기 없음 — 합류 전엔 비멤버라 규칙상 학원 문서를 읽을 수 없음).
-  // teacherCode 우선 → 없으면 ownerCode. 인덱스의 docId/name으로 바로 합류한다.
-  // 학원 만료/비활성 검증은 합류 직후 loadUserProfile(본인 학원 읽기, 허용됨)에서 수행.
-  function lookupCode(field) {
-    return window.fbGetDocs(window.fbQuery(
-      window.fbCollection(window.fbDb, 'schoolNames'),
-      window.fbWhere(field, '==', code)
-    )).then(function(snap) {
-      if (snap.empty) return null;
-      var idx = snap.docs[0].data();
-      if (!idx || !idx.docId) return null;
-      return { docId: idx.docId, name: idx.name || '', role: (field === 'ownerCode' ? 'owner' : 'teacher') };
-    });
+  // [보안] 클라이언트에서 코드를 조회/검증하지 않는다(인덱스에 코드 없음).
+  //   서버 함수 joinByCode 가 schools 에서 코드 대조 + 만료/정원/active 검증 후
+  //   users 문서를 active 로 전환한다.
+  if (!window.fbCallable) {
+    showErr('합류 기능을 사용할 수 없습니다. 잠시 후 다시 시도해주세요.');
+    return;
   }
-
-  lookupCode('teacherCode').then(function(hit) {
-    return hit || lookupCode('ownerCode');
-  }).then(function(hit) {
-    if (!hit) { showErr('유효하지 않은 코드입니다.'); return; }
-    activateWithCode({ _id: hit.docId, name: hit.name }, hit.role);
+  window.fbCallable('joinByCode')({ code: code }).then(function(res) {
+    var d = (res && res.data) || {};
+    var roleLabel = d.role === 'owner' ? '원장' : '선생님';
+    resultEl.style.background = '#dcfce7'; resultEl.style.color = '#16a34a';
+    resultEl.textContent = (d.schoolName || '') + ' (' + roleLabel + ') 활성화 완료!';
+    setTimeout(function() {
+      document.getElementById('activateScreen').style.display = 'none';
+      loadUserProfile(activateUser.fbUser);
+    }, 1200);
   }).catch(function(err) {
-    showErr('오류: ' + (err && (err.code || err.message) || ''));
+    showErr(err && err.message ? err.message : '유효하지 않은 코드입니다.');
   });
 }
 
@@ -6455,98 +6421,22 @@ function _unusedActivateApplySave() {
 //  - 미사용 + 본인 소유 학원 있음 → 새 학원 X, 기존 학원 만료일 +plan.days 연장
 //  - 미사용 + 학원 없음 → 새 학원 생성
 function autoActivateFreeTrial(uid, profile, teachers, plan) {
-  var now = new Date();
-  var addDays = plan && plan.days ? plan.days : 14;
-  var expires = new Date(now.getTime() + addDays * 24 * 60 * 60 * 1000);
-  var expiresStr = expires.toISOString().slice(0, 10);
-
-  var schoolName = profile.schoolName || (profile.name + ' 학원');
-  var nameKey = normalizeSchoolKey(schoolName);
-
-  // 사용자 문서(freeTrialUsed) + 본인이 원장인 학원 동시 조회
-  return Promise.all([
-    window.fbGetDoc(window.fbDoc(window.fbDb, 'users', uid)),
-    window.fbGetDocs(window.fbQuery(
-      window.fbCollection(window.fbDb, 'schools'),
-      window.fbWhere('ownerUid', '==', uid)
-    ))
-  ]).then(function(res) {
-    var udata = (res[0] && res[0].exists()) ? res[0].data() : {};
-    var ownSnap = res[1];
-
-    // [공통] 이미 무료체험을 사용한 계정은 차단
-    if (udata.freeTrialUsed || (profile && profile.freeTrialUsed)) {
-      return Promise.reject({ code: 'free-trial-used', message: '이미 무료 체험을 사용하셨습니다.' });
-    }
-
-    // [케이스 2] 이미 본인 소유 학원이 있으면 → 새로 만들지 않고 기존 학원 만료일 연장
-    var existing = null;
-    if (ownSnap && ownSnap.forEach) {
-      ownSnap.forEach(function(d) {
-        var s = d.data();
-        if (!existing) { existing = { id: d.id, data: s }; return; }
-        // 학원이 여러 개면 만료일이 가장 늦은 학원을 연장 대상으로
-        var a = existing.data.expiresAt || '';
-        var b = s.expiresAt || '';
-        if (b > a) existing = { id: d.id, data: s };
-      });
-    }
-    if (existing) {
-      var exStr = existing.data.expiresAt || '';
-      var exDate = exStr ? new Date(exStr) : now;
-      // 만료 전이면 기존 만료일 기준 +addDays, 이미 만료면 오늘 기준 +addDays
-      var base = (exDate.getTime() > now.getTime()) ? exDate : now;
-      var newExp = new Date(base.getTime() + addDays * 24 * 60 * 60 * 1000);
-      var newExpStr = newExp.toISOString().slice(0, 10);
-      return Promise.all([
-        window.fbUpdateDoc(window.fbDoc(window.fbDb, 'schools', existing.id), { expiresAt: newExpStr }),
-        window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), { freeTrialUsed: true })
-      ]);
-    }
-
-    // [케이스 신규] 학원 없음 → 동일 학원명 인덱스 체크 후 새 학원 생성
-    return window.fbGetDoc(window.fbDoc(window.fbDb, 'schoolNames', nameKey)).then(function(idxSnap) {
-      if (idxSnap.exists() && idxSnap.data() && idxSnap.data().docId) {
-        return Promise.reject({ code: 'school-name-taken', message: '이미 등록된 학원명입니다. 같은 학원이면 선생님 코드로 가입해주세요.' });
-      }
-      // 코드 중복 방지용 기존 코드 수집: schools 전체 스캔 대신 공개 인덱스(schoolNames) 사용
-      return window.fbGetDocs(window.fbCollection(window.fbDb, 'schoolNames')).then(function(snap) {
-        var allCodes = [];
-        snap.forEach(function(d) {
-          var s = d.data();
-          if (s.ownerCode) allCodes.push(String(s.ownerCode).toUpperCase());
-          if (s.teacherCode) allCodes.push(String(s.teacherCode).toUpperCase());
-        });
-        var ownerCode   = generateUniqueCode(6, allCodes);
-        allCodes.push(ownerCode);
-        var teacherCode = generateUniqueCode(6, allCodes);
-
-        var schoolData = {
-          name:        schoolName,
-          ownerCode:   ownerCode,
-          teacherCode: teacherCode,
-          plan:        'free',
-          status:      'active',
-          teacherCount: (plan && plan.teacherLimit) || 10,
-          maxTeachers: (((plan && plan.teacherLimit) || 10) + 1),
-          expiresAt:   expiresStr,
-          createdAt:   now.toISOString().slice(0, 10),
-          ownerUid:    uid
-        };
-        return window.fbAddDoc(window.fbCollection(window.fbDb, 'schools'), schoolData).then(function(ref) {
-          writeSchoolNameIndex(schoolName, teacherCode, ref.id, ownerCode);
-          return window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), {
-            status:        'active',
-            role:          'owner',
-            schoolId:      ref.id,
-            schoolName:    schoolData.name,
-            ownerCode:     ownerCode,
-            freeTrialUsed: true
-          });
-        });
+  // [보안] 학원 생성/코드 발급/만료 연장은 전부 서버(createFreeTrialSchool)에서 수행.
+  //   - freeTrialUsed 검증, 동일 학원명 차단, 코드 충돌 회피(전체 schools 스캔)를 서버에서 처리.
+  //   - 클라이언트는 학원명만 전달하고, 서버가 users 문서를 active/원장으로 전환한다.
+  if (!window.fbCallable) {
+    return Promise.reject({ code: 'no-callable', message: '무료체험 기능을 사용할 수 없습니다. 잠시 후 다시 시도해주세요.' });
+  }
+  var schoolName = (profile && profile.schoolName)
+    || (profile && profile.name ? (profile.name + ' 학원') : '');
+  return window.fbCallable('createFreeTrialSchool')({ schoolName: schoolName })
+    .then(function(res) { return (res && res.data) || { ok: true }; })
+    .catch(function(e) {
+      return Promise.reject({
+        code: (e && e.code) || 'error',
+        message: (e && e.message) || '무료체험 처리 중 오류가 발생했습니다.'
       });
     });
-  });
 }
 
 // ── 구독 화면 ──────────────────────────────────────────────
