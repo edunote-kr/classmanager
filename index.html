@@ -475,6 +475,10 @@ window.fbPwResetSignInPhone = signInWithPhoneNumber;
 window.fbPwResetSignOut = signOut;
 window.fbPwResetCallable = function(name){ return httpsCallable(pwResetFunctions, name); };
 
+// 메인 로그인 세션 기준 Functions (슈퍼관리자 권한 검증이 필요한 callable용 — context.auth가 채워짐)
+const mainFunctions = getFunctions(app, 'asia-northeast3');
+window.fbCallable = function(name){ return httpsCallable(mainFunctions, name); };
+
 // 전역으로 노출
 window.fbAuth = auth;
 window.fbDb = db;
@@ -7872,7 +7876,7 @@ function loadAllUsers() {
       var statusColor = isActive ? '#16a34a' : '#ef4444';
       var statusBg = isActive ? '#dcfce7' : '#fee2e2';
       var statusText = isActive ? '활성' : '대기/비활성';
-      return '<div data-user-name="' + ((u.name||'')+' '+(u.userId||'')+' '+(u.schoolName||'')).replace(/"/g,'&quot;') + '" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc">'
+      return '<div data-urow="' + u.uid + '" data-uname="' + (u.name||u.userId||'이름없음').replace(/"/g,'&quot;') + '" data-user-name="' + ((u.name||'')+' '+(u.userId||'')+' '+(u.schoolName||'')).replace(/"/g,'&quot;') + '" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc">'
         + '<div>'
         + '<div style="font-size:13px;font-weight:700;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + (u.name||u.userId||'이름없음') + '</div>'
         + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'
@@ -7884,6 +7888,7 @@ function loadAllUsers() {
         + '<button id="aubtn-' + u.uid + '" onclick="toggleUserStatusDirect(\'' + u.uid + '\',\'' + (u.status||'inactive') + '\')" '
         + 'style="font-size:11px;background:' + (isActive ? '#fee2e2' : '#dcfce7') + ';color:' + (isActive ? '#dc2626' : '#16a34a') + ';border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-family:inherit">'
         + (isActive ? '비활성화' : '활성화') + '</button>'
+        + '<button onclick="deleteUserAccount(\'' + u.uid + '\',\'' + (u.role||'teacher') + '\')" title="삭제" style="font-size:11px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:4px 9px;cursor:pointer;font-family:inherit"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>'
         + '</div>'
         + '</div>';
     }).join('');
@@ -8019,14 +8024,17 @@ function showSchoolUsers(schoolId, schoolName) {
 
       document.getElementById('userModalList').innerHTML = users.map(function(u) {
         var isInactive = u.status !== 'active';
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px">'
+        return '<div data-umrow="' + u.uid + '" data-uname="' + (u.name||u.userId||'이름없음').replace(/"/g,'&quot;') + '" style="display:flex;align-items:center;justify-content:space-between;padding:10px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px">'
           + '<div>'
           + '<div style="font-size:13px;font-weight:700;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + (u.name||u.userId||'이름없음') + '</div>'
           + '<div style="font-size:11px;color:#94a3b8">' + (u.role||'teacher') + ' · ' + (u.userId||'') + '</div>'
           + '</div>'
+          + '<div style="display:flex;gap:6px;align-items:center">'
           + '<button id="umbtn-' + u.uid + '" onclick="toggleUserStatusInModal(\'' + u.uid + '\',\'' + (u.status||'inactive') + '\')" '
           + 'style="font-size:11px;background:' + (isInactive ? '#dcfce7' : '#fee2e2') + ';color:' + (isInactive ? '#16a34a' : '#dc2626') + ';border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-family:inherit;white-space:nowrap">'
           + (isInactive ? '활성화' : '비활성화') + '</button>'
+          + '<button onclick="deleteUserAccount(\'' + u.uid + '\',\'' + (u.role||'teacher') + '\')" title="삭제" style="font-size:11px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:4px 9px;cursor:pointer;font-family:inherit"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>'
+          + '</div>'
           + '</div>';
       }).join('');
     });
@@ -8056,6 +8064,49 @@ function toggleUserStatusInModal(uid, currentStatus) {
       if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
       showAdminToast('오류: ' + err.message, 'error');
     });
+}
+
+// 사용자 삭제 (슈퍼관리자).
+// Cloud Function(deleteUser)이 배포돼 있으면 Auth 계정 + Firestore 문서를 함께 삭제.
+// 미배포 시에는 Firestore users 문서만 삭제(fallback) — 이 경우 로그인 계정(아이디/비번)은 Auth에 잔존.
+function deleteUserAccount(uid, role) {
+  var sel = '[data-urow="' + uid + '"], [data-umrow="' + uid + '"]';
+  var row = document.querySelector(sel);
+  var who = (row && row.getAttribute('data-uname')) || uid;
+  var warn = (role === 'owner')
+    ? '\n\n※ 이 사용자는 원장입니다. 삭제해도 학원/학생 데이터는 남지만, 학원 소유자(ownerUid) 연결이 끊깁니다.'
+    : '';
+  if (!confirm('이 사용자를 삭제하시겠습니까?\n\n  ' + who + '  (' + (role || 'teacher') + ')' + warn
+      + '\n\n• 사용자 정보가 영구 삭제됩니다 (되돌릴 수 없음).\n• 삭제 기능(deleteUser)이 배포돼 있으면 로그인 계정까지 함께 삭제됩니다.')) return;
+  if (!confirm('한 번 더 확인합니다.\n"' + who + '" 을(를) 삭제할까요?')) return;
+
+  function removeRows() {
+    var nodes = document.querySelectorAll(sel);
+    for (var i = 0; i < nodes.length; i++) nodes[i].remove();
+  }
+  function fallbackDocDelete(note) {
+    window.fbDeleteDoc(window.fbDoc(window.fbDb, 'users', uid))
+      .then(function() {
+        showAdminToast('삭제 완료: ' + who + (note || ''));
+        removeRows();
+      })
+      .catch(function(e) { showAdminToast('오류: ' + (e && e.message || e), 'error'); });
+  }
+
+  var callable = window.fbCallable && window.fbCallable('deleteUser');
+  var p = callable ? callable({ uid: uid }) : Promise.reject({ code: 'no-callable' });
+
+  p.then(function() {
+    showAdminToast('삭제 완료 (로그인 계정 포함): ' + who);
+    removeRows();
+  }).catch(function(err) {
+    var c = (err && err.code) || '';
+    if (c.indexOf('permission-denied') >= 0) { showAdminToast('권한이 없습니다 (슈퍼관리자 전용).', 'error'); return; }
+    if (c.indexOf('failed-precondition') >= 0) { showAdminToast((err.message || '삭제할 수 없는 계정입니다.'), 'error'); return; }
+    if (c.indexOf('invalid-argument') >= 0) { showAdminToast((err.message || '입력값을 확인해주세요.'), 'error'); return; }
+    // 그 외(함수 미배포/내부오류 등) → 문서만 삭제 fallback
+    fallbackDocDelete(' (로그인 계정은 남았을 수 있음 — deleteUser 함수 배포 필요)');
+  });
 }
 
 function toggleUserStatus(uid, currentStatus, schoolId, schoolName) {
