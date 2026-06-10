@@ -483,6 +483,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/fireba
 import { getAuth, setPersistence, browserSessionPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 import { getFirestore, initializeFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, addDoc, deleteDoc, updateDoc, onSnapshot, deleteField } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-functions.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app-check.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAgSVfgqsbYwjLQI_yMv6-iA7DEfXjLaBE",
@@ -494,6 +495,25 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
+// ── App Check (reCAPTCHA v3) ────────────────────────────────────────────────
+// reCAPTCHA 관리(google.com/recaptcha/admin)에서 발급한 "사이트 키" 를 아래에 붙여넣으세요.
+// (비밀 키는 Firebase 콘솔 App Check 등록 화면에 넣고, 사이트 키만 여기 코드에 들어갑니다)
+// 키를 넣기 전(placeholder)에는 초기화하지 않으므로, 지금 배포해도 기존 동작에 영향 없음.
+// 키를 넣고 배포 → App Check 콘솔 metrics 에서 verified 요청 확인 → 그 다음 함수의
+// ENFORCE_APP_CHECK=true 배포 (순서 지켜야 사용자 잠금 방지).
+const APP_CHECK_SITE_KEY = "6LdRKBgtAAAAAGtNgLQN_Q1EinxCTRUADP7A5XHp";
+if (APP_CHECK_SITE_KEY && APP_CHECK_SITE_KEY.indexOf("PASTE_") !== 0) {
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(APP_CHECK_SITE_KEY),
+      isTokenAutoRefreshEnabled: true
+    });
+  } catch (e) {
+    console.error("App Check 초기화 실패:", e && (e.code || e.message));
+  }
+}
+
 const auth = getAuth(app);
 // WebChannel(Listen/channel) 연결이 불안정한 환경(맥 Safari, 추적방지 등) 대비:
 // long-polling 강제로 연결 안정성 확보 (변경 금지)
