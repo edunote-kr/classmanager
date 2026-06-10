@@ -1891,8 +1891,7 @@ onAuthStateChanged(auth, function(user) {
   <!-- ATTENDANCE PANEL (예정) -->
   <div class="panel" id="panel-attendance">
     <div class="card">
-      <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 출결 현황</div>
-      <button onclick="startKiosk()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:8px"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg> 출결 체크 모드 시작 (학생 코드 입력)<div style="font-size:10px;font-weight:600;opacity:0.9;margin-top:3px">등·하원 문자·알림톡 발송에만 사용됩니다</div></button>
+      <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 월별 출석부</div>
       <div style="font-size:11px;color:#94a3b8;margin:0 0 8px;line-height:1.5">출/결/지/보충 현황은 <b style="color:#64748b">전체 선생님</b>의 수업 입력 기준으로 통합됩니다. 학생을 눌러 달력으로 볼 수 있어요.</div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <select id="attYear" onchange="renderAttendance()" style="flex:1;min-width:90px;padding:9px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit"></select>
@@ -1932,6 +1931,37 @@ onAuthStateChanged(auth, function(user) {
       <div id="soonTitle" style="font-size:17px;font-weight:800;color:#475569;margin-bottom:6px">준비 중</div>
       <div style="font-size:13px;color:#94a3b8;line-height:1.6">해당 기능을 준비하고 있어요.<br>곧 만나요!</div>
       <div style="display:inline-block;margin-top:14px;font-size:11px;font-weight:700;color:#8b5cf6;background:#f5f3ff;border:1px solid #ddd6fe;padding:4px 12px;border-radius:20px">준비 중 (예정)</div>
+    </div>
+  </div>
+
+  <!-- 출결 처리 패널 -->
+  <div class="panel" id="panel-checkin">
+    <div class="card">
+      <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:5px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 출결 처리</div>
+      <button onclick="startKiosk()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:6px"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg> 키오스크 출결 모드 (학생 코드 입력)</button>
+      <div style="font-size:11px;color:#94a3b8;margin:0 0 10px;line-height:1.5">키오스크로 등·하원을 체크하거나, 아래에서 <b style="color:#64748b">수동</b>으로 처리할 수 있어요. 모든 재원생이 표시됩니다.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <input id="ciSearch" oninput="renderCiList()" placeholder="학생 검색 (이름·반)" style="flex:2;min-width:130px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+        <select id="ciGrade" onchange="renderCiList()" style="flex:1;min-width:90px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box"></select>
+        <select id="ciStatus" onchange="renderCiList()" style="flex:1;min-width:90px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box"><option value="">전체 상태</option><option value="none">미등원</option><option value="in">등원</option><option value="late">지각</option><option value="out">하원</option><option value="absent">결석</option></select>
+      </div>
+      <div id="ciDateLine" style="font-size:11px;font-weight:700;color:#0891b2;margin-bottom:2px"></div>
+      <div id="ciList"></div>
+    </div>
+  </div>
+
+  <!-- 출결 이력 패널 (조회 전용) -->
+  <div class="panel" id="panel-checkinlog">
+    <div class="card">
+      <div class="card-title" style="color:#2563eb"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:5px"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> 출결 이력 (조회)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <input type="date" id="clDate" onchange="clChangeDate()" style="flex:1;min-width:120px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+        <input id="clSearch" oninput="renderClList()" placeholder="학생 검색" style="flex:2;min-width:120px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box">
+        <select id="clGrade" onchange="renderClList()" style="flex:1;min-width:90px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box"></select>
+        <select id="clStatus" onchange="renderClList()" style="flex:1;min-width:90px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box"><option value="">전체 상태</option><option value="none">미등원</option><option value="in">등원</option><option value="late">지각</option><option value="out">하원</option><option value="absent">결석</option></select>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:6px">조회 전용입니다. 수동 처리·수정은 ‘출결 처리’에서 가능합니다.</div>
+      <div id="clList"></div>
     </div>
   </div>
 
@@ -3789,6 +3819,8 @@ function switchTab(tab) {
   else { if(_lessonPreviewOpen) setTimeout(renderLessonPreview,50); }
   navSyncActive(tab);
   if (tab==='dashboard') renderDashboard();
+  if (tab==='checkin')    enterCheckinManage();
+  if (tab==='checkinlog') enterCheckinHistory();
   if (tab==='list')     { updateStudentFilter(); renderList(); }
   if (tab==='notice')   renderNotices();
   if (tab==='stats')    loadClassAttendance(renderStats);
@@ -3850,7 +3882,8 @@ function navSelectLeaf(tab) {
   try { history.pushState({ navTab:tab }, ''); } catch(e) {}
 }
 function navSelectGroup(gid) {
-  _navOpenGroup = gid;
+  if (_navOpenGroup===gid && navGroupOf(activeTab)===gid) { _navCollapsed = !_navCollapsed; renderNav(); return; }
+  _navCollapsed = false; _navOpenGroup = gid;
   var g = NAV_GROUPS.filter(function(x){return x.id===gid;})[0];
   if (g && g.leaves && g.leaves.length) navSelectLeaf(g.leaves[0].id);
   else { renderNav(); }
@@ -5920,6 +5953,7 @@ function finishLogin(fbUser, profile) {
   var mb = document.getElementById('myPageBtn');
   if (mb) mb.style.display = 'none'; // 마이페이지는 탭으로 이동
   if (typeof renderNav==='function') renderNav();
+  if (!window._navLanded && typeof switchTab==='function'){ window._navLanded=true; switchTab('dashboard'); }
   var msgB = document.getElementById('myMsgBtn');
   if (msgB) msgB.style.display = 'inline-flex'; // 쪽지함 버튼 항상 표시
 
@@ -10964,8 +10998,8 @@ function showToast(msg, type='success') {
         {id:'notice', label:'알림장', count:'notice'},
         {id:'stats', label:'통계'} ]},
     { id:'attend', label:'출결관리', icon:I('<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'), leaves:[
-        {id:'checkin', label:'출결 처리', soon:true},
-        {id:'checkinlog', label:'출결 이력', soon:true},
+        {id:'checkin', label:'출결 처리'},
+        {id:'checkinlog', label:'출결 이력'},
         {id:'attendance', label:'월별 출석부'} ]},
     { id:'students', label:'원생관리', icon:I('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'), leaves:[
         {id:'students', label:'원생 목록'},
@@ -10998,8 +11032,9 @@ function showToast(msg, type='success') {
         {id:'sup-inquiry', label:'1:1 문의', action:'showMyPage'} ]}
   ];
 
-  var NAV_REAL_PANELS = {dashboard:1,input:1,list:1,notice:1,stats:1,attendance:1,students:1,teachers:1};
+  var NAV_REAL_PANELS = {dashboard:1,input:1,list:1,notice:1,stats:1,attendance:1,students:1,teachers:1,checkin:1,checkinlog:1};
   window._navOpenGroup = 'home';
+  window._navCollapsed = false;
 
   window.navLeafMeta = function(id){
     for (var i=0;i<NAV_GROUPS.length;i++){ var g=NAV_GROUPS[i];
@@ -11030,7 +11065,7 @@ function showToast(msg, type='success') {
   function renderSubRow(){
     var row=document.getElementById('navSubRow'); if(!row) return;
     var g=NAV_GROUPS.filter(function(x){return x.id===curGid();})[0];
-    if(!g){ row.innerHTML=''; return; }
+    if(!g || _navCollapsed){ row.innerHTML=''; return; }
     row.innerHTML = g.leaves.map(function(l){
       return '<button class="nav-schip'+(l.id===activeTab?' active':'')+'" onclick="navSelectLeaf(\''+l.id+'\')">'+l.label+leafExtra(l)+'</button>';
     }).join('');
@@ -11039,8 +11074,9 @@ function showToast(msg, type='success') {
     var nav=document.getElementById('sidebarNav'); if(!nav) return;
     var cur=curGid(), html='';
     visibleGroups().forEach(function(g){
-      var open=(g.id===cur);
-      html += '<button class="sb-group'+(open?' open active':'')+'" onclick="navSelectGroup(\''+g.id+'\')"><span class="sb-ico">'+g.icon+'</span><span>'+g.label+'</span><span class="sb-chev">&#9656;</span></button>';
+      var open=(g.id===cur && !_navCollapsed);
+      var isActive=(g.id===cur);
+      html += '<button class="sb-group'+(open?' open':'')+(isActive?' active':'')+'" onclick="navSelectGroup(\''+g.id+'\')"><span class="sb-ico">'+g.icon+'</span><span>'+g.label+'</span><span class="sb-chev">&#9656;</span></button>';
       if(open){
         html += '<div class="sb-sub">';
         g.leaves.forEach(function(l){
@@ -11052,6 +11088,7 @@ function showToast(msg, type='success') {
     nav.innerHTML = html;
   }
   window.navSyncActive = function(tab){
+    _navCollapsed=false;
     var gid=navGroupOf(tab); if(gid) _navOpenGroup=gid;
     renderGroupRow(); renderSubRow(); renderSidebar(); updateNavCounts();
   };
@@ -11098,6 +11135,126 @@ function showToast(msg, type='success') {
   };
 
   try { renderNav(); } catch(e){ console.warn('nav init', e); }
+})();
+</script>
+
+<script>
+/* ===== 출결 처리 / 출결 이력 (등하원 checkins 레이어) ===== */
+(function(){
+  var _ciDate='', _ciDay={}, _clDate='', _clDay={};
+
+  function _ciDocLoad(date, cb){
+    if (window.fbDb && currentSchoolId){
+      window.fbGetDoc(window.fbDoc(window.fbDb,'schools',currentSchoolId,'checkins',date)).then(function(snap){
+        cb((snap&&snap.exists&&snap.exists())?(snap.data()||{}):{});
+      }).catch(function(){ cb({}); });
+    } else {
+      var m={}; try{ m=JSON.parse(localStorage.getItem('kms_checkins_'+currentSchoolId+'_'+date)||'{}'); }catch(e){}
+      cb(m);
+    }
+  }
+  function _ciPersist(date, day, sid){
+    var obj={}; obj[sid]=day[sid];
+    if (window.fbDb && currentSchoolId) window.fbSetDocMerge(window.fbDoc(window.fbDb,'schools',currentSchoolId,'checkins',date), obj).catch(function(){});
+    try{ localStorage.setItem('kms_checkins_'+currentSchoolId+'_'+date, JSON.stringify(day)); }catch(e){}
+  }
+  function _hm2(ms){ if(!ms) return ''; var d=new Date(ms); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+
+  function ciStatus(rec){
+    if(!rec) return {k:'none',l:'미등원',c:'#94a3b8',bg:'#f1f5f9'};
+    if(rec.absent) return {k:'absent',l:'결석',c:'#dc2626',bg:'#fef2f2'};
+    if(rec.outAt) return {k:'out',l:'하원',c:'#2563eb',bg:'#eff6ff'};
+    if(rec.inAt) return rec.late ? {k:'late',l:'지각',c:'#d97706',bg:'#fffbeb'} : {k:'in',l:'등원',c:'#059669',bg:'#ecfdf5'};
+    return {k:'none',l:'미등원',c:'#94a3b8',bg:'#f1f5f9'};
+  }
+  function _gradeOpts(sel){
+    var seen={}, gs=[];
+    (students||[]).forEach(function(s){ var g=(s&&s.grade)||''; if(g&&!seen[g]){seen[g]=1;gs.push(g);} });
+    gs.sort(function(a,b){return String(a).localeCompare(String(b),'ko');});
+    var h='<option value="">전체 학년</option>';
+    gs.forEach(function(g){ h+='<option value="'+g+'"'+(g===sel?' selected':'')+'>'+g+'</option>'; });
+    return h;
+  }
+  function _esc(s){ return (typeof escapeNotice==='function')?escapeNotice(s):String(s==null?'':s); }
+  function _filtered(stat){
+    var q=((document.getElementById(stat?'clSearch':'ciSearch')||{}).value||'').trim().toLowerCase();
+    var gv=((document.getElementById(stat?'clGrade':'ciGrade')||{}).value||'');
+    var sv=((document.getElementById(stat?'clStatus':'ciStatus')||{}).value||'');
+    var day=stat?_clDay:_ciDay;
+    return (students||[]).filter(function(s){
+      if(!s) return false;
+      if(gv && (s.grade||'')!==gv) return false;
+      if(q){ var hay=((s.name||'')+' '+(s.className||'')).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+      if(sv){ if(ciStatus(day[String(s.id)]).k!==sv) return false; }
+      return true;
+    }).sort(function(a,b){ return String(a.className||'').localeCompare(String(b.className||''),'ko')||String(a.name||'').localeCompare(String(b.name||''),'ko'); });
+  }
+
+  // ── 출결 처리(수동) ──
+  window.enterCheckinManage=function(){
+    _ciDate=todayStr();
+    var g=document.getElementById('ciGrade'); if(g) g.innerHTML=_gradeOpts(g.value||'');
+    var dl=document.getElementById('ciDateLine'); if(dl) dl.textContent='오늘 · '+_ciDate;
+    _ciDocLoad(_ciDate, function(m){ _ciDay=m||{}; renderCiList(); });
+  };
+  window.renderCiList=function(){
+    var el=document.getElementById('ciList'); if(!el) return;
+    var list=_filtered(false);
+    if(!list.length){ el.innerHTML='<div style="text-align:center;color:#94a3b8;padding:26px;font-size:13px">표시할 학생이 없습니다.</div>'; return; }
+    el.innerHTML=list.map(function(s){
+      var sid=String(s.id), rec=_ciDay[sid], st=ciStatus(rec);
+      var times=''; if(rec){ var ti=_hm2(rec.inAt), to=_hm2(rec.outAt); if(ti) times+='등 '+ti; if(to) times+=(times?' · ':'')+'하 '+to; }
+      function btn(act,lab,bg){ return '<button onclick="ciManual(\''+sid+'\',\''+act+'\')" style="border:none;border-radius:7px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;background:'+bg+'">'+lab+'</button>'; }
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap">'
+        +'<div style="min-width:120px;flex:1"><div style="font-size:14px;font-weight:800;color:#1e293b">'+_esc(s.name)+'</div>'
+        +'<div style="font-size:11px;color:#94a3b8">'+_esc(s.className||'')+(s.grade?(' · '+_esc(s.grade)):'')+'</div></div>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;min-width:74px"><span style="font-size:11px;font-weight:800;color:'+st.c+';background:'+st.bg+';padding:2px 9px;border-radius:9px">'+st.l+'</span>'
+        +(times?'<span style="font-size:10px;color:#94a3b8;margin-top:3px">'+times+'</span>':'')+'</div>'
+        +'<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">'
+        + btn('in','등원','#059669')+btn('late','지각','#d97706')+btn('out','하원','#2563eb')+btn('absent','결석','#dc2626')
+        + '<button onclick="ciManual(\''+sid+'\',\'cancel\')" style="border:1px solid #e2e8f0;border-radius:7px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:#64748b;background:#fff">출석취소</button>'
+        +'</div></div>';
+    }).join('');
+  };
+  window.ciManual=function(sid,act){
+    var stu=(students||[]).find(function(s){return String(s.id)===String(sid);}); if(!stu) return;
+    var rec=_ciDay[sid]||{name:stu.name,inAt:0,outAt:0,late:false,absent:false};
+    rec.name=stu.name; var now=Date.now();
+    if(act==='in'){ rec.inAt=now; rec.late=false; rec.absent=false; rec.outAt=0; }
+    else if(act==='late'){ rec.inAt=now; rec.late=true; rec.absent=false; rec.outAt=0; }
+    else if(act==='out'){ rec.outAt=now; rec.absent=false; if(!rec.inAt) rec.inAt=now; }
+    else if(act==='absent'){ rec.absent=true; rec.inAt=0; rec.outAt=0; rec.late=false; }
+    else if(act==='cancel'){ rec={name:stu.name,inAt:0,outAt:0,late:false,absent:false}; }
+    _ciDay[sid]=rec; _ciPersist(_ciDate,_ciDay,sid); renderCiList();
+  };
+
+  // ── 출결 이력(조회 전용) ──
+  window.enterCheckinHistory=function(){
+    if(!_clDate) _clDate=todayStr();
+    var dp=document.getElementById('clDate'); if(dp && !dp.value) dp.value=_clDate;
+    var g=document.getElementById('clGrade'); if(g) g.innerHTML=_gradeOpts(g.value||'');
+    _ciDocLoad(_clDate, function(m){ _clDay=m||{}; renderClList(); });
+  };
+  window.clChangeDate=function(){
+    var dp=document.getElementById('clDate'); _clDate=(dp&&dp.value)||todayStr();
+    _ciDocLoad(_clDate, function(m){ _clDay=m||{}; renderClList(); });
+  };
+  window.renderClList=function(){
+    var el=document.getElementById('clList'); if(!el) return;
+    var list=_filtered(true);
+    if(!list.length){ el.innerHTML='<div style="text-align:center;color:#94a3b8;padding:26px;font-size:13px">표시할 학생이 없습니다.</div>'; return; }
+    el.innerHTML=list.map(function(s){
+      var sid=String(s.id), rec=_clDay[sid], st=ciStatus(rec);
+      var ti=rec?_hm2(rec.inAt):'', to=rec?_hm2(rec.outAt):'';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #f1f5f9">'
+        +'<div style="flex:1;min-width:120px"><div style="font-size:14px;font-weight:800;color:#1e293b">'+_esc(s.name)+'</div>'
+        +'<div style="font-size:11px;color:#94a3b8">'+_esc(s.className||'')+(s.grade?(' · '+_esc(s.grade)):'')+'</div></div>'
+        +'<div style="text-align:center;min-width:54px"><div style="font-size:10px;color:#94a3b8">등원</div><div style="font-size:13px;font-weight:700;color:'+(ti?'#059669':'#cbd5e1')+'">'+(ti||'—')+'</div></div>'
+        +'<div style="text-align:center;min-width:54px"><div style="font-size:10px;color:#94a3b8">하원</div><div style="font-size:13px;font-weight:700;color:'+(to?'#2563eb':'#cbd5e1')+'">'+(to||'—')+'</div></div>'
+        +'<span style="font-size:11px;font-weight:800;color:'+st.c+';background:'+st.bg+';padding:2px 9px;border-radius:9px;min-width:42px;text-align:center">'+st.l+'</span>'
+        +'</div>';
+    }).join('');
+  };
 })();
 </script>
 
