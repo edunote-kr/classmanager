@@ -502,7 +502,7 @@ const app = initializeApp(firebaseConfig);
 // 키를 넣기 전(placeholder)에는 초기화하지 않으므로, 지금 배포해도 기존 동작에 영향 없음.
 // 키를 넣고 배포 → App Check 콘솔 metrics 에서 verified 요청 확인 → 그 다음 함수의
 // ENFORCE_APP_CHECK=true 배포 (순서 지켜야 사용자 잠금 방지).
-const APP_CHECK_SITE_KEY = "PASTE_RECAPTCHA_V3_SITE_KEY";
+const APP_CHECK_SITE_KEY = "6LdRKBgtAAAAAGtNgLQN_Q1EinxCTRUADP7A5XHp";
 if (APP_CHECK_SITE_KEY && APP_CHECK_SITE_KEY.indexOf("PASTE_") !== 0) {
   try {
     initializeAppCheck(app, {
@@ -9082,7 +9082,7 @@ function openChargeFromNav() {
   if (typeof isOwnerOrAdmin==='function' && !isOwnerOrAdmin()) { showToast('충전은 원장 계정에서 가능합니다.','error'); return; }
   if (!window.fbAuth || !window.fbAuth.currentUser) { showToast('로그인이 필요합니다.','error'); return; }
   var u = window.fbAuth.currentUser;
-  function _go(profile){ showSubscribeScreen(u, profile||{}, 'extend'); setTimeout(function(){ if(typeof openCreditPurchase==='function') openCreditPurchase(); }, 220); }
+  function _go(profile){ showSubscribeScreen(u, profile||{}, 'extend'); if(typeof openCreditPurchase==='function') openCreditPurchase(); }
   window.fbGetDoc(window.fbDoc(window.fbDb,'users',u.uid)).then(function(snap){ _go(snap.exists()?snap.data():{}); }).catch(function(){ _go({}); });
 }
 
