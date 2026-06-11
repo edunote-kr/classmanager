@@ -914,6 +914,16 @@ onAuthStateChanged(auth, function(user) {
       </div>
       <div id="phoneVerified" style="display:none;color:#16a34a;font-size:12px;font-weight:700;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> 휴대폰 인증 완료!</div>
       <div id="recaptcha-container"></div>
+      <div id="signupConsentBox" style="margin-bottom:12px;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;background:#f8fafc;box-sizing:border-box">
+        <label style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;cursor:pointer;margin-bottom:7px;line-height:1.4">
+          <input type="checkbox" id="signupAgreePrivacy" style="margin-top:1px;flex-shrink:0">
+          <span><b style="color:#4f46e5">[필수]</b> 개인정보 수집·이용에 동의합니다. <a onclick="openPrivacyPolicy()" style="color:#6366f1;text-decoration:underline;cursor:pointer">전문 보기</a></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;cursor:pointer;line-height:1.4">
+          <input type="checkbox" id="signupAgreeMarketing" style="margin-top:1px;flex-shrink:0">
+          <span><b style="color:#94a3b8">[선택]</b> 혜택·서비스 안내 등 마케팅 정보 수신에 동의합니다.</span>
+        </label>
+      </div>
       <button onclick="doFirebaseSignup()" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px">회원가입</button>
       <!-- 구분선 (구글 가입 임시 숨김) -->
       <div style="display:none;align-items:center;gap:8px;margin-bottom:10px">
@@ -5221,6 +5231,7 @@ function clearSignupForm() {
   var vs=document.getElementById('verificationSection'); if(vs) vs.style.display='none';
   var pv=document.getElementById('phoneVerified'); if(pv) pv.style.display='none';
   var box=document.getElementById('schoolCodeBox'); if(box) box.style.display='none';
+  ['signupAgreePrivacy','signupAgreeMarketing'].forEach(function(id){ var el=document.getElementById(id); if(el) el.checked=false; });
   // 상태 플래그 리셋
   idChecked=false; schoolChecked=false; schoolJoinMode='new'; schoolJoinInfo=null;
   confirmationResult=null; phoneVerifiedNumber=null;
@@ -5710,6 +5721,9 @@ function doFirebaseSignup() {
   if (!schoolChecked) { showAuthError('학원명 중복확인을 해주세요. (이미 등록된 학원이면 선생님 코드 확인까지 필요)'); return; }
   if (!phoneVerifiedNumber) { showAuthError('휴대폰 인증을 완료해주세요.'); return; }
   if (pw.length < 6) { showAuthError('비밀번호는 6자리 이상이어야 합니다.'); return; }
+  var agreePrivacyEl = document.getElementById('signupAgreePrivacy');
+  if (!agreePrivacyEl || !agreePrivacyEl.checked) { showAuthError('개인정보 수집·이용에 동의해주세요. (필수)'); return; }
+  var agreeMarketing = !!(document.getElementById('signupAgreeMarketing') && document.getElementById('signupAgreeMarketing').checked);
   var email = id + '@edunote.kr';
   showLoading(true);
   window._signupInProgress = true; // 가입 흐름이 끝날 때까지 자동 프로필 로드 차단
@@ -5728,7 +5742,11 @@ function doFirebaseSignup() {
         phone:     phoneVerifiedNumber,
         role:      'teacher',
         status:    'inactive',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        consentPrivacy: true,
+        consentMarketing: agreeMarketing,
+        consentPolicyVersion: 'EduNote-PP-2026-06-11',
+        consentAt: new Date().toISOString()
       };
       return window.fbSetDoc(window.fbDoc(window.fbDb, 'users', uid), userDoc).then(function() {
         // 아이디 중복확인용 경량 문서 (미인증 조회 가능)
@@ -11477,6 +11495,69 @@ function showToast(msg, type='success') {
     }).join('');
   };
 })();
+</script>
+<!-- ── 개인정보 처리방침 모달 (최상위 고정, 로그인 모달 위) ────────────── -->
+<div id="privacyPolicyModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:10001;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;flex-shrink:0">
+      <span style="font-size:15px;font-weight:800;color:#1e293b">개인정보 처리방침</span>
+      <button onclick="closePrivacyPolicy()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;color:#64748b;font-family:inherit">✕</button>
+    </div>
+    <div style="padding:18px 20px;overflow-y:auto;font-size:12.5px;line-height:1.7;color:#334155">
+      <p style="margin:0 0 14px">EduNote(이하 &quot;서비스&quot;)는 「개인정보 보호법」 등 관련 법령을 준수하며, 이용자의 개인정보를 보호하기 위해 다음과 같이 개인정보 처리방침을 둡니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제1조 (개인정보의 처리 목적)</h4>
+      <p style="margin:0">회원 가입 및 관리, 본인확인, 서비스 제공, 요금 정산, 고객 문의 응대, 공지·안내를 위하여 개인정보를 처리합니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제2조 (수집하는 개인정보 항목)</h4>
+      <p style="margin:0">① 회원(원장·선생님) 가입 시: 아이디, 비밀번호, 이름, 휴대폰번호, 이메일, 학원명.<br>
+      ② 서비스 이용 중 생성: 접속 일시, 이용 기록.<br>
+      ③ 결제 시(추후 도입): 결제수단 정보는 결제대행사(PG)를 통해 처리되며, 서비스는 카드정보를 저장하지 않습니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제3조 (학생 정보의 처리 — 위탁 관계)</h4>
+      <p style="margin:0">① 학원이 입력하는 학생의 개인정보(이름, 연락처, 출결·과제 기록 등)에 대하여는 해당 <b>학원이 개인정보처리자</b>이며, 서비스는 이를 <b>수탁받아 처리</b>합니다.<br>
+      ② 학생 및 법정대리인으로부터 개인정보 수집·이용 동의를 받을 책임은 해당 학원에 있습니다.<br>
+      ③ 서비스는 학원의 지시 범위 내에서만 학생 정보를 처리하며, 위탁 목적 외로 이용하지 않습니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제4조 (만 14세 미만 아동의 개인정보)</h4>
+      <p style="margin:0">① 서비스는 만 14세 미만 아동의 회원가입을 받지 않습니다(회원은 원장·선생님).<br>
+      ② 학원이 입력하는 만 14세 미만 학생 정보에 대하여는 학원이 법정대리인의 동의를 확보해야 합니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제5조 (보유·이용 기간 및 파기)</h4>
+      <p style="margin:0">① 회원 탈퇴 시 회원 및 관련 하위 데이터를 지체 없이 삭제·파기합니다.<br>
+      ② 다만 관계 법령에 따라 보존이 필요한 거래·결제 기록 등은 해당 법정 기간 동안 보관합니다(추후 결제 도입 시 반영).</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제6조 (제3자 제공 및 처리위탁)</h4>
+      <p style="margin:0">① 서비스는 법령에 근거하거나 이용자 동의가 있는 경우를 제외하고 개인정보를 제3자에게 제공하지 않습니다.<br>
+      ② 안정적 서비스 제공을 위해 다음 업무를 위탁합니다:<br>
+      &nbsp;&nbsp;• Google LLC (Firebase): 인증·데이터 저장·서버 인프라<br>
+      &nbsp;&nbsp;• 【SMS/알림톡 발송 대행사】: 알림 발송 (추후 도입 시)<br>
+      &nbsp;&nbsp;• 【결제대행사(PG)】: 결제 처리 (추후 도입 시)</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제7조 (정보주체의 권리)</h4>
+      <p style="margin:0">이용자는 자신의 개인정보에 대한 열람·정정·삭제·처리정지를 요청할 수 있으며, 서비스 내 기능 또는 아래 연락처를 통해 행사할 수 있습니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제8조 (안전성 확보 조치)</h4>
+      <p style="margin:0">접근권한 관리, 전송구간 암호화(HTTPS), 인증·접근통제(Firebase Auth·App Check), 최소수집 원칙을 적용합니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제9조 (개인정보 보호책임자 및 사업자 정보)</h4>
+      <p style="margin:0">• 개인정보 보호책임자: 【성명】 (연락처: 【이메일/전화】)<br>
+      • 상호: 【사업자 상호】 / 대표자: 【성명】<br>
+      • 주소: 【사업장 주소】 / 사업자등록번호: 【등록번호】<br>
+      <span style="color:#94a3b8;font-size:11px">※ 사업자 등록 완료 후 위 【】 항목을 채워주세요.</span></p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제10조 (고지의무)</h4>
+      <p style="margin:0">본 방침은 2026년 【 】월 【 】일부터 시행하며, 변경 시 서비스 내 공지합니다.<br>
+      방침 버전: EduNote-PP-2026-06-11</p>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid #e2e8f0;flex-shrink:0;text-align:right">
+      <button onclick="closePrivacyPolicy()" style="background:#4f46e5;color:#fff;border:none;border-radius:9px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">확인</button>
+    </div>
+  </div>
+</div>
+<script>
+  window.openPrivacyPolicy = function(){ var m=document.getElementById('privacyPolicyModal'); if(m) m.style.display='flex'; };
+  window.closePrivacyPolicy = function(){ var m=document.getElementById('privacyPolicyModal'); if(m) m.style.display='none'; };
 </script>
 </body>
 </html>
