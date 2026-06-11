@@ -5521,6 +5521,19 @@ function filterUserList() {
   });
 }
 
+// checkJoinCode 결과 reason → 사용자 메시지
+function joinCodeErrMsg(d) {
+  switch (d && d.reason) {
+    case 'owner':    return '등록 불가능한 코드입니다. (원장 코드로는 가입할 수 없습니다)';
+    case 'mismatch': return '입력한 학원과 코드가 일치하지 않습니다.';
+    case 'invalid':  return '유효하지 않은 코드입니다.';
+    case 'expired':  return '학원 이용 기간이 만료되었습니다. 원장님께 문의해주세요.';
+    case 'inactive': return '현재 이용할 수 없는 학원입니다. 원장님께 문의해주세요.';
+    case 'full':     return '선생님 정원이 가득 찼습니다. 원장님께 문의해주세요.';
+    default:         return '등록 불가능한 코드입니다.';
+  }
+}
+
 // 학원명 or 코드 통합 확인: 코드 형식(5~8자 영문+숫자)이면 바로 코드 조회, 아니면 학원명 중복확인
 function checkSchoolOrCode() {
   var val = (document.getElementById('signupSchool').value || '').trim();
@@ -5532,20 +5545,34 @@ function checkSchoolOrCode() {
   // 코드 형식 판별: 영문+숫자만으로 5~8자
   var isCodeFormat = /^[A-Za-z0-9]{5,8}$/.test(val);
   if (isCodeFormat) {
-    // [보안] 코드는 더 이상 클라이언트에서 조회/검증하지 않는다(인덱스에 코드 없음).
-    //   가입(inactive 생성) 직후 서버 함수 joinByCode 가 코드를 대조·합류시킨다.
-    //   학원명을 노출하지 않아 코드 유효성 oracle 도 막는다.
+    // [v⑩] 코드 직입: 서버 checkJoinCode 로 즉시 검증(선생님 코드만 합류, 원장 코드 차단). 학원명도 함께 표시.
     var resultEl = document.getElementById('schoolCheckResult');
     var box = document.getElementById('schoolCodeBox');
     if (box) box.style.display='none';
-    window._signupJoinCode = val.toUpperCase();
-    schoolChecked = true;
-    schoolJoinMode = 'join';
-    schoolJoinNoCode = false;
-    schoolJoinInfo = { byCode: true };
-    resultEl.style.display='block';
-    resultEl.style.color='#16a34a';
-    resultEl.textContent='코드가 입력되었습니다. 가입을 완료하면 해당 학원에 자동으로 합류합니다.';
+    schoolChecked = false; window._signupJoinCode = null;
+    if (!window.fbCallable) {
+      resultEl.style.display='block'; resultEl.style.color='#ef4444';
+      resultEl.textContent='잠시 후 다시 시도해주세요.'; return;
+    }
+    resultEl.style.display='block'; resultEl.style.color='#94a3b8'; resultEl.textContent='코드 확인 중...';
+    window.fbCallable('checkJoinCode')({ code: val.toUpperCase() }).then(function(res){
+      var d = (res && res.data) || {};
+      if (d.ok && d.joinable) {
+        window._signupJoinCode = val.toUpperCase();
+        schoolChecked = true; schoolJoinMode = 'join'; schoolJoinNoCode = false;
+        schoolJoinInfo = { byCode: true };
+        resultEl.style.color='#16a34a';
+        resultEl.textContent='「' + (d.schoolName || '해당 학원') + '」 확인됨 · 가입 완료 시 선생님으로 합류합니다.';
+      } else {
+        schoolChecked = false; window._signupJoinCode = null;
+        resultEl.style.color='#ef4444';
+        resultEl.textContent = joinCodeErrMsg(d);
+      }
+    }).catch(function(e){
+      schoolChecked = false; window._signupJoinCode = null;
+      resultEl.style.color='#ef4444';
+      resultEl.textContent = '코드 확인 실패: ' + ((e && e.message) || '다시 시도해주세요.');
+    });
   } else {
     // 학원명으로 처리
     window._signupJoinCode = null;
@@ -5597,15 +5624,30 @@ function verifySchoolCode() {
     resultEl.style.display='block'; resultEl.style.color='#ef4444'; resultEl.textContent='코드를 입력해주세요.';
     return;
   }
-  // [보안] 클라이언트에서 코드를 검증하지 않는다(인덱스에 코드 없음).
-  //   입력값만 보관하고, 가입 직후 서버(joinByCode)가 대조·합류시킨다.
-  window._signupJoinCode = code;
-  schoolChecked = true;
-  schoolJoinMode = 'join';
-  schoolJoinNoCode = false;
-  resultEl.style.display='block';
-  resultEl.style.color='#16a34a';
-  resultEl.textContent='코드가 입력되었습니다. 가입을 완료하면 해당 학원에 자동으로 합류합니다.';
+  // [v⑩] 서버 checkJoinCode 로 즉시 검증. 학원명 입력 경로라 schoolId 도 함께 보내 해당 학원 코드인지 대조.
+  schoolChecked = false; window._signupJoinCode = null;
+  if (!window.fbCallable) {
+    resultEl.style.display='block'; resultEl.style.color='#ef4444'; resultEl.textContent='잠시 후 다시 시도해주세요.'; return;
+  }
+  var schoolId = (schoolJoinInfo && schoolJoinInfo.docId) ? schoolJoinInfo.docId : null;
+  resultEl.style.display='block'; resultEl.style.color='#94a3b8'; resultEl.textContent='코드 확인 중...';
+  window.fbCallable('checkJoinCode')({ code: code, schoolId: schoolId }).then(function(res){
+    var d = (res && res.data) || {};
+    if (d.ok && d.joinable) {
+      window._signupJoinCode = code;
+      schoolChecked = true; schoolJoinMode = 'join'; schoolJoinNoCode = false;
+      resultEl.style.color='#16a34a';
+      resultEl.textContent='「' + (d.schoolName || '해당 학원') + '」 확인됨 · 가입 완료 시 선생님으로 합류합니다.';
+    } else {
+      schoolChecked = false; window._signupJoinCode = null;
+      resultEl.style.color='#ef4444';
+      resultEl.textContent = joinCodeErrMsg(d);
+    }
+  }).catch(function(e){
+    schoolChecked = false; window._signupJoinCode = null;
+    resultEl.style.color='#ef4444';
+    resultEl.textContent = '코드 확인 실패: ' + ((e && e.message) || '다시 시도해주세요.');
+  });
 }
 
 // 코드 없이 진행 → 비활성 계정으로 가입 (가입 후 코드 입력/관리자 승인 필요)
