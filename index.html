@@ -914,6 +914,10 @@ onAuthStateChanged(auth, function(user) {
       <div id="recaptcha-container"></div>
       <div id="signupConsentBox" style="margin-bottom:12px;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;background:#f8fafc;box-sizing:border-box">
         <label style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;cursor:pointer;margin-bottom:7px;line-height:1.4">
+          <input type="checkbox" id="signupAgreeTerms" style="margin-top:1px;flex-shrink:0">
+          <span><b style="color:#4f46e5">[필수]</b> 이용약관에 동의합니다. <a onclick="openTermsOfService()" style="color:#6366f1;text-decoration:underline;cursor:pointer">전문 보기</a></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#334155;cursor:pointer;margin-bottom:7px;line-height:1.4">
           <input type="checkbox" id="signupAgreePrivacy" style="margin-top:1px;flex-shrink:0">
           <span><b style="color:#4f46e5">[필수]</b> 개인정보 수집·이용에 동의합니다. <a onclick="openPrivacyPolicy()" style="color:#6366f1;text-decoration:underline;cursor:pointer">전문 보기</a></span>
         </label>
@@ -5229,7 +5233,7 @@ function clearSignupForm() {
   var vs=document.getElementById('verificationSection'); if(vs) vs.style.display='none';
   var pv=document.getElementById('phoneVerified'); if(pv) pv.style.display='none';
   var box=document.getElementById('schoolCodeBox'); if(box) box.style.display='none';
-  ['signupAgreePrivacy','signupAgreeMarketing'].forEach(function(id){ var el=document.getElementById(id); if(el) el.checked=false; });
+  ['signupAgreeTerms','signupAgreePrivacy','signupAgreeMarketing'].forEach(function(id){ var el=document.getElementById(id); if(el) el.checked=false; });
   // 상태 플래그 리셋
   idChecked=false; schoolChecked=false; schoolJoinMode='new'; schoolJoinInfo=null;
   confirmationResult=null; phoneVerifiedNumber=null;
@@ -5719,6 +5723,8 @@ function doFirebaseSignup() {
   if (!schoolChecked) { showAuthError('학원명 중복확인을 해주세요. (이미 등록된 학원이면 선생님 코드 확인까지 필요)'); return; }
   if (!phoneVerifiedNumber) { showAuthError('휴대폰 인증을 완료해주세요.'); return; }
   if (pw.length < 6) { showAuthError('비밀번호는 6자리 이상이어야 합니다.'); return; }
+  var agreeTermsEl = document.getElementById('signupAgreeTerms');
+  if (!agreeTermsEl || !agreeTermsEl.checked) { showAuthError('이용약관에 동의해주세요. (필수)'); return; }
   var agreePrivacyEl = document.getElementById('signupAgreePrivacy');
   if (!agreePrivacyEl || !agreePrivacyEl.checked) { showAuthError('개인정보 수집·이용에 동의해주세요. (필수)'); return; }
   var agreeMarketing = !!(document.getElementById('signupAgreeMarketing') && document.getElementById('signupAgreeMarketing').checked);
@@ -5741,6 +5747,8 @@ function doFirebaseSignup() {
         role:      'teacher',
         status:    'inactive',
         createdAt: new Date().toISOString(),
+        consentTerms: true,
+        consentTermsVersion: 'EduNote-TOS-2026-06-11',
         consentPrivacy: true,
         consentMarketing: agreeMarketing,
         consentPolicyVersion: 'EduNote-PP-2026-06-11',
@@ -11493,6 +11501,99 @@ function showToast(msg, type='success') {
     }).join('');
   };
 })();
+</script>
+<!-- ── 이용약관 모달 (최상위 고정, 로그인 모달 위) ────────────────────── -->
+<div id="termsModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:10001;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;flex-shrink:0">
+      <span style="font-size:15px;font-weight:800;color:#1e293b">이용약관</span>
+      <button onclick="closeTermsOfService()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;color:#64748b;font-family:inherit">✕</button>
+    </div>
+    <div style="padding:18px 20px;overflow-y:auto;font-size:12.5px;line-height:1.7;color:#334155">
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:0 0 6px">제1조 (목적)</h4>
+      <p style="margin:0">이 약관은 EduNote(이하 &quot;서비스&quot;)가 제공하는 학원 과제·출결·수업 관리 서비스의 이용과 관련하여 서비스와 이용자 간 권리·의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제2조 (정의)</h4>
+      <p style="margin:0">① &quot;회원&quot;: 약관에 동의하고 이용계약을 체결한 자(원장·선생님).<br>
+      ② &quot;플랜&quot;: 베이직/프로/프리미엄 등 기능 범위에 따른 유료 구독 상품.<br>
+      ③ &quot;크레딧&quot;: 문자·알림톡 발송에 사용되는 선불 충전식 이용권.<br>
+      ④ &quot;무료체험&quot;: 일정 기간 무료로 제공되는 시험 이용.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제3조 (약관의 게시 및 변경)</h4>
+      <p style="margin:0">① 서비스는 본 약관을 회원이 확인할 수 있도록 게시합니다.<br>
+      ② 관련 법령을 위배하지 않는 범위에서 약관을 변경할 수 있으며, 변경 시 적용일자·사유를 명시하여 사전 공지합니다. 회원에게 불리한 변경은 최소 7일(중대한 경우 30일) 전 공지합니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제4조 (이용계약의 체결)</h4>
+      <p style="margin:0">① 이용계약은 가입 신청자가 약관에 동의하고 서비스가 이를 승낙함으로써 성립합니다.<br>
+      ② 타인의 정보 도용·허위 기재 시 이용이 제한될 수 있습니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제5조 (서비스의 제공)</h4>
+      <p style="margin:0">① 서비스는 과제·출결·수업/반 관리, 알림 발송 등의 기능을 제공합니다.<br>
+      ② 연중무휴 제공을 원칙으로 하나, 점검·장애·천재지변 등으로 일시 중단될 수 있으며 사전 또는 사후 공지합니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제6조 (유료서비스 및 결제)</h4>
+      <p style="margin:0">① 회원은 무료체험 종료 후 플랜을 구독하여 유료서비스를 이용할 수 있습니다.<br>
+      ② 플랜 요금·제공 기능·포함 알림 건수는 서비스 내 안내에 따릅니다.<br>
+      ③ 결제는 서비스가 지정한 결제수단(결제대행사 PG 등)을 통해 이루어지며, 정기결제(자동갱신) 상품은 해지 전까지 약정 주기로 자동 결제됩니다.<br>
+      ④ 회원은 다음 결제일 이전에 해지하여 자동갱신을 중단할 수 있습니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제7조 (크레딧)</h4>
+      <p style="margin:0">① 크레딧은 선불 충전식이며, 문자·알림톡 발송 시 건당 차감됩니다.<br>
+      ② 크레딧은 플랜 구독과 별개로 충전·관리됩니다.<br>
+      ③ 충전 크레딧의 유효기간은 충전일로부터 【 】(예: 1년)이며, 경과 시 소멸될 수 있습니다(구체 기간은 서비스 내 안내).<br>
+      ④ 이미 발송에 사용(소비)된 크레딧은 환불 대상에서 제외됩니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제8조 (청약철회 및 환불)</h4>
+      <p style="margin:0">① 회원은 관련 법령(전자상거래 등에서의 소비자보호에 관한 법률 등)에 따라 청약철회를 할 수 있습니다.<br>
+      <b>② 플랜(구독) 환불</b><br>
+      &nbsp;&nbsp;1. 결제 후 서비스를 전혀 이용하지 않은 경우, 결제일로부터 7일 이내 전액 환불을 요청할 수 있습니다.<br>
+      &nbsp;&nbsp;2. 이용을 개시한 경우, 잔여 이용기간에 해당하는 금액을 일할 계산하여 환불합니다(이미 제공된 부분·할인·혜택 적용분은 공제될 수 있음).<br>
+      <b>③ 크레딧 환불</b><br>
+      &nbsp;&nbsp;1. 미사용 잔여 크레딧은 환불을 요청할 수 있습니다.<br>
+      &nbsp;&nbsp;2. 단, 이미 발송에 소비된 크레딧 및 충전 시 제공된 무상·보너스 크레딧은 제외됩니다.<br>
+      &nbsp;&nbsp;3. 환불 시 결제대행 수수료 등 실비가 공제될 수 있습니다.<br>
+      ④ 회원의 약관 위반 등 귀책으로 계약이 해지되는 경우 환불이 제한될 수 있습니다.<br>
+      ⑤ 환불은 회원이 결제한 수단으로 처리함을 원칙으로 합니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제9조 (이용제한 및 계약 해지)</h4>
+      <p style="margin:0">① 회원이 약관·법령을 위반하거나 서비스 운영을 방해하는 경우, 이용을 제한하거나 계약을 해지할 수 있습니다.<br>
+      ② 해지 전 회원에게 통지하며, 긴급한 경우 사후 통지할 수 있습니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제10조 (회원 탈퇴)</h4>
+      <p style="margin:0">① 회원은 언제든지 서비스 내 기능을 통해 탈퇴할 수 있습니다.<br>
+      ② 탈퇴 시 회원 및 관련 데이터는 지체 없이 삭제·파기됩니다(법령상 보존 의무가 있는 경우 해당 기간 보관). 원장 회원의 학원에 다른 구성원이 있는 경우 구성원 정리 후 탈퇴가 가능합니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제11조 (학생 정보의 처리)</h4>
+      <p style="margin:0">① 학원이 입력하는 학생 개인정보에 대하여는 해당 학원이 개인정보처리자이며, 서비스는 이를 수탁받아 처리합니다.<br>
+      ② 학생 및 법정대리인의 동의 확보 책임은 해당 학원(회원)에 있습니다. 자세한 사항은 개인정보 처리방침에 따릅니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제12조 (이용자의 의무)</h4>
+      <p style="margin:0">① 회원은 계정 정보를 안전하게 관리할 책임이 있으며, 제3자에게 양도·대여할 수 없습니다.<br>
+      ② 회원은 서비스를 법령·약관 및 공서양속에 반하지 않게 이용해야 합니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제13조 (책임의 제한)</h4>
+      <p style="margin:0">① 천재지변, 회원의 귀책, 제3자(통신사·결제대행사·발송대행사 등)의 사유로 인한 손해에 대하여 책임이 제한될 수 있습니다.<br>
+      ② 서비스는 회원이 입력·게시한 데이터의 정확성에 대하여 책임지지 않습니다.<br>
+      ③ 본 조는 관련 법령이 허용하는 범위 내에서 적용됩니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">제14조 (분쟁 해결 및 관할)</h4>
+      <p style="margin:0">① 분쟁은 상호 협의로 해결하며, 협의가 어려운 경우 관련 법령 및 상관례에 따릅니다.<br>
+      ② 본 약관은 대한민국 법률에 따르며, 분쟁의 관할법원은 민사소송법에 따른 법원으로 합니다.</p>
+
+      <h4 style="font-size:13px;font-weight:800;color:#4f46e5;margin:16px 0 6px">부칙</h4>
+      <p style="margin:0">본 약관은 2026년 【 】월 【 】일부터 시행합니다.<br>
+      약관 버전: EduNote-TOS-2026-06-11<br>
+      사업자 정보: 【상호】 / 대표자 【성명】 / 사업자등록번호 【번호】 / 주소 【주소】 / 문의 【연락처】<br>
+      <span style="color:#94a3b8;font-size:11px">※ 사업자 등록 완료 후 위 【】 항목과 시행일·크레딧 유효기간을 채워주세요.</span></p>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid #e2e8f0;flex-shrink:0;text-align:right">
+      <button onclick="closeTermsOfService()" style="background:#4f46e5;color:#fff;border:none;border-radius:9px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">확인</button>
+    </div>
+  </div>
+</div>
+<script>
+  window.openTermsOfService = function(){ var m=document.getElementById('termsModal'); if(m) m.style.display='flex'; };
+  window.closeTermsOfService = function(){ var m=document.getElementById('termsModal'); if(m) m.style.display='none'; };
 </script>
 <!-- ── 개인정보 처리방침 모달 (최상위 고정, 로그인 모달 위) ────────────── -->
 <div id="privacyPolicyModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:10001;padding:20px;box-sizing:border-box">
