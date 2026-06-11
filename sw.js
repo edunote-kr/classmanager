@@ -1,45 +1,46 @@
-const CACHE_NAME = 'kms-cache-v1';
-const STATIC_ASSETS = [
-  '/classmanager/',
-  '/classmanager/index.html',
-];
+/* EduNote 서비스워커 — network-first (staleness 방지판)
+ * 온라인이면 항상 네트워크 최신본을 표시 → 새 배포 즉시 반영.
+ * 오프라인일 때만 마지막 캐시로 폴백. 외부(Firebase/gstatic/폰트)는 캐시하지 않음.
+ */
+var CACHE = 'edunote-v1';
+var SHELL = ['./', './index.html'];
 
-// 설치: 정적 파일 캐시
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+self.addEventListener('install', function (e) {
+  self.skipWaiting(); // 새 워커 즉시 대기 해제
+  e.waitUntil(
+    caches.open(CACHE).then(function (c) { return c.addAll(SHELL).catch(function(){}); })
   );
-  self.skipWaiting();
 });
 
-// 활성화: 이전 캐시 삭제
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
-
-// 요청 처리: 네트워크 우선, 실패 시 캐시
-self.addEventListener('fetch', event => {
-  // Google Apps Script 요청은 캐시 안 함
-  if (event.request.url.includes('script.google.com')) return;
-
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        // 성공 시 캐시 업데이트
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        return response;
+self.addEventListener('activate', function (e) {
+  e.waitUntil(
+    caches.keys()
+      .then(function (keys) {
+        return Promise.all(keys.filter(function (k) { return k !== CACHE; })
+                              .map(function (k) { return caches.delete(k); }));
       })
-      .catch(() => {
-        // 오프라인 시 캐시에서
-        return caches.match(event.request);
+      .then(function () { return self.clients.claim(); })
+  );
+});
+
+self.addEventListener('fetch', function (e) {
+  var req = e.request;
+  if (req.method !== 'GET') return;                 // 쓰기/콜러블 등은 패스
+  var url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;  // 외부(Firebase 등) 캐시 안 함
+
+  // 동일 출처 GET: 네트워크 우선, 성공 시 캐시 갱신, 실패 시 캐시→index.html 폴백
+  e.respondWith(
+    fetch(req)
+      .then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { c.put(req, copy); }).catch(function(){});
+        return res;
+      })
+      .catch(function () {
+        return caches.match(req).then(function (m) {
+          return m || caches.match('./index.html');
+        });
       })
   );
 });

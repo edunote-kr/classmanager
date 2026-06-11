@@ -6,23 +6,21 @@
 <meta name="theme-color" content="#6366f1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="KMS 과제관리">
+<meta name="apple-mobile-web-app-title" content="EduNote">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
 <title>에듀노트 · 학원 과제관리</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366f1'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='22' font-weight='900' fill='white' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E">
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABcElEQVR42u2bPUvDUBSG33v9QLHSQUG3/g+d9ReIq4iig+AiLqIOKkUQl6JLoX8q/g0d2mqhUKybtJKkSZB+3POcrZBbeJ/7nJMmaZxy1NFJs68ZqEa97LIe60IJXRSGDzl8lgwu1OBZbfBWwidl81bCJ2X0Ml7e0u7HZfXWwv+FQAtYB+As6o8BAADAb83/x5c83JW0uTF+lrXXjqKohwEAmHQLXN9+Dn3e31vS7s5i6pqLy7aarfxn4JurFVUqcxgAAAAAYHqG4DjrvvqFASYMWF/zeqyWJEndbl9n521mAAAAENAMeH5axQAAWG6BUVeDg6dBDAAAAOz9FH7/+NbxaQsDAAAAANgcgkm1vbWgw4NlSVL01lPtpYMBAAAAACY7BIs8HueGCC0wHcW/xGgBABgHkOcFo9CqUS87DACA8r1nF5L+QwZYgjCYlRZIImNh92MNCBlCXLbUsKFcJ6Rtqi+6MITwIw2YVSPybNwPE61v3Kici6AAAAAASUVORK5CYII=">
-<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAADNUlEQVR42u3dsWqTURjH4XM+GwpKk2vQVcfkGkQRFL2EQkcRQRAXcS4UcTOSVVzaqXTUC9BRL0H3oqhRsU6uIWm+JOe83/PMHULy8+9b/ao5FWJ37/QsUa3JeJBLeB1ZwEQKPIuYSHFnERMp7ixkIoWdhUyksBsxs0ltN5OFTKS1bsRMpLVuxEykqLOQiXSCNGIm0lo3YiZS1I2YiRR14+0ikqbtXyGwyZVuxEykqBsxEylqNzTduKGtMzWudCNmIkXt5CD2yWGdqXmlLTRxF9o6U/tKW2hi39AQImjnBhHODguNkwOKDtq5QZSzw0Lj5ABBwxpk9zMWGgQNggZBI2gQNAgaVmir5hd/sL+T+v3sU2zR8xff08dPfyw0CBoEDYJG0CBoEDS0peo/h3746OtCX//k8aV05fIFn7qgmcf7D7/Ty1c/in19t25upzu3t50cIGgQNAgaBI2gQdAgaBA0CBpBg6BB0LAoT9t1yPHJNB2fTC00CBoEDW7oTrl3dzvduD77p06ePvuWPn/5a6FB0CBoEDQIGkGDoEHQIGgQNIKG+niWo0WjYS+Nhj1vhIUGQYOgETQIGgQNggZBE5S/WGnROv5bt3l+SNZCg6BB0CBoEDSCBkGDoEHQIGgEDdXyLEdlDo+m6fBo6o2w0AgaBA2CBkGDoBE0CBoEDYIGQROTZzk65trVrfTg/sWZX/P6zc/09t0vCw2CBkGDoBE0CBoEDYIGQSNoEDQIGgQN/3narkWjYS+Nhj1vhKDP52B/J/X72aeIkwNBg6BB0CBoEDSChnLl3b3TM28DFhoEDYIGQSNoEDQIGgQNcwQ9GQ88IU8Ik/EgW2icHCBoWFfQ7mgi3M8WGicHVBG0s4Pazw0LjZMDqgna2UHN54aFJv7JYaWpdZ0tNN34ptBKU+M6z1xoUVNbzE4OunFyWGlqXOe5FlrU1BLz3CeHqKkhZjc03bqhrTQ1rfPCCy1qSo75XCeHqCk15pRSWipO/1g6pYTcyjeF1pqSYl46aFFTUsxLnxxOEEoJubWFttaU1MzKArTWbGL8Vr6owmadv4uv9UQQt4hXbWM3r7hFHCpogQt4Ff4BDSfq9BcP45wAAAAASUVORK5CYII=">
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png">
 <script>
-  // 이전 서비스워커가 옛 페이지를 캐시해 새 배포(파비콘 등)가 안 보이는 문제 방지:
-  // 등록된 서비스워커를 해제하고 캐시를 정리한다. (Firestore 기반이라 오프라인 캐시 불필요)
+  // PWA 서비스워커 등록 (network-first: 온라인이면 항상 최신 배포 표시 → 과거 stale 캐시 문제 해소).
+  //   오프라인일 때만 마지막 캐시로 폴백. 외부(Firebase 등) 요청은 캐시하지 않음.
+  //   ※ 롤백 필요 시: register 한 줄을 navigator.serviceWorker.getRegistrations()...unregister() 로 되돌리면 됨.
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations()
-      .then(function(regs){ regs.forEach(function(r){ r.unregister(); }); })
-      .catch(function(){});
-  }
-  if (window.caches && caches.keys) {
-    caches.keys().then(function(keys){ keys.forEach(function(k){ caches.delete(k); }); }).catch(function(){});
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
   }
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800;900&display=swap" rel="stylesheet">
