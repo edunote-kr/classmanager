@@ -785,7 +785,7 @@ onAuthStateChanged(auth, function(user) {
         </div>
         <div style="margin-bottom:14px">
           <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">문의 내용</label>
-          <textarea id="csMessage" placeholder="문의 내용을 입력해주세요" rows="4" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:none"></textarea>
+          <textarea id="csMessage" placeholder="문의 내용을 입력해주세요" rows="4" maxlength="4000" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:none"></textarea>
         </div>
         <button onclick="submitInquiry()" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">문의 보내기</button>
         <div id="csResult" style="display:none;text-align:center;margin-top:10px;font-size:12px;font-weight:700;color:#16a34a"></div>
@@ -1163,7 +1163,7 @@ onAuthStateChanged(auth, function(user) {
     <!-- 답장 -->
     <div style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:14px">
       <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px">답장 / 추가 문의</div>
-      <textarea id="msgReplyText" placeholder="답장 내용을 입력하세요" rows="3" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:none;margin-bottom:8px"></textarea>
+      <textarea id="msgReplyText" placeholder="답장 내용을 입력하세요" rows="3" maxlength="4000" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:none;margin-bottom:8px"></textarea>
       <button id="msgReplyBtn" onclick="sendMessageReply()" style="width:100%;padding:11px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">답장 보내기</button>
     </div>
   </div>
@@ -1998,7 +1998,7 @@ onAuthStateChanged(auth, function(user) {
 <!-- 1:1 문의 (로그인 사용자용) -->
     <div style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:14px">
       <div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:8px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 1:1 문의</div>
-      <textarea id="myInquiryMessage" placeholder="문의 내용을 입력해주세요" rows="3" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:none;margin-bottom:8px"></textarea>
+      <textarea id="myInquiryMessage" placeholder="문의 내용을 입력해주세요" rows="3" maxlength="4000" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:none;margin-bottom:8px"></textarea>
       <button onclick="submitMyInquiry()" style="width:100%;padding:11px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">문의 보내기</button>
       <div id="myInquiryResult" style="display:none;text-align:center;margin-top:8px;font-size:12px;font-weight:700;color:#16a34a"></div>
     </div>
