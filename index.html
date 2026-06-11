@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="styles.css">
 <script src="utils.js"></script>
 <script src="state.js"></script>
+<script src="core.js"></script>
 <script src="notices.js"></script>
 <script src="kiosk.js"></script>
 <script src="attendance.js"></script>
@@ -2696,8 +2697,7 @@ async function init(){
     showToast('오프라인 모드 - 캐시 사용중','info');
   }).then(function(){showLoading(false);});
 }
-function recKey() { return 'kms_records_'+(currentUser||'_'); }
-function stuKey() { return 'kms_students_'+(currentUser||'_'); }
+// ── recKey/stuKey → core.js ──
 function persist() {
   localStorage.setItem(recKey(), JSON.stringify(records));
   // Firestore에도 저장 (Firebase 모드)
@@ -7090,22 +7090,7 @@ function drawLogoToCanvas(size, callback) {
   img.src = src;
 }
 
-function isOwnerOrAdmin() {
-  return currentRole === 'owner' || currentRole === 'superadmin';
-}
-
-function getRoleBadge() {
-  if (currentRole === 'superadmin') return '관리자';
-  if (currentRole === 'owner') return '원장님';
-  if (currentRole === 'teacher') return '선생님';
-  return '';
-}
-
-function getRoleBadgeColor() {
-  if (currentRole === 'superadmin') return { bg: '#f59e0b', color: '#1e293b' };
-  if (currentRole === 'owner')      return { bg: '#6366f1', color: '#fff' };
-  return { bg: '#e2e8f0', color: '#475569' };
-}
+// ── 역할 헬퍼(isOwnerOrAdmin/getRoleBadge/getRoleBadgeColor) → core.js ──
 
 // ── 마이페이지 ─────────────────────────────────────────────
 var myLogoBase64 = null;
