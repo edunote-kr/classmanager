@@ -1,0 +1,35 @@
+/* EduNote utils.js — 의존 없는 공통 유틸 (전역 함수).
+   index.html 의 메인 스크립트보다 먼저 로드되어 전역에 정의된다.
+   ※ 순수 함수만(모놀리스 상태/함수 비참조). 분리 1단계 산출물. */
+function isCode4(c) { return /^\d{4}$/.test(c); }
+function gradeLevel(g){ g=String(g||''); if(/초/.test(g))return '초등'; if(/중/.test(g))return '중등'; if(/고/.test(g))return '고등'; return '기타'; }
+function todayStr() {
+  // 로컬(예: KST) 기준 날짜. toISOString은 UTC라 새벽 시간대에 하루 어긋나므로 보정.
+  var d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+function formatDate(d) { return d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}); }
+function escapeNotice(s){ if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escapeInq(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeAdmin(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function generateCode(length) {
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var code = '';
+  for (var i = 0; i < length; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+function escapeMsg(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
