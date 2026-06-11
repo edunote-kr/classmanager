@@ -1331,7 +1331,7 @@ onAuthStateChanged(auth, function(user) {
   <div class="panel" id="panel-teachers">
     <div class="card">
       <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 선생님 관리</div>
-      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 12px;line-height:1.5">선생님 이름·휴대폰과 <b>출퇴근 코드(휴대폰 뒷 4자리)</b>입니다. 선생님은 출결 키오스크에 이 4자리를 입력해 출근·퇴근합니다.</div>
+      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 12px;line-height:1.5">선생님 <b>휴대폰·출퇴근 코드(4자리)</b>를 입력·관리합니다. 선생님은 출결 키오스크에 이 4자리를 입력해 출근·퇴근하고, 퇴원 선생님은 아래 목록에서 관리합니다.</div>
       <input id="teacherSearch" oninput="filterTeacherRoster()" placeholder="선생님 검색 (이름·휴대폰·코드)" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:12px">
       <div id="teacherRosterList" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
@@ -1941,44 +1941,146 @@ function loadSchoolTeachers() {
     _schoolTeachers = [];
     snap.forEach(function(d){
       var u = d.data();
-      if (u.role === 'teacher') _schoolTeachers.push({ uid: d.id, name: u.name || u.userId, userId: u.userId, phone: u.phone || '' });
+      if (u.role === 'teacher') _schoolTeachers.push({ uid: d.id, name: u.name || u.userId, userId: u.userId, phone: u.phone || '', status: u.status || 'active' });
     });
   }).catch(function(){ /* 선생님 목록 실패해도 학생 표시는 진행 */ });
 }
 
 // uid → 선생님 이름
 function phoneLast4(p){ var d=String(p||'').replace(/\D/g,''); return d.length>=4 ? d.slice(-4) : ''; }
+function _tMeta(){ return (currentSchoolProfile && currentSchoolProfile.teacherMeta) || {}; }
+function teacherMetaFor(uid){ var m=_tMeta()[uid]||{}; return { phone: m.phone||'', code4: m.code4||'' }; }
+function _teacherEffPhone(t){ var m=teacherMetaFor(t.uid); return m.phone || t.phone || ''; }
+function _teacherCode(t){ return teacherMetaFor(t.uid).code4 || ''; }
+function teacherLimitNum(){
+  var L = currentSchoolProfile && currentSchoolProfile.teacherLimit;
+  if (typeof L==='number') return L;
+  var plan = (currentSchoolProfile && currentSchoolProfile.plan) || 'free';
+  return (typeof PLANS!=='undefined' && PLANS[plan] && PLANS[plan].teacherLimit) || 10;
+}
+function _activeTeachers(){ return (_schoolTeachers||[]).filter(function(t){ return t.status!=='inactive'; }); }
+function _inactiveTeachers(){ return (_schoolTeachers||[]).filter(function(t){ return t.status==='inactive'; }); }
+function _escAttr(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function _tByName(a,b){ return String(a.name||'').localeCompare(String(b.name||''),'ko'); }
+
+window._teacherEditUid = null;
+window._teacherInactiveOpen = false;
+
 function renderTeacherRoster(){
   if (typeof loadSchoolTeachers==='function') loadSchoolTeachers().then(_drawTeacherRoster);
   else _drawTeacherRoster();
 }
+function filterTeacherRoster(){ _drawTeacherRoster(); }
+function toggleInactiveTeachers(){ window._teacherInactiveOpen=!window._teacherInactiveOpen; _drawTeacherRoster(); }
+function startTeacherEdit(uid){ window._teacherEditUid=uid; _drawTeacherRoster(); }
+function cancelTeacherEdit(){ window._teacherEditUid=null; _drawTeacherRoster(); }
+
 function _drawTeacherRoster(){
   var el=document.getElementById('teacherRosterList'); if(!el) return;
   var q=((document.getElementById('teacherSearch')||{}).value||'').trim().toLowerCase();
-  var list=(_schoolTeachers||[]).slice().sort(function(a,b){ return String(a.name||'').localeCompare(String(b.name||''),'ko'); });
+  var active=_activeTeachers().slice().sort(_tByName);
+  var inactive=_inactiveTeachers().slice().sort(_tByName);
   var stuCodes={}; (typeof students!=='undefined'&&students?students:[]).forEach(function(s){ if(s&&s.code4) stuCodes[String(s.code4)]=true; });
-  var tCount={}; list.forEach(function(t){ var c=phoneLast4(t.phone); if(c) tCount[c]=(tCount[c]||0)+1; });
-  var rows=list.filter(function(t){
-    if(!q) return true;
-    var hay=((t.name||'')+' '+(t.phone||'')+' '+phoneLast4(t.phone)).toLowerCase();
-    return hay.indexOf(q)>=0;
-  });
-  if(!rows.length){ el.innerHTML='<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">'+(q?'검색 결과가 없습니다.':'등록된 선생님이 없습니다.')+'</div>'; return; }
-  el.innerHTML=rows.map(function(t){
-    var code=phoneLast4(t.phone);
-    var dup = code && (stuCodes[code] || tCount[code]>1);
-    var codeHtml = code
-      ? '<div style="font-family:monospace;font-size:16px;font-weight:800;letter-spacing:2px;color:'+(dup?'#dc2626':'#0891b2')+';background:'+(dup?'#fef2f2':'#ecfeff')+';border-radius:8px;padding:4px 12px">'+code+'</div>'
-      : '<div style="font-size:12px;color:#94a3b8">미설정</div>';
-    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid #e2e8f0;border-radius:10px">'
-      +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:#1e293b">'+escapeNotice(t.name||'')+'</div>'
-      +'<div style="font-size:12px;color:#64748b;margin-top:2px">'+(t.phone?escapeNotice(t.phone):'휴대폰 미등록')+'</div>'
-      +(dup?'<div style="font-size:11px;color:#dc2626;margin-top:3px;font-weight:600">⚠ 학생·다른 선생님 코드와 중복 — 키오스크 인식 불가</div>':'')+'</div>'
-      +'<div style="text-align:center;flex-shrink:0"><div style="font-size:10px;color:#94a3b8;margin-bottom:3px">출퇴근 코드</div>'+codeHtml+'</div>'
-      +'</div>';
-  }).join('');
+  var tCount={}; active.forEach(function(t){ var c=_teacherCode(t); if(c) tCount[c]=(tCount[c]||0)+1; });
+  function match(t){ if(!q) return true; var hay=((t.name||'')+' '+_teacherEffPhone(t)+' '+_teacherCode(t)).toLowerCase(); return hay.indexOf(q)>=0; }
+
+  var limit=teacherLimitNum();
+  var topHtml='<div style="display:flex;align-items:center;justify-content:space-between;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px 14px;margin-bottom:12px">'
+    +'<span style="font-size:12px;font-weight:700;color:#0369a1">활성 선생님</span>'
+    +'<span style="font-size:14px;font-weight:900;color:#0891b2">'+active.length+' <span style="font-size:12px;color:#94a3b8;font-weight:700">/ '+limit+'명</span></span>'
+    +'</div>';
+
+  var aRows=active.filter(match);
+  var aHtml = aRows.length ? aRows.map(function(t){ return _teacherCard(t,false,stuCodes,tCount); }).join('')
+    : '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">'+(q?'검색 결과가 없습니다.':'활성 선생님이 없습니다.')+'</div>';
+
+  var iRows=inactive.filter(match);
+  var inacHtml='<div style="margin-top:14px;border-top:1px dashed #e2e8f0;padding-top:12px">'
+    +'<button onclick="toggleInactiveTeachers()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 12px;cursor:pointer;font-family:inherit">'
+    +'<span style="font-size:12px;font-weight:700;color:#64748b">퇴원 선생님 ('+inactive.length+')</span>'
+    +'<span style="font-size:11px;color:#94a3b8">'+(window._teacherInactiveOpen?'감추기 \u25B2':'펼치기 \u25BC')+'</span></button>'
+    + (window._teacherInactiveOpen ? '<div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">'
+        + (iRows.length ? iRows.map(function(t){ return _teacherCard(t,true,stuCodes,tCount); }).join('')
+                        : '<div style="text-align:center;color:#cbd5e1;padding:14px;font-size:12px">'+(q?'검색 결과 없음':'퇴원 선생님이 없습니다.')+'</div>')
+        + '</div>' : '')
+    +'</div>';
+
+  el.innerHTML = topHtml + '<div style="display:flex;flex-direction:column;gap:8px">'+aHtml+'</div>' + inacHtml;
 }
-function filterTeacherRoster(){ _drawTeacherRoster(); }
+
+function _teacherCard(t,isInactive,stuCodes,tCount){
+  var editing=(window._teacherEditUid===t.uid);
+  var phone=_teacherEffPhone(t), code=_teacherCode(t);
+  var dup=!isInactive && code && (stuCodes[code] || tCount[code]>1);
+  if(editing){
+    return '<div style="border:1.5px solid #0891b2;border-radius:10px;padding:12px;background:#f0fdff">'
+      +'<div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:8px">'+escapeNotice(t.name||'')+'</div>'
+      +'<label style="font-size:11px;color:#64748b;font-weight:700">휴대폰</label>'
+      +'<input id="tedit-phone-'+t.uid+'" value="'+_escAttr(phone)+'" placeholder="예: 010-1234-5678" style="width:100%;box-sizing:border-box;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;margin:3px 0 8px">'
+      +'<label style="font-size:11px;color:#64748b;font-weight:700">출퇴근 코드(4자리)</label>'
+      +'<input id="tedit-code-'+t.uid+'" value="'+_escAttr(code)+'" maxlength="4" inputmode="numeric" placeholder="0000" style="width:100%;box-sizing:border-box;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;margin:3px 0 10px">'
+      +'<div style="display:flex;gap:6px">'
+      +'<button onclick="saveTeacherEdit(\''+t.uid+'\')" style="flex:1;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">저장</button>'
+      +'<button onclick="cancelTeacherEdit()" style="flex:1;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>'
+      +'</div></div>';
+  }
+  var codeHtml=code
+    ? '<span style="font-family:monospace;font-size:15px;font-weight:800;letter-spacing:2px;color:'+(dup?'#dc2626':'#0891b2')+';background:'+(dup?'#fef2f2':'#ecfeff')+';border-radius:7px;padding:3px 10px">'+code+'</span>'
+    : '<span style="font-size:12px;color:#94a3b8">코드 미설정</span>';
+  var actions=isInactive
+    ? '<button onclick="setTeacherActive(\''+t.uid+'\',true)" style="background:#dcfce7;color:#15803d;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">활성화</button>'
+    : '<button onclick="startTeacherEdit(\''+t.uid+'\')" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:7px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">수정</button>'
+      +'<button onclick="setTeacherActive(\''+t.uid+'\',false)" style="background:#fff7ed;color:#c2410c;border:none;border-radius:7px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">퇴원</button>';
+  return '<div style="display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid #e2e8f0;border-radius:10px;'+(isInactive?'opacity:.7;background:#fafafa':'')+'">'
+    +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:#1e293b">'+escapeNotice(t.name||'')+'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-top:2px">'+(phone?escapeNotice(phone):'휴대폰 미설정')+'</div>'
+    +(dup?'<div style="font-size:11px;color:#dc2626;margin-top:3px;font-weight:600">\u26A0 코드 중복 — 키오스크 인식 불가</div>':'')+'</div>'
+    +'<div style="text-align:center;flex-shrink:0">'+codeHtml+'</div>'
+    +'<div style="display:flex;gap:5px;flex-shrink:0">'+actions+'</div>'
+    +'</div>';
+}
+
+function saveTeacherEdit(uid){
+  var phone=((document.getElementById('tedit-phone-'+uid)||{}).value||'').trim();
+  var code=((document.getElementById('tedit-code-'+uid)||{}).value||'').trim();
+  if(code){
+    if(!/^\d{4}$/.test(code)){ showToast('출퇴근 코드는 4자리 숫자로 입력해주세요.','error'); return; }
+    var stuDup=(typeof students!=='undefined'&&students?students:[]).some(function(s){ return s&&String(s.code4)===code; });
+    if(stuDup){ showToast('이미 학생이 사용 중인 코드입니다.','error'); return; }
+    var tDup=(_schoolTeachers||[]).some(function(t){ return t.uid!==uid && _teacherCode(t)===code; });
+    if(tDup){ showToast('다른 선생님이 사용 중인 코드입니다.','error'); return; }
+  }
+  saveTeacherMeta(uid, { phone: phone, code4: code });
+}
+function saveTeacherMeta(uid, meta){
+  if(!window.fbDb || !currentSchoolId){ showToast('저장 실패: 학원 정보를 찾을 수 없습니다.','error'); return; }
+  var val={ phone: meta.phone||'', code4: meta.code4||'' };
+  var update={}; update['teacherMeta.'+uid]=val;
+  window.fbUpdateDoc(window.fbDoc(window.fbDb,'schools',currentSchoolId), update).then(function(){
+    if(!currentSchoolProfile.teacherMeta) currentSchoolProfile.teacherMeta={};
+    currentSchoolProfile.teacherMeta[uid]=val;
+    window._teacherEditUid=null;
+    showToast('저장되었습니다.');
+    _drawTeacherRoster();
+  }).catch(function(e){ showToast('저장 실패: '+((e&&(e.code||e.message))||''),'error'); });
+}
+function setTeacherActive(uid, active){
+  var t=(_schoolTeachers||[]).find(function(x){return x.uid===uid;});
+  var nm=t?t.name:'선생님';
+  if(!active){ if(!confirm(nm+' 선생님을 퇴원(비활성) 처리할까요?\n로그인이 차단되고 정원에서 제외됩니다. (삭제 아님 · 다시 활성화 가능)')) return; }
+  else { if(!confirm(nm+' 선생님을 다시 활성화할까요?')) return; }
+  if(!window.fbCallable){ showToast('서버 연결이 필요합니다.','error'); return; }
+  showLoading(true);
+  window.fbCallable('ownerSetTeacherActive')({ teacherUid: uid, active: active }).then(function(){
+    showLoading(false);
+    if(t) t.status = active?'active':'inactive';
+    showToast(nm+' 선생님 '+(active?'활성화':'퇴원 처리')+' 완료');
+    _drawTeacherRoster();
+  }).catch(function(e){
+    showLoading(false);
+    showToast(((e&&(e.message||e.code))||'')||'처리에 실패했습니다.','error');
+  });
+}
 function teacherNameByUid(uid) {
   var t = _schoolTeachers.find(function(x){ return x.uid === uid; });
   return t ? t.name : '(알 수 없음)';
@@ -2528,7 +2630,7 @@ function openAssignStudent(studentId) {
     _schoolTeachers = [];
     snap.forEach(function(d){
       var u = d.data();
-      if (u.role === 'teacher') _schoolTeachers.push({ uid: d.id, name: u.name || u.userId, userId: u.userId, phone: u.phone || '' });
+      if (u.role === 'teacher') _schoolTeachers.push({ uid: d.id, name: u.name || u.userId, userId: u.userId, phone: u.phone || '', status: u.status || 'active' });
     });
     drawAssignTeacherList(s);
   }).catch(function(err){
@@ -3293,6 +3395,7 @@ function startKiosk(){
   try{ history.pushState({kiosk:1},''); }catch(e){}
   loadCheckins();
   if(typeof loadSchoolTeachers==='function') loadSchoolTeachers();
+  if(window.fbDb && currentSchoolId){ window.fbGetDoc(window.fbDoc(window.fbDb,'schools',currentSchoolId)).then(function(sn){ if(sn&&sn.exists&&sn.exists()){ currentSchoolProfile.teacherMeta=(sn.data()||{}).teacherMeta||{}; } }).catch(function(){}); }
 }
 function loadCheckins(){
   _checkinDay={};
@@ -3321,7 +3424,7 @@ function kioskSubmit(){
   if(code.length!==4) return;
   var stu=students.find(function(s){ return String(s.code4)===String(code); });
   if(stu){ processCheckin(stu); return; }
-  var tch=(_schoolTeachers||[]).find(function(t){ return phoneLast4(t.phone)===String(code); });
+  var tch=(_schoolTeachers||[]).find(function(t){ return t.status!=='inactive' && _teacherCode(t)===String(code); });
   if(tch){ processTeacherCheckin(tch); return; }
   _kioskResult('error','코드를 확인해주세요','일치하는 학생·선생님이 없습니다');
 }
@@ -5741,6 +5844,9 @@ function finishLogin(fbUser, profile) {
       if (sd.phone) currentSchoolProfile.phone = sd.phone;
       if (sd.name) currentSchoolProfile.name = sd.name;
       currentSchoolProfile.plan = sd.plan || 'free';
+      currentSchoolProfile.maxTeachers = (typeof sd.maxTeachers==='number') ? sd.maxTeachers : null;
+      currentSchoolProfile.teacherLimit = (typeof sd.teacherCount==='number') ? sd.teacherCount : (currentSchoolProfile.maxTeachers!=null ? Math.max(0, currentSchoolProfile.maxTeachers-1) : null);
+      currentSchoolProfile.teacherMeta = sd.teacherMeta || {};
       refreshSchoolLogo();
       refreshPlanBadge();
       // schoolId가 코드값이었으면 실제 ID로 교정 저장 (새로고침 시 정상 동작)
@@ -11006,6 +11112,20 @@ function showToast(msg, type='success') {
     if(rec.inAt) return rec.late ? {k:'late',l:'지각',c:'#d97706',bg:'#fffbeb'} : {k:'in',l:'등원',c:'#059669',bg:'#ecfdf5'};
     return {k:'none',l:'미등원',c:'#94a3b8',bg:'#f1f5f9'};
   }
+  function ciStatuses(rec){
+    if(!rec) return [{l:'미등원',c:'#94a3b8',bg:'#f1f5f9'}];
+    if(rec.absent) return [{l:'결석',c:'#dc2626',bg:'#fef2f2'}];
+    var out=[];
+    if(rec.inAt) out.push(rec.late ? {l:'지각',c:'#d97706',bg:'#fffbeb'} : {l:'등원',c:'#059669',bg:'#ecfdf5'});
+    if(rec.outAt) out.push({l:'하원',c:'#2563eb',bg:'#eff6ff'});
+    if(!out.length) return [{l:'미등원',c:'#94a3b8',bg:'#f1f5f9'}];
+    return out;
+  }
+  function ciBadgesHtml(rec){
+    return ciStatuses(rec).map(function(s){
+      return '<span style="font-size:11px;font-weight:800;color:'+s.c+';background:'+s.bg+';padding:2px 9px;border-radius:9px;white-space:nowrap">'+s.l+'</span>';
+    }).join('');
+  }
   function _gradeOpts(sel){
     var seen={}, gs=[];
     (students||[]).forEach(function(s){ var g=(s&&s.grade)||''; if(g&&!seen[g]){seen[g]=1;gs.push(g);} });
@@ -11047,7 +11167,7 @@ function showToast(msg, type='success') {
       return '<div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap">'
         +'<div style="min-width:120px;flex:1"><div style="font-size:14px;font-weight:800;color:#1e293b">'+_esc(s.name)+'</div>'
         +'<div style="font-size:11px;color:#94a3b8">'+_esc(s.className||'')+(s.grade?(' · '+_esc(s.grade)):'')+'</div></div>'
-        +'<div style="display:flex;flex-direction:column;align-items:flex-end;min-width:74px"><span style="font-size:11px;font-weight:800;color:'+st.c+';background:'+st.bg+';padding:2px 9px;border-radius:9px">'+st.l+'</span>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;min-width:74px"><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">'+ciBadgesHtml(rec)+'</div>'
         +(times?'<span style="font-size:10px;color:#94a3b8;margin-top:3px">'+times+'</span>':'')+'</div>'
         +'<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">'
         + btn('in','등원','#059669')+btn('late','지각','#d97706')+btn('out','하원','#2563eb')+btn('absent','결석','#dc2626')
@@ -11090,7 +11210,7 @@ function showToast(msg, type='success') {
         +'<div style="font-size:11px;color:#94a3b8">'+_esc(s.className||'')+(s.grade?(' · '+_esc(s.grade)):'')+'</div></div>'
         +'<div style="text-align:center;min-width:54px"><div style="font-size:10px;color:#94a3b8">등원</div><div style="font-size:13px;font-weight:700;color:'+(ti?'#059669':'#cbd5e1')+'">'+(ti||'—')+'</div></div>'
         +'<div style="text-align:center;min-width:54px"><div style="font-size:10px;color:#94a3b8">하원</div><div style="font-size:13px;font-weight:700;color:'+(to?'#2563eb':'#cbd5e1')+'">'+(to||'—')+'</div></div>'
-        +'<span style="font-size:11px;font-weight:800;color:'+st.c+';background:'+st.bg+';padding:2px 9px;border-radius:9px;min-width:42px;text-align:center">'+st.l+'</span>'
+        +'<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;min-width:42px">'+ciBadgesHtml(rec)+'</div>'
         +'</div>';
     }).join('');
   };
