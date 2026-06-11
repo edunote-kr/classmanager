@@ -26,6 +26,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <script src="utils.js"></script>
+<script src="state.js"></script>
 
 <script type="module" src="fb.js"></script>
 </head>
@@ -1493,11 +1494,7 @@ var SCHOOLS = {
   }
 };
 var ADMIN_NAME = '관리자';
-var currentUser = null;
-var currentRole = null; // 'superadmin', 'owner', 'teacher'
-var currentSchool = null;
-var currentSchoolId = null; // 소속 학원 ID
-var currentSchoolProfile = { name: '', phone: '', logo: null }; // 이미지 저장용 학원 프로필
+// 전역 상태(currentUser/currentRole/currentSchool/currentSchoolId/currentSchoolProfile) → state.js
 var _attEntries = []; // 학교 단위 수업출결(classAttendance) 평면 배열 (전 선생님 통합)
 var ACCOUNTS = {};
 
@@ -1613,8 +1610,7 @@ function normalizeRec(r) {
   };
 }
 
-var records = [];
-var notices = []; // 알림장 (반·오늘 과제·특이사항)
+// 전역 상태(records/notices) → state.js
 let editId    = null;
 let activeTab = 'dashboard';
 
@@ -1701,7 +1697,7 @@ function importData(e) {
 }
 
 // ── 학생 관리 ──
-var students = [];
+// 전역 상태(students) → state.js
 
 // 학생 저장: 학원 공유 풀 schools/{schoolId}/students (원장만 쓰기 가능)
 function persistStudents(){
