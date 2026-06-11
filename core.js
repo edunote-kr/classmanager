@@ -5,6 +5,8 @@
 // 의존: currentUser/currentRole (state.js). 호출은 전부 런타임.
 // 주의: 다른 파일에서 재정의 금지.
 
+var SUPER_ADMIN_UID = 'LLnDDM5na6gLPVJbAe9DX5ApAnN2'; // 슈퍼관리자 식별 uid (auth 체크·admin 대시보드 공유)
+
 function recKey() { return 'kms_records_'+(currentUser||'_'); }
 function stuKey() { return 'kms_students_'+(currentUser||'_'); }
 
