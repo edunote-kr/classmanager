@@ -1941,7 +1941,7 @@ async function saveRecord() {
     var _df=document.getElementById('f-date'); if(_df){ try{ _df.focus(); }catch(e){} }
     return;
   }
-  if (!rec.todayContent && !rec.homework && !rec.reading && !rec.grammar && !rec.reading1 && !rec.grammar1 && !rec.exam1 && !rec.student) {
+  if (!hasAnyLessonContent(rec) && !rec.homework && !rec.student) {
     showToast('수업 내용 또는 과제를 입력해주세요.','error'); return;
   }
   var wasEdit = (editId !== null);
@@ -5511,7 +5511,7 @@ function makeCard(rec) {
       });
       return rows ? `<div class="rec-row"><span class="po-section" style="color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 지난 과제 이행도</span><br>${rows}</div>` : '';
     })();
-    const todayC = (rec.todayContent||rec.reading||rec.grammar||rec.reading1||rec.grammar1||rec.exam1||rec.supplement1) ? (() => {
+    const todayC = hasAnyLessonContent(rec) ? (() => {
       const lR = LEVELS.find(l=>l.value===(rec.readingComp||0))||LEVELS[0];
       const lG = LEVELS.find(l=>l.value===(rec.grammarComp||0))||LEVELS[0];
       var readingRows = '';

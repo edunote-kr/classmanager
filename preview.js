@@ -50,7 +50,7 @@ function renderLessonPreview(){
   var html;
   try{
     var rec=collectRecordFromForm();
-    var has = rec.todayContent||rec.homework||rec.reading||rec.grammar||rec.reading1||rec.grammar1||rec.exam1||rec.student||rec.memo;
+    var has = hasAnyLessonContent(rec)||rec.homework||rec.student||rec.memo;
     html = has ? ('<div style="pointer-events:none">'+makeCard(rec)+'</div>') : '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:30px 10px;line-height:1.6">입력을 시작하면<br>여기에 카드가 미리 보여요.</div>';
   }catch(e){ html='<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">미리보기를 표시할 수 없습니다.</div>'; }
   bodies.forEach(function(bd){ if(bd) bd.innerHTML=html; });

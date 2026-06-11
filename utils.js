@@ -33,3 +33,15 @@ function escapeMsg(s) {
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+// 수업내용(오늘의학습/독해/문법/내신/기타/보충, 1~5 포함)이 하나라도 있는지.
+// 미리보기 has 가드·makeCard·텍스트export·saveRecord 검증에서 공용 사용(가드 drift 방지).
+function hasAnyLessonContent(rec){
+  if(!rec) return false;
+  if(rec.todayContent||rec.reading||rec.grammar) return true;
+  if(rec.todayContent1||rec.todayContent2||rec.todayContent3||rec.todayContent4||rec.todayContent5) return true;
+  for(var i=1;i<=5;i++){
+    if(rec['today'+i]||rec['reading'+i]||rec['grammar'+i]||rec['exam'+i]||rec['etc'+i]||rec['supplement'+i]) return true;
+  }
+  return false;
+}
