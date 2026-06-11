@@ -991,6 +991,11 @@
 
       <!-- 숨겨진 기존 필드 (저장 호환용) -->
       <div style="display:none">
+        <input type="hidden" id="f-today1"><input type="hidden" id="f-today1Comp" value="0">
+        <input type="hidden" id="f-today2"><input type="hidden" id="f-today2Comp" value="0">
+        <input type="hidden" id="f-today3"><input type="hidden" id="f-today3Comp" value="0">
+        <input type="hidden" id="f-today4"><input type="hidden" id="f-today4Comp" value="0">
+        <input type="hidden" id="f-today5"><input type="hidden" id="f-today5Comp" value="0">
         <input type="hidden" id="f-reading1"><input type="hidden" id="f-reading1Comp" value="0">
         <input type="hidden" id="f-reading2"><input type="hidden" id="f-reading2Comp" value="0">
         <input type="hidden" id="f-reading3"><input type="hidden" id="f-reading3Comp" value="0">
@@ -1591,6 +1596,16 @@ function normalizeRec(r) {
     grammar5Comp:  (Number(r.grammar5Comp)||0),
     exam5:         r.exam5         || '',
     exam5Comp:     (Number(r.exam5Comp)||0),
+    today1:        r.today1        || '',
+    today1Comp:    (Number(r.today1Comp)||0),
+    today2:        r.today2        || '',
+    today2Comp:    (Number(r.today2Comp)||0),
+    today3:        r.today3        || '',
+    today3Comp:    (Number(r.today3Comp)||0),
+    today4:        r.today4        || '',
+    today4Comp:    (Number(r.today4Comp)||0),
+    today5:        r.today5        || '',
+    today5Comp:    (Number(r.today5Comp)||0),
     etc1:          r.etc1          || '',
     etc1Comp:      (Number(r.etc1Comp)||0),
     etc2:          r.etc2          || '',
@@ -1907,6 +1922,16 @@ function collectRecordFromForm() {
     grammar5Comp:  parseInt((document.getElementById('f-grammar5Comp')||{value:'0'}).value)||0,
     exam5:         (document.getElementById('f-exam5')||{}).value?.trim()||'',
     exam5Comp:     parseInt((document.getElementById('f-exam5Comp')||{value:'0'}).value)||0,
+    today1:        (document.getElementById('f-today1')||{}).value?.trim()||'',
+    today1Comp:    parseInt((document.getElementById('f-today1Comp')||{value:'0'}).value)||0,
+    today2:        (document.getElementById('f-today2')||{}).value?.trim()||'',
+    today2Comp:    parseInt((document.getElementById('f-today2Comp')||{value:'0'}).value)||0,
+    today3:        (document.getElementById('f-today3')||{}).value?.trim()||'',
+    today3Comp:    parseInt((document.getElementById('f-today3Comp')||{value:'0'}).value)||0,
+    today4:        (document.getElementById('f-today4')||{}).value?.trim()||'',
+    today4Comp:    parseInt((document.getElementById('f-today4Comp')||{value:'0'}).value)||0,
+    today5:        (document.getElementById('f-today5')||{}).value?.trim()||'',
+    today5Comp:    parseInt((document.getElementById('f-today5Comp')||{value:'0'}).value)||0,
     etc1:          (document.getElementById('f-etc1')||{value:''}).value.trim(),
     etc1Comp:      parseInt((document.getElementById('f-etc1Comp')||{value:'0'}).value)||0,
     etc2:          (document.getElementById('f-etc2')||{value:''}).value.trim(),
@@ -2714,7 +2739,7 @@ function setLessonComp(bi, ii, val) {
 // 블록 데이터 → 기존 hidden 필드로 직렬화 (저장 전 호출)
 function serializeLessonBlocks() {
   // 먼저 모든 동적 수업 필드를 비운다 (항목 삭제 시 옛 값이 남는 버그 방지)
-  ['reading','grammar','exam','etc','supplement'].forEach(function(base){
+  ['today','reading','grammar','exam','etc','supplement'].forEach(function(base){
     for (var n = 1; n <= 5; n++) {
       var el  = document.getElementById('f-'+base+n);
       var elC = document.getElementById('f-'+base+n+'Comp');
@@ -2726,7 +2751,7 @@ function serializeLessonBlocks() {
   _lessonBlocks.forEach(function(block) {
     block.items.forEach(function(item) {
       var t = block.type;
-      var fieldBase = t === 'today' ? 'reading' : t; // today→reading 필드 사용
+      var fieldBase = t; // 각 타입 전용 필드 사용 (today 는 today 필드)
       counters[t]++;
       var n = counters[t];
       var fieldName  = fieldBase + (n === 1 ? '1' : n);
@@ -2743,7 +2768,8 @@ function serializeLessonBlocks() {
 function deserializeLessonBlocks(rec) {
   _lessonBlocks = [];
   var typeMap = [
-    {type:'today',  base:'reading'},
+    {type:'today',  base:'today'},
+    {type:'reading',base:'reading'},
     {type:'grammar',base:'grammar'},
     {type:'exam',   base:'exam'},
     {type:'etc',    base:'etc'},
@@ -5514,6 +5540,12 @@ function makeCard(rec) {
     const todayC = hasAnyLessonContent(rec) ? (() => {
       const lR = LEVELS.find(l=>l.value===(rec.readingComp||0))||LEVELS[0];
       const lG = LEVELS.find(l=>l.value===(rec.grammarComp||0))||LEVELS[0];
+      var todayRows = '';
+      for(var ti=1;ti<=5;ti++){
+        var tv=rec['today'+ti], tc=rec['today'+ti+'Comp']||0;
+        if(!tv) continue;
+        todayRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 오늘의 학습${ti}</strong><br>${esc(tv)}<br>${compBadgeHTML(tc)}</div>`;
+      }
       var readingRows = '';
       for(var ri=1;ri<=5;ri++){
         var rv=rec['reading'+ri], rc=rec['reading'+ri+'Comp']||0;
@@ -5551,6 +5583,7 @@ function makeCard(rec) {
       return `<div class="rec-row">
         <span class="po-section" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 오늘 수업내용</span><br>
 ${[rec.todayContent,rec.todayContent1,rec.todayContent2,rec.todayContent3,rec.todayContent4,rec.todayContent5].filter(Boolean).map(function(t,i){return `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:#4f46e5">${i===0&&rec.todayContent?'':'<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> '+(i+(rec.todayContent?0:-1)+1)+'번 </strong>'}</strong>${esc(t)}</div>`;}).join('')}
+        ${todayRows}
         ${(rec.reading||rec.grammar) ? '<div style="border-top:1.5px solid #cbd5e1;margin:6px 0 6px;"></div>' : ''}
         ${rec.reading ? `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 독해</strong><br>${esc(rec.reading.replace(/^독해\s*/,''))}<br>${compBadgeHTML(rec.readingComp||0)}</div>` : ''}
         ${rec.grammar ? `<div style="margin-bottom:4px;white-space:pre-wrap"><strong><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 문법</strong><br>${esc(rec.grammar.replace(/^문법\s*/,''))}<br>${compBadgeHTML(rec.grammarComp||0)}</div>` : ''}
