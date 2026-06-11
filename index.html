@@ -1330,6 +1330,16 @@ onAuthStateChanged(auth, function(user) {
   <!-- TEACHER ASSIGN PANEL (원장 전용) -->
   <div class="panel" id="panel-teachers">
     <div class="card">
+      <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 선생님 관리</div>
+      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 12px;line-height:1.5">선생님 이름·휴대폰과 <b>출퇴근 코드(휴대폰 뒷 4자리)</b>입니다. 선생님은 출결 키오스크에 이 4자리를 입력해 출근·퇴근합니다.</div>
+      <input id="teacherSearch" oninput="filterTeacherRoster()" placeholder="선생님 검색 (이름·휴대폰·코드)" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:12px">
+      <div id="teacherRosterList" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+
+  <!-- 반배정 관리 패널 (선생님별 학생 배정 — 기존 선생님 관리에서 이동) -->
+  <div class="panel" id="panel-classassign">
+    <div class="card">
       <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 선생님별 학생 배정</div>
       <div style="font-size:11px;color:#94a3b8;margin:-4px 0 12px;line-height:1.5">학생을 선택해 선생님에게 일괄 배정합니다. 선생님은 자신에게 배정된 학생만 원생목록에서 보게 됩니다.</div>
       <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">선생님 선택</label>
@@ -1339,7 +1349,7 @@ onAuthStateChanged(auth, function(user) {
         <div style="display:flex;gap:6px">
           <button onclick="toggleAllAssign(true)" style="background:#ecfeff;color:#0e7490;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">전체 선택</button>
           <button onclick="toggleAllAssign(false)" style="background:#f1f5f9;color:#64748b;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">전체 해제</button>
-        </div>
+  </div>
         <span id="assignSelCount" style="font-size:11px;color:#94a3b8;font-weight:700"></span>
       </div>
       <div id="assignStudentGrid" style="display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto"></div>
@@ -1931,12 +1941,44 @@ function loadSchoolTeachers() {
     _schoolTeachers = [];
     snap.forEach(function(d){
       var u = d.data();
-      if (u.role === 'teacher') _schoolTeachers.push({ uid: d.id, name: u.name || u.userId, userId: u.userId });
+      if (u.role === 'teacher') _schoolTeachers.push({ uid: d.id, name: u.name || u.userId, userId: u.userId, phone: u.phone || '' });
     });
   }).catch(function(){ /* 선생님 목록 실패해도 학생 표시는 진행 */ });
 }
 
 // uid → 선생님 이름
+function phoneLast4(p){ var d=String(p||'').replace(/\D/g,''); return d.length>=4 ? d.slice(-4) : ''; }
+function renderTeacherRoster(){
+  if (typeof loadSchoolTeachers==='function') loadSchoolTeachers().then(_drawTeacherRoster);
+  else _drawTeacherRoster();
+}
+function _drawTeacherRoster(){
+  var el=document.getElementById('teacherRosterList'); if(!el) return;
+  var q=((document.getElementById('teacherSearch')||{}).value||'').trim().toLowerCase();
+  var list=(_schoolTeachers||[]).slice().sort(function(a,b){ return String(a.name||'').localeCompare(String(b.name||''),'ko'); });
+  var stuCodes={}; (typeof students!=='undefined'&&students?students:[]).forEach(function(s){ if(s&&s.code4) stuCodes[String(s.code4)]=true; });
+  var tCount={}; list.forEach(function(t){ var c=phoneLast4(t.phone); if(c) tCount[c]=(tCount[c]||0)+1; });
+  var rows=list.filter(function(t){
+    if(!q) return true;
+    var hay=((t.name||'')+' '+(t.phone||'')+' '+phoneLast4(t.phone)).toLowerCase();
+    return hay.indexOf(q)>=0;
+  });
+  if(!rows.length){ el.innerHTML='<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">'+(q?'검색 결과가 없습니다.':'등록된 선생님이 없습니다.')+'</div>'; return; }
+  el.innerHTML=rows.map(function(t){
+    var code=phoneLast4(t.phone);
+    var dup = code && (stuCodes[code] || tCount[code]>1);
+    var codeHtml = code
+      ? '<div style="font-family:monospace;font-size:16px;font-weight:800;letter-spacing:2px;color:'+(dup?'#dc2626':'#0891b2')+';background:'+(dup?'#fef2f2':'#ecfeff')+';border-radius:8px;padding:4px 12px">'+code+'</div>'
+      : '<div style="font-size:12px;color:#94a3b8">미설정</div>';
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid #e2e8f0;border-radius:10px">'
+      +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:#1e293b">'+escapeNotice(t.name||'')+'</div>'
+      +'<div style="font-size:12px;color:#64748b;margin-top:2px">'+(t.phone?escapeNotice(t.phone):'휴대폰 미등록')+'</div>'
+      +(dup?'<div style="font-size:11px;color:#dc2626;margin-top:3px;font-weight:600">⚠ 학생·다른 선생님 코드와 중복 — 키오스크 인식 불가</div>':'')+'</div>'
+      +'<div style="text-align:center;flex-shrink:0"><div style="font-size:10px;color:#94a3b8;margin-bottom:3px">출퇴근 코드</div>'+codeHtml+'</div>'
+      +'</div>';
+  }).join('');
+}
+function filterTeacherRoster(){ _drawTeacherRoster(); }
 function teacherNameByUid(uid) {
   var t = _schoolTeachers.find(function(x){ return x.uid === uid; });
   return t ? t.name : '(알 수 없음)';
@@ -2486,7 +2528,7 @@ function openAssignStudent(studentId) {
     _schoolTeachers = [];
     snap.forEach(function(d){
       var u = d.data();
-      if (u.role === 'teacher') _schoolTeachers.push({ uid: d.id, name: u.name || u.userId, userId: u.userId });
+      if (u.role === 'teacher') _schoolTeachers.push({ uid: d.id, name: u.name || u.userId, userId: u.userId, phone: u.phone || '' });
     });
     drawAssignTeacherList(s);
   }).catch(function(err){
@@ -3250,6 +3292,7 @@ function startKiosk(){
   document.getElementById('kioskOverlay').style.display='flex';
   try{ history.pushState({kiosk:1},''); }catch(e){}
   loadCheckins();
+  if(typeof loadSchoolTeachers==='function') loadSchoolTeachers();
 }
 function loadCheckins(){
   _checkinDay={};
@@ -3277,8 +3320,36 @@ function kioskSubmit(){
   var code=_kioskInput; _kioskInput=''; _renderKioskDisplay();
   if(code.length!==4) return;
   var stu=students.find(function(s){ return String(s.code4)===String(code); });
-  if(!stu){ _kioskResult('error','코드를 확인해주세요','일치하는 학생이 없습니다'); return; }
-  processCheckin(stu);
+  if(stu){ processCheckin(stu); return; }
+  var tch=(_schoolTeachers||[]).find(function(t){ return phoneLast4(t.phone)===String(code); });
+  if(tch){ processTeacherCheckin(tch); return; }
+  _kioskResult('error','코드를 확인해주세요','일치하는 학생·선생님이 없습니다');
+}
+function processTeacherCheckin(tch){
+  var key='t_'+tch.uid, now=Date.now(), rec=_checkinDay[key];
+  if(!rec || !rec.inAt){
+    _checkinDay[key]={ name:tch.name, role:'teacher', inAt:now, outAt:0 };
+    persistCheckin(key); notifyStubTeacher('출근', tch, now);
+    _kioskResult('in', tch.name+' 선생님 출근!', _hm(now)+' 출근 처리되었습니다');
+  } else if(!rec.outAt){
+    if(now-rec.inAt < KIOSK_OUT_GAP_MS){
+      _kioskResult('warn', tch.name+' 이미 출근', _hm(rec.inAt)+' 출근함 · 퇴근은 30분 후');
+    } else {
+      rec.outAt=now; _checkinDay[key]=rec;
+      persistCheckin(key); notifyStubTeacher('퇴근', tch, now);
+      _kioskResult('out', tch.name+' 선생님 퇴근!', _hm(now)+' 퇴근 처리되었습니다');
+    }
+  } else {
+    _kioskResult('warn', tch.name+' 출퇴근 완료', '오늘 출근·퇴근이 모두 기록됨');
+  }
+}
+function notifyStubTeacher(type, tch, ms){
+  var school=(currentSchoolProfile&&currentSchoolProfile.name)||'학원';
+  var msg='['+school+'] '+tch.name+' 선생님이 '+_hm(ms)+'에 '+type+'했습니다.';
+  _notifyLog.unshift({ msg:msg, at:ms, type:type, student:tch.name+' 선생님' });
+  try{ var q=JSON.parse(localStorage.getItem('kms_notifyQueue')||'[]'); q.unshift({msg:msg,at:ms,type:type,sent:false}); localStorage.setItem('kms_notifyQueue', JSON.stringify(q.slice(0,300))); }catch(e){}
+  if(window.console) console.log('[알림 stub - 발송 예정]', msg);
+  _renderKioskRecent();
 }
 function processCheckin(stu){
   var sid=String(stu.id), now=Date.now(), rec=_checkinDay[sid];
@@ -3317,7 +3388,7 @@ function _renderKioskRecent(){
   var el=document.getElementById('kioskRecent'); if(!el) return;
   var items=_notifyLog.slice(0,5);
   el.innerHTML = items.length ? '<div style="color:#64748b;font-size:11px;margin-bottom:6px;text-align:center">최근 알림 (전송 예정)</div>'+items.map(function(it){
-    var c= it.type==='등원' ? '#34d399' : '#fbbf24';
+    var c= (it.type==='등원'||it.type==='출근') ? '#34d399' : '#fbbf24';
     return '<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:8px 11px;margin-bottom:5px;color:#cbd5e1;font-size:12px"><span style="color:'+c+';font-weight:700">'+it.type+'</span> '+escapeNotice(it.student)+' · '+_hm(it.at)+'</div>';
   }).join('') : '';
 }
@@ -3448,7 +3519,8 @@ function switchTab(tab) {
   if (tab==='stats')    loadClassAttendance(renderStats);
   if (tab==='input')    { updateLoadSelect(); renderHomeworks(); renderLastHomeworks(); renderLessonBlocks(); renderTests(); }
   if (tab==='students') renderStudents();
-  if (tab==='teachers') renderTeacherAssign();
+  if (tab==='teachers') renderTeacherRoster();
+  if (tab==='classassign') renderTeacherAssign();
   if (tab==='attendance') {
     var _am=document.getElementById('attMonth'); if(_am) _am.value=String(new Date().getMonth()+1);
     var _ay=document.getElementById('attYear');  if(_ay) _ay.value=String(new Date().getFullYear());
@@ -10752,7 +10824,7 @@ function showToast(msg, type='success') {
         {id:'msg-charge-log', label:'충전 내역', soon:true, owner:true} ]},
     { id:'work', label:'업무관리', owner:true, icon:I('<rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'), leaves:[
         {id:'teachers', label:'선생님 관리'},
-        {id:'classassign', label:'반배정 관리', soon:true} ]},
+        {id:'classassign', label:'반배정 관리'} ]},
     { id:'mypage', label:'마이페이지', icon:I('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>'), leaves:[
         {id:'mp-school', label:'학원 정보'},
         {id:'mp-account', label:'개인정보 수정'},
@@ -10763,7 +10835,7 @@ function showToast(msg, type='success') {
         {id:'sup-inquiry', label:'1:1 문의'} ]}
   ];
 
-  var NAV_REAL_PANELS = {dashboard:1,input:1,list:1,notice:1,stats:1,attendance:1,students:1,teachers:1,checkin:1,checkinlog:1,leavers:1};
+  var NAV_REAL_PANELS = {dashboard:1,input:1,list:1,notice:1,stats:1,attendance:1,students:1,teachers:1,classassign:1,checkin:1,checkinlog:1,leavers:1};
   window._navOpenGroup = 'home';
   window._navCollapsed = false;
 
