@@ -1256,6 +1256,15 @@
     </div>
   </div>
 
+  <!-- 발송 이력 PANEL (문자/알림톡 공통, 채널별 렌더) -->
+  <div class="panel" id="panel-sendlog">
+    <div class="card">
+      <div class="card-title" id="sendlogTitle"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg> 발송 이력</div>
+      <div style="font-size:11px;color:#94a3b8;margin:0 0 10px;line-height:1.5">실발송(솔라피) 연동 전이라 현재 기록은 <b style="color:#64748b">테스트 전송</b>입니다. 연동 후 실제 발송/성공·실패가 함께 기록됩니다.</div>
+      <div id="sendlogList" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+
   <!-- ATTENDANCE PANEL (예정) -->
   <div class="panel" id="panel-attendance">
     <div class="card">
@@ -3667,6 +3676,48 @@ function watchUserStatus(uid) {
 }
 
 // 마지막 활동 시각 기록 (이탈 감지용) — 본인 user 문서, 하루 1회 throttle
+function renderSendHistory(channel){
+  channel = (channel === 'sms') ? 'sms' : 'alimtalk';
+  var titleEl = document.getElementById('sendlogTitle');
+  if(titleEl) titleEl.innerHTML = titleEl.innerHTML.replace(/발송 이력$/, (channel==='sms'?'문자':'알림톡')+' 발송 이력');
+  var list = document.getElementById('sendlogList');
+  if(!list) return;
+  list.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">불러오는 중...</div>';
+  if(!window.fbDb || !currentSchoolId){
+    list.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">학원 정보를 불러오지 못했습니다.</div>'; return;
+  }
+  try {
+    var col = window.fbCollection(window.fbDb, 'schools', currentSchoolId, 'sendLogs');
+    var q = window.fbQuery(col, window.fbWhere('channel', '==', channel));
+    window.fbGetDocs(q).then(function(snap){
+      var rows = [];
+      snap.forEach(function(d){ rows.push(d.data()); });
+      rows.sort(function(a,b){ return (b.sentAt||0) - (a.sentAt||0); });
+      if(!rows.length){
+        list.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">발송 이력이 없습니다.</div>'; return;
+      }
+      list.innerHTML = rows.map(function(r){
+        var d = new Date(r.sentAt||0);
+        var when = (d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+        var rt = r.recipientType==='parent'?'학부모':(r.recipientType==='student'?'학생':(r.recipientType||''));
+        var sb;
+        if(r.status==='sent') sb='<span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:#dcfce7;color:#16a34a;white-space:nowrap">발송</span>';
+        else if(r.status==='failed') sb='<span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:#fee2e2;color:#dc2626;white-space:nowrap">실패</span>';
+        else sb='<span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:#f1f5f9;color:#94a3b8;white-space:nowrap">테스트</span>';
+        return '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px">'
+          + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:13px;font-weight:700;color:#1e293b">' + escHtml(r.studentName||'학생') + (r.className?' <span style="font-size:11px;font-weight:600;color:#94a3b8">'+escHtml(r.className)+'</span>':'') + '</div>'
+          + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + rt + ' · ' + when + (r.sentByName?' · '+escHtml(r.sentByName):'') + '</div>'
+          + '</div>' + sb + '</div>';
+      }).join('');
+    }).catch(function(e){
+      list.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px;font-size:13px">불러오기 실패: ' + (e && (e.code||e.message) || '') + '</div>';
+    });
+  } catch(e){
+    list.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px;font-size:13px">불러오기 실패</div>';
+  }
+}
+
 function touchLastActive(uid){
   try{
     if(!window.fbDb || !uid) return;
@@ -7312,8 +7363,8 @@ function showToast(msg, type='success') {
         {id:'bill-sales', label:'월별 매출내역', soon:true} ]},
     { id:'message', label:'메세지관리', icon:I('<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>'), leaves:[
         {id:'msg-send', label:'문자/알림톡 발송', soon:true},
-        {id:'msg-sms-log', label:'문자 발송 이력', soon:true},
-        {id:'msg-alim-log', label:'알림톡 발송 이력', soon:true},
+        {id:'msg-sms-log', label:'문자 발송 이력', owner:true},
+        {id:'msg-alim-log', label:'알림톡 발송 이력', owner:true},
         {id:'msg-charge', label:'충전/충전설정', action:'openChargeFromNav', owner:true},
         {id:'msg-charge-log', label:'충전 내역', soon:true, owner:true} ]},
     { id:'work', label:'업무관리', owner:true, icon:I('<rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'), leaves:[
@@ -7340,7 +7391,7 @@ function showToast(msg, type='success') {
     return null;
   };
   window.navGroupOf = function(id){ var m=navLeafMeta(id); return m?m.groupId:null; };
-  window.navPanelKey = function(id){ if(id&&id.indexOf('mp-')===0) return 'mypage'; if(id==='sup-inquiry') return 'inquiry'; return NAV_REAL_PANELS[id]?id:'soon'; };
+  window.navPanelKey = function(id){ if(id&&id.indexOf('mp-')===0) return 'mypage'; if(id==='sup-inquiry') return 'inquiry'; if(id==='msg-sms-log'||id==='msg-alim-log') return 'sendlog'; return NAV_REAL_PANELS[id]?id:'soon'; };
   window.mpShowPane = function(tab){ ['school','account','code','plan'].forEach(function(k){ var p=document.getElementById('mp-pane-'+k); if(p) p.classList.toggle('active', tab==='mp-'+k); }); mpUpdateSaveBtn(); };
   window.mpUpdateSaveBtn = function(){ var btn=document.getElementById('mySaveBtn'); if(!btn) return; var onSave=(activeTab==='mp-school'||activeTab==='mp-account'); btn.style.display=(window._mpIsOwner && onSave)?'block':'none'; var r=document.getElementById('myPageResult'); if(r && !onSave) r.style.display='none'; };
   function visibleGroups(){

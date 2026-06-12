@@ -29,6 +29,8 @@ function switchTab(tab) {
   if (tab==='leavers' && typeof renderLeavers==='function') renderLeavers();
   if (tab==='list')     { updateStudentFilter(); renderList(); }
   if (tab==='notice')   renderNotices();
+  if (tab==='msg-sms-log')  renderSendHistory('sms');
+  if (tab==='msg-alim-log') renderSendHistory('alimtalk');
   if (tab==='stats')    loadClassAttendance(renderStats);
   if (tab==='input')    { updateLoadSelect(); renderHomeworks(); renderLastHomeworks(); renderLessonBlocks(); renderTests(); }
   if (tab==='students') renderStudents();
