@@ -99,7 +99,38 @@ function renderStudents() {
 
   let html = '';
 
-  // (선생님별 배정 현황 카드는 업무관리>반배정 관리 패널로 이동 → renderAssignSummary)
+  // 원장: 선생님별 배정 요약 (접기/펼치기)
+  if (isOwner && _schoolTeachers.length > 0) {
+    html += '<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'
+      + '<div onclick="toggleAssignSummary()" style="background:#ecfeff;padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
+      + '<span style="font-size:12px;font-weight:800;color:#0891b2">선생님별 배정 현황</span>'
+      + '<span id="assignSummaryArrow" style="color:#0891b2;font-size:11px">▼</span>'
+      + '</div>'
+      + '<div id="assignSummaryBody" style="padding:10px 12px">';
+    // 각 선생님별 배정 학생
+    _schoolTeachers.forEach(function(t){
+      var assigned = _act.filter(function(s){ return Array.isArray(s.assignedTo) && s.assignedTo.indexOf(t.uid) !== -1; });
+      html += '<div style="margin-bottom:8px">'
+        + '<div style="font-size:12px;font-weight:700;color:#0e7490;margin-bottom:3px">' + escapeNotice(t.name) + ' <span style="color:#94a3b8;font-weight:600">' + assigned.length + '명</span></div>';
+      if (assigned.length === 0) {
+        html += '<div style="font-size:11px;color:#cbd5e1;padding-left:6px">배정된 학생 없음</div>';
+      } else {
+        html += '<div style="font-size:11px;color:#475569;padding-left:6px;line-height:1.6">'
+          + assigned.map(function(s){ return escapeNotice(s.name) + (s.className ? '<span style="color:#94a3b8">('+escapeNotice(s.className)+')</span>' : ''); }).join(', ')
+          + '</div>';
+      }
+      html += '</div>';
+    });
+    // 미배정 학생
+    var unassigned = _act.filter(function(s){ return !Array.isArray(s.assignedTo) || s.assignedTo.length === 0; });
+    html += '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e2e8f0">'
+      + '<div style="font-size:12px;font-weight:700;color:#b45309;margin-bottom:3px">미배정 <span style="color:#94a3b8;font-weight:600">' + unassigned.length + '명</span></div>'
+      + (unassigned.length > 0
+          ? '<div style="font-size:11px;color:#475569;padding-left:6px;line-height:1.6">' + unassigned.map(function(s){ return escapeNotice(s.name); }).join(', ') + '</div>'
+          : '<div style="font-size:11px;color:#cbd5e1;padding-left:6px">없음</div>')
+      + '</div>';
+    html += '</div></div>';
+  }
 
   // 반별 그룹핑 (원장/선생님 동일)
   const groups = {};
@@ -194,44 +225,6 @@ function toggleAssignSummary() {
   if (arrow) arrow.textContent = open ? '▶' : '▼';
 }
 
-// 선생님별 배정 현황 카드 (업무관리>반배정 관리 패널 상단 — 원생목록에서 이동)
-function renderAssignSummary() {
-  var box = document.getElementById('assignSummaryContainer');
-  if (!box) return;
-  if (!isOwnerOrAdmin() || !_schoolTeachers || _schoolTeachers.length === 0) { box.innerHTML = ''; return; }
-  var _act = students.filter(isActiveStu);
-  var html = '<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'
-    + '<div onclick="toggleAssignSummary()" style="background:#ecfeff;padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
-    + '<span style="font-size:12px;font-weight:800;color:#0891b2">선생님별 배정 현황</span>'
-    + '<span id="assignSummaryArrow" style="color:#0891b2;font-size:11px">▼</span>'
-    + '</div>'
-    + '<div id="assignSummaryBody" style="padding:10px 12px">';
-  // 각 선생님별 배정 학생
-  _schoolTeachers.forEach(function(t){
-    var assigned = _act.filter(function(s){ return Array.isArray(s.assignedTo) && s.assignedTo.indexOf(t.uid) !== -1; });
-    html += '<div style="margin-bottom:8px">'
-      + '<div style="font-size:12px;font-weight:700;color:#0e7490;margin-bottom:3px">' + escapeNotice(t.name) + ' <span style="color:#94a3b8;font-weight:600">' + assigned.length + '명</span></div>';
-    if (assigned.length === 0) {
-      html += '<div style="font-size:11px;color:#cbd5e1;padding-left:6px">배정된 학생 없음</div>';
-    } else {
-      html += '<div style="font-size:11px;color:#475569;padding-left:6px;line-height:1.6">'
-        + assigned.map(function(s){ return escapeNotice(s.name) + (s.className ? '<span style="color:#94a3b8">('+escapeNotice(s.className)+')</span>' : ''); }).join(', ')
-        + '</div>';
-    }
-    html += '</div>';
-  });
-  // 미배정 학생
-  var unassigned = _act.filter(function(s){ return !Array.isArray(s.assignedTo) || s.assignedTo.length === 0; });
-  html += '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e2e8f0">'
-    + '<div style="font-size:12px;font-weight:700;color:#b45309;margin-bottom:3px">미배정 <span style="color:#94a3b8;font-weight:600">' + unassigned.length + '명</span></div>'
-    + (unassigned.length > 0
-        ? '<div style="font-size:11px;color:#475569;padding-left:6px;line-height:1.6">' + unassigned.map(function(s){ return escapeNotice(s.name); }).join(', ') + '</div>'
-        : '<div style="font-size:11px;color:#cbd5e1;padding-left:6px">없음</div>')
-    + '</div>';
-  html += '</div></div>';
-  box.innerHTML = html;
-}
-
 // 학년 레벨 분류 + 칩 필터
 var _stuLevelFilter = '전체';
 function setStuLevel(lv){ _stuLevelFilter=lv; renderStudentLevelChips(); filterStudentList(); }
@@ -298,6 +291,7 @@ function makeStudentRow(s) {
         var isOwner = (currentRole === 'owner' || currentRole === 'superadmin');
         if (!isOwner) return ''; // 선생님: 읽기 전용 (버튼 없음)
         return '<button onclick="startEditStudent(\'' + s.id + '\')" style="background:#ede9fe;color:#6366f1;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">수정</button>'
+          + '<button onclick="issueParentLink(\'' + s.id + '\',\'' + escJsArg(s.name||'') + '\')" style="background:#cffafe;color:#0e7490;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">학부모링크</button>'
           + stuStatusButtons(s)
           + '<button onclick="deleteStudent(\'' + s.id + '\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">삭제</button>';
       })()
@@ -419,7 +413,6 @@ function _drawTeacherAssign() {
   var sel = document.getElementById('assignTeacherSelect');
   var grid = document.getElementById('assignStudentGrid');
   if (!sel || !grid) return;
-  renderAssignSummary();
   if (!_schoolTeachers || _schoolTeachers.length === 0) {
     sel.innerHTML = '<option value="">소속 선생님 없음</option>';
     grid.innerHTML = '<div style="color:#94a3b8;font-size:12px;text-align:center;padding:18px">소속 선생님이 없습니다.<br><span style="font-size:11px">선생님이 같은 학원 코드로 가입하면 표시됩니다.</span></div>';
@@ -489,6 +482,51 @@ function saveBulkAssign() {
   }
   localStorage.setItem(stuKey(), JSON.stringify(students));
   showToast(changed.length+'명 배정이 업데이트되었습니다.');
-  renderAssignSummary();
   if (typeof renderStudents==='function') renderStudents();
+}
+
+// ── 학부모 읽기전용 링크 발급 (원장/슈퍼, 알림톡 착지용) ───────────────────────
+// CF issueParentToken 호출 → 추측불가 토큰 링크 발급(기존 링크 자동 무효) → 모달로 표시·복사.
+// 검증/데이터는 서버(getParentView). 학부모 페이지는 parent.html (로그인 불필요).
+function issueParentLink(id, name) {
+  if (!window.fbCallable) { showToast('잠시 후 다시 시도해주세요.', 'error'); return; }
+  if (!confirm((name || '학생') + ' 학부모 링크를 발급할까요?\n기존에 발급한 링크가 있으면 무효화됩니다.')) return;
+  showToast('링크 발급 중...', 'info');
+  window.fbCallable('issueParentToken')({ studentId: String(id) }).then(function (res) {
+    var url = res && res.data && res.data.url;
+    if (!url) { showToast('발급에 실패했습니다.', 'error'); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { showToast('학부모 링크가 복사되었습니다.'); }).catch(function () {});
+    }
+    showParentLinkModal(name, url);
+  }).catch(function (err) {
+    showToast((err && err.message) ? err.message : '발급에 실패했습니다.', 'error');
+  });
+}
+
+function showParentLinkModal(name, url) {
+  var old = document.getElementById('parentLinkModal');
+  if (old) old.parentNode.removeChild(old);
+  var ov = document.createElement('div');
+  ov.id = 'parentLinkModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML =
+    '<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.3);font-family:inherit">'
+    + '<div style="font-size:15px;font-weight:800;color:#0e7490;margin-bottom:4px">학부모 링크 발급 완료</div>'
+    + '<div style="font-size:12px;color:#64748b;margin-bottom:12px">' + escHtml(name || '학생') + ' · 카톡으로 보낼 읽기전용 링크입니다. 로그인 없이 열립니다.</div>'
+    + '<div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:12px;color:#334155;word-break:break-all;user-select:all;margin-bottom:12px">' + escHtml(url) + '</div>'
+    + '<div style="display:flex;gap:8px">'
+    + '<button id="parentLinkCopy" style="flex:1;background:#0891b2;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">복사</button>'
+    + '<button id="parentLinkOpen" style="flex:1;background:#ecfeff;color:#0e7490;border:1px solid #67e8f9;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">열기</button>'
+    + '<button id="parentLinkClose" style="flex:0 0 auto;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">닫기</button>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function (e) { if (e.target === ov) ov.parentNode.removeChild(ov); });
+  document.getElementById('parentLinkClose').onclick = function () { ov.parentNode.removeChild(ov); };
+  document.getElementById('parentLinkOpen').onclick = function () { window.open(url, '_blank'); };
+  document.getElementById('parentLinkCopy').onclick = function () {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { showToast('복사되었습니다.'); }).catch(function () { showToast('직접 길게 눌러 복사해주세요.', 'info'); });
+    } else { showToast('직접 길게 눌러 복사해주세요.', 'info'); }
+  };
 }
