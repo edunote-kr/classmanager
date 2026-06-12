@@ -17,7 +17,7 @@
     background: linear-gradient(135deg, #6366f1, #4f46e5);
     color: #fff; padding: 22px 18px 18px;
   }
-  .hero .brand { font-size: 12px; font-weight: 700; opacity: .85; letter-spacing: .3px; }
+  .hero .brand { font-size: 17px; font-weight: 800; opacity: .92; letter-spacing: .3px; text-align: center; margin-bottom: 10px; }
   .hero .sname { font-size: 13px; font-weight: 600; opacity: .9; margin-top: 8px; }
   .hero .stu { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
   .hero .stu .name { font-size: 22px; font-weight: 800; }
@@ -118,7 +118,6 @@
   <div id="mainView" class="hidden">
     <div class="hero">
       <div class="brand">EduNote · 학습 안내</div>
-      <div class="sname" id="schoolName"></div>
       <div class="stu">
         <span class="name" id="stuName"></span>
         <span class="cls hidden" id="stuClass"></span>
@@ -450,7 +449,6 @@ function showError(title, sub){
     SCHOOL.name  = (d.school && d.school.name)  || "";
     SCHOOL.phone = (d.school && d.school.phone) || "";
     SCHOOL.logo  = (d.school && d.school.logo)  || "";
-    q("schoolName").textContent = d.school && d.school.name ? d.school.name : "";
     q("stuName").textContent = (d.student && d.student.name) || "학생";
     if(d.student && d.student.className){
       q("stuClass").textContent = d.student.className;
