@@ -3666,6 +3666,16 @@ function watchUserStatus(uid) {
   );
 }
 
+// 마지막 활동 시각 기록 (이탈 감지용) — 본인 user 문서, 하루 1회 throttle
+function touchLastActive(uid){
+  try{
+    if(!window.fbDb || !uid) return;
+    var today = new Date().toISOString().slice(0,10);
+    if(localStorage.getItem('kms_lastactive_day') === today) return; // 하루 1회만
+    localStorage.setItem('kms_lastactive_day', today);
+    window.fbUpdateDoc(window.fbDoc(window.fbDb, 'users', uid), { lastActiveAt: new Date().toISOString() }).catch(function(){});
+  }catch(e){}
+}
 function finishLogin(fbUser, profile) {
   document.getElementById('loginScreen').style.display = 'none';
   var landing = document.getElementById('landingPage');
@@ -3684,6 +3694,7 @@ function finishLogin(fbUser, profile) {
   }
   hideInitLoader();
   showLoading(false);
+  touchLastActive(fbUser && fbUser.uid);
 
   // 로그아웃 버튼 표시
   var lb = document.getElementById('logoutBtn');

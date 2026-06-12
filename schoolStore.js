@@ -363,18 +363,43 @@ function _statSummaryBox(val, label, color){
     + '<div style="font-size:18px;font-weight:900;color:'+color+'">'+val+'</div>'
     + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">'+label+'</div></div>';
 }
+function _statActiveBadge(lastActiveAt){
+  if(!lastActiveAt) return '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:#f1f5f9;color:#94a3b8">활동기록 수집 전</span>';
+  var diff = Math.floor((new Date() - new Date(lastActiveAt)) / 86400000);
+  var txt = diff <= 0 ? '오늘' : (diff + '일 전');
+  var color, bg;
+  if(diff >= 14){ color='#dc2626'; bg='#fee2e2'; }
+  else if(diff >= 7){ color='#d97706'; bg='#fef3c7'; }
+  else { color='#16a34a'; bg='#f0fdf4'; }
+  return '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:'+bg+';color:'+color+'">마지막 활동 '+txt+'</span>';
+}
 
 function renderSchoolStatCards(el, schools, userSnap){
   var now = new Date();
+  // 학원별 마지막 활동 = 멤버 user lastActiveAt 최댓값
+  schools.forEach(function(s){
+    var maxLA = '';
+    userSnap.forEach(function(d){
+      var u = d.data();
+      if(u.role === 'superadmin') return;
+      var match = (u.schoolId===s.id || u.schoolId===s.ownerCode || u.schoolId===s.teacherCode || (u.schoolName && s.name && u.schoolName.trim()===s.name.trim()));
+      if(match && u.lastActiveAt && u.lastActiveAt > maxLA) maxLA = u.lastActiveAt;
+    });
+    s._lastActiveAt = maxLA;
+  });
   // 전체 집계
   var total = schools.length;
-  var activeN = 0, soonN = 0, expiredN = 0, paidN = 0, trialN = 0, totSms = 0, totAlim = 0;
+  var activeN = 0, soonN = 0, expiredN = 0, paidN = 0, trialN = 0, totSms = 0, totAlim = 0, dormantN = 0;
   schools.forEach(function(s){
     if(s.status === 'active') activeN++;
     if(s.expiresAt){
       var d = Math.ceil((new Date(s.expiresAt) - now) / 86400000);
       if(d < 0) expiredN++;
       else if(d <= 30) soonN++;
+    }
+    if(s._lastActiveAt){
+      var la = Math.floor((now - new Date(s._lastActiveAt)) / 86400000);
+      if(la >= 14) dormantN++;
     }
     var p = s.plan || 'basic';
     if(p === 'free' || !s.plan) trialN++; else paidN++;
@@ -395,8 +420,8 @@ function renderSchoolStatCards(el, schools, userSnap){
     + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">'
     + _statSummaryBox(soonN, '만료 임박', soonN>0?'#d97706':'#94a3b8')
     + _statSummaryBox(expiredN, '만료됨', expiredN>0?'#dc2626':'#94a3b8')
-    + _statSummaryBox(totSms, '문자 잔여', '#0891b2')
-    + _statSummaryBox(totAlim, '알림톡 잔여', '#7c3aed')
+    + _statSummaryBox(dormantN, '휴면(14일+)', dormantN>0?'#dc2626':'#94a3b8')
+    + _statSummaryBox(totSms+totAlim, '총 크레딧', '#0891b2')
     + '</div>'
     + '</div>';
 
@@ -429,7 +454,7 @@ function renderSchoolStatCards(el, schools, userSnap){
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
       + '<div style="min-width:0">'
       + '<div style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>' + escHtml(s.name) + '</div>'
-      + '<div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">' + _statPlanBadge(s.plan) + _statDdayBadge(s.expiresAt) + '</div>'
+      + '<div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">' + _statPlanBadge(s.plan) + _statDdayBadge(s.expiresAt) + _statActiveBadge(s._lastActiveAt) + '</div>'
       + '<div style="font-size:11px;color:#94a3b8;margin-top:6px">생성: ' + (s.createdAt ? s.createdAt.slice(0,10) : '-') + '</div>'
       + '<div style="margin-top:4px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:' + (couponUsed ? '#fef3c7' : '#f1f5f9') + ';color:' + (couponUsed ? '#d97706' : '#94a3b8') + '">무료체험 쿠폰 ' + (couponUsed ? '사용됨' : '미사용') + '</span></div>'
       + '</div>'
