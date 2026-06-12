@@ -804,6 +804,7 @@ function openBulkSendDialog(date, list, excluded) {
     if (tg) tg.textContent = (n === 0) ? '모두 선택' : '모두 해제';
   }
   checks().forEach(function (c) { c.addEventListener('change', recount); });
+  recount();
   document.getElementById('bulkToggleAll').onclick = function () {
     var anyOn = checks().some(function (c) { return c.checked && !c.disabled; });
     checks().forEach(function (c) { if (!c.disabled) c.checked = !anyOn; });
