@@ -4865,18 +4865,18 @@ function loadApplications() {
       return '<div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:14px;background:#f8fafc">'
         + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
         + '<div>'
-        + '<div style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>' + (a.schoolName||'') + '</div>'
-        + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + (a.createdAt||'').slice(0,10) + ' · ' + (a.name||'') + ' · ' + (a.phone||'') + '</div>'
+        + '<div style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>' + escHtml(a.schoolName||'') + '</div>'
+        + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + (a.createdAt||'').slice(0,10) + ' · ' + escHtml(a.name||'') + ' · ' + escHtml(a.phone||'') + '</div>'
         + ((a.userId||a.teachType||a.depositor) ? '<div style="font-size:11px;color:#64748b;margin-top:3px">'
-            + (a.userId ? '아이디: <b>' + a.userId + '</b>' : '')
+            + (a.userId ? '아이디: <b>' + escHtml(a.userId) + '</b>' : '')
             + (a.teachType ? ' · ' + a.teachType : '')
-            + (a.depositor && a.depositor !== a.name ? ' · 예금주: ' + a.depositor : '')
+            + (a.depositor && a.depositor !== a.name ? ' · 예금주: ' + escHtml(a.depositor) : '')
             + '</div>' : '')
         + '</div>'
         + '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:' + statusBg + ';color:' + statusColor + ';white-space:nowrap">' + statusText + '</span>'
         + '</div>'
         + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'
-        + '<span style="background:#ede9fe;color:#6d28d9;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + (a.planLabel||a.plan||'') + '</span>'
+        + '<span style="background:#ede9fe;color:#6d28d9;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + escHtml(a.planLabel||a.plan||'') + '</span>'
         + (isCredit
             ? '<span style="background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + (a.channel==='sms'?'문자':'알림톡') + ' ' + (a.count||0) + '건</span>'
             : '<span style="background:#f1f5f9;color:#475569;font-size:11px;padding:3px 10px;border-radius:6px">선생님 ' + (a.teacherCount||0) + '명</span>')
@@ -4885,7 +4885,7 @@ function loadApplications() {
         + (isPending ? '<div style="display:flex;gap:8px">'
           + (isCredit
              ? '<button onclick="approveCreditApplication(\'' + a.id + '\')" style="flex:1;padding:8px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> 크레딧 적립 승인</button>'
-             : '<button onclick="approveApplication(\'' + a.id + '\',\'' + (a.schoolName||'').replace(/'/g,"\\'") + '\',' + (a.days||14) + ',' + (a.teacherCount||0) + ')" '
+             : '<button onclick="approveApplication(\'' + a.id + '\',\'' + escJsArg(a.schoolName||'') + '\',' + (a.days||14) + ',' + (a.teacherCount||0) + ')" '
                + 'style="flex:1;padding:8px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> 승인 + 코드발급</button>')
           + '<button onclick="rejectApplication(\'' + a.id + '\')" '
           + 'style="padding:8px 14px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> 거절</button>'
@@ -5136,7 +5136,7 @@ function renderAdminSchoolOptions(keyword) {
     return !kw || s.name.toLowerCase().indexOf(kw) !== -1;
   });
   filtered.forEach(function(s) {
-    options += '<option value="' + s.id + '" data-name="' + s.name.replace(/"/g,'&quot;') + '">' + s.name + (s.inactive ? ' (비활성)' : '') + '</option>';
+    options += '<option value="' + s.id + '" data-name="' + s.name.replace(/"/g,'&quot;') + '">' + escHtml(s.name) + (s.inactive ? ' (비활성)' : '') + '</option>';
   });
   sel.innerHTML = options;
   // 이전 선택이 필터 결과에 있으면 유지
@@ -5206,7 +5206,7 @@ function renderAdminSchoolData(schoolName, members, records, schoolNotices) {
     mRecs.forEach(function(r) { if (r.student) mStudents[r.student] = true; });
     html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8fafc;border-radius:8px">'
       + '<div>'
-      + '<div style="font-size:13px;font-weight:700;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + (m.name||m.userId||'이름없음') + '</div>'
+      + '<div style="font-size:13px;font-weight:700;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + escHtml(m.name||m.userId||'이름없음') + '</div>'
       + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + (m.role||'teacher') + '</div>'
       + '</div>'
       + '<div style="display:flex;gap:12px;text-align:center">'
@@ -5234,12 +5234,12 @@ function renderAdminSchoolData(schoolName, members, records, schoolNotices) {
       html += '<div style="background:#f8fafc;border-radius:8px;border-left:3px solid #6366f1;overflow:hidden">'
         + '<div onclick="toggleAdminRecord(' + idx + ')" style="padding:10px 12px;cursor:pointer">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
-        + '<span style="font-size:13px;font-weight:700;color:#1e293b">' + (r.student||'학생') + '</span>'
+        + '<span style="font-size:13px;font-weight:700;color:#1e293b">' + escHtml(r.student||'학생') + '</span>'
         + '<span style="font-size:11px;color:#94a3b8">' + (r.date||'') + '</span>'
         + '</div>'
         + '<div style="font-size:11px;color:#64748b;display:flex;gap:10px;flex-wrap:wrap">'
         + '<span>' + (r._teacher||'') + '</span>'
-        + (r.className ? '<span>' + r.className + '</span>' : '')
+        + (r.className ? '<span>' + escHtml(r.className) + '</span>' : '')
         + '<span>이행도: ' + comp + '</span>'
         + (r.wordScore ? '<span>단어: ' + r.wordScore + '점</span>' : '')
         + '</div>'

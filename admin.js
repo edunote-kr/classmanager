@@ -108,9 +108,9 @@ function loadAllUsers() {
       var statusText = isActive ? '활성' : '대기/비활성';
       return '<div data-urow="' + u.uid + '" data-uname="' + (u.name||u.userId||'이름없음').replace(/"/g,'&quot;') + '" data-user-name="' + ((u.name||'')+' '+(u.userId||'')+' '+(u.schoolName||'')).replace(/"/g,'&quot;') + '" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc">'
         + '<div>'
-        + '<div style="font-size:13px;font-weight:700;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + (u.name||u.userId||'이름없음') + '</div>'
+        + '<div style="font-size:13px;font-weight:700;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + escHtml(u.name||u.userId||'이름없음') + '</div>'
         + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'
-        + (u.role||'teacher') + ' · ' + (u.schoolName||'학원없음') + ' · ' + (u.userId||'')
+        + (u.role||'teacher') + ' · ' + escHtml(u.schoolName||'학원없음') + ' · ' + escHtml(u.userId||'')
         + '</div>'
         + '</div>'
         + '<div style="display:flex;gap:6px;align-items:center">'
@@ -256,8 +256,8 @@ function showSchoolUsers(schoolId, schoolName) {
         var isInactive = u.status !== 'active';
         return '<div data-umrow="' + u.uid + '" data-uname="' + (u.name||u.userId||'이름없음').replace(/"/g,'&quot;') + '" style="display:flex;align-items:center;justify-content:space-between;padding:10px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px">'
           + '<div>'
-          + '<div style="font-size:13px;font-weight:700;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + (u.name||u.userId||'이름없음') + '</div>'
-          + '<div style="font-size:11px;color:#94a3b8">' + (u.role||'teacher') + ' · ' + (u.userId||'') + '</div>'
+          + '<div style="font-size:13px;font-weight:700;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + escHtml(u.name||u.userId||'이름없음') + '</div>'
+          + '<div style="font-size:11px;color:#94a3b8">' + (u.role||'teacher') + ' · ' + escHtml(u.userId||'') + '</div>'
           + '</div>'
           + '<div style="display:flex;gap:6px;align-items:center">'
           + '<button id="umbtn-' + u.uid + '" onclick="toggleUserStatusInModal(\'' + u.uid + '\',\'' + (u.status||'inactive') + '\')" '
@@ -590,7 +590,7 @@ function checkExpiryAlerts() {
       if (expired.length > 0) {
         inner += '<div style="margin-bottom:8px"><div style="font-size:11px;color:#dc2626;font-weight:700;margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> 만료 (' + expired.length + ')</div><div style="display:flex;flex-wrap:wrap;gap:4px">';
         expired.forEach(function(s) {
-          inner += '<span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + s.name + ' · ' + s.date + '</span>';
+          inner += '<span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + escHtml(s.name) + ' · ' + s.date + '</span>';
         });
         inner += '</div></div>';
       }
@@ -599,7 +599,7 @@ function checkExpiryAlerts() {
       if (soon.length > 0) {
         inner += '<div style="margin-bottom:8px"><div style="font-size:11px;color:#92400e;font-weight:700;margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> 만료 임박 (' + soon.length + ')</div><div style="display:flex;flex-wrap:wrap;gap:4px">';
         soon.forEach(function(s) {
-          inner += '<span style="background:#fef9c3;color:#92400e;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + s.name + ' · D-' + s.diff + ' · ' + s.date + '</span>';
+          inner += '<span style="background:#fef9c3;color:#92400e;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + escHtml(s.name) + ' · D-' + s.diff + ' · ' + s.date + '</span>';
         });
         inner += '</div></div>';
       }
@@ -608,7 +608,7 @@ function checkExpiryAlerts() {
       if (normal.length > 0) {
         inner += '<div style="margin-bottom:8px"><div style="font-size:11px;color:#16a34a;font-weight:700;margin-bottom:4px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> 정상 이용 중 (' + normal.length + ')</div><div style="display:flex;flex-wrap:wrap;gap:4px">';
         normal.forEach(function(s) {
-          inner += '<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + s.name + ' · D-' + s.diff + ' · ' + s.date + '</span>';
+          inner += '<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">' + escHtml(s.name) + ' · D-' + s.diff + ' · ' + s.date + '</span>';
         });
         inner += '</div></div>';
       }

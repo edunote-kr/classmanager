@@ -13,6 +13,15 @@ function escapeNotice(s){ if(s==null)return''; return String(s).replace(/&/g,'&a
 function escHtml(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+// 인라인 onclick 등 속성 안에 문자열 '인자'로 넣을 때 사용.
+// JS 문자열 이스케이프(\\ ' 개행) + HTML 속성 이스케이프(& " < >) 동시 적용 →
+// 속성 탈출/인자 문자열 탈출(XSS) 모두 차단. (브라우저가 속성 디코드 후 JS가 인자 디코드)
+function escJsArg(s){
+  return String(s==null?'':s)
+    .replace(/\\/g,'\\\\').replace(/'/g,"\\'")
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\r?\n/g,' ');
+}
 function escapeInq(s) {
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');

@@ -204,8 +204,8 @@ function drawAssignTeacherList(s) {
     var checked = assigned.indexOf(t.uid) !== -1 ? 'checked' : '';
     return '<label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:13px">'
       + '<input type="checkbox" class="assign-teacher-cb" value="' + t.uid + '" ' + checked + ' style="width:16px;height:16px;accent-color:#0891b2">'
-      + '<span style="font-weight:700;color:#1e293b">' + (t.name||'') + '</span>'
-      + '<span style="font-size:11px;color:#94a3b8">' + (t.userId||'') + '</span>'
+      + '<span style="font-weight:700;color:#1e293b">' + escHtml(t.name||'') + '</span>'
+      + '<span style="font-size:11px;color:#94a3b8">' + escHtml(t.userId||'') + '</span>'
       + '</label>';
   }).join('');
 }
@@ -284,8 +284,8 @@ function makeStudentRow(s) {
     // 첫째 줄: 이름+학년 / 출결 / 버튼
     + '<div style="display:flex;align-items:center;gap:6px;justify-content:space-between;flex-wrap:wrap">'
     + '<div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1 1 auto">'
-    + '<span style="font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + s.name + '</span>'
-    + (s.grade ? '<span style="font-size:10px;color:#6366f1;font-weight:700;background:#ede9fe;padding:1px 6px;border-radius:4px;white-space:nowrap">' + s.grade + '</span>' : '')
+    + '<span style="font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + escHtml(s.name) + '</span>'
+    + (s.grade ? '<span style="font-size:10px;color:#6366f1;font-weight:700;background:#ede9fe;padding:1px 6px;border-radius:4px;white-space:nowrap">' + escHtml(s.grade) + '</span>' : '')
     + '</div>'
 + (function(){
         var isOwner = (currentRole === 'owner' || currentRole === 'superadmin');
@@ -297,10 +297,10 @@ function makeStudentRow(s) {
     + '</div></div>'
     // 둘째 줄: 반 / 전화번호
     + '<div style="display:flex;gap:8px;margin-top:5px;font-size:11px;color:#64748b;flex-wrap:wrap">'
-    + (s.className ? '<span style="background:#f1f5f9;padding:1px 7px;border-radius:4px;font-weight:600">' + s.className + '</span>' : '')
-    + (s.school ? '<span style="background:#eef2ff;color:#4f46e5;padding:1px 7px;border-radius:4px;font-weight:600">' + s.school + '</span>' : '')
-    + (s.phone  ? '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.44 2.68h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.6-.6a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 19z"/></svg>' + s.phone  + '</span>' : '')
-    + (s.parent ? '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' + s.parent + '</span>' : '')
+    + (s.className ? '<span style="background:#f1f5f9;padding:1px 7px;border-radius:4px;font-weight:600">' + escHtml(s.className) + '</span>' : '')
+    + (s.school ? '<span style="background:#eef2ff;color:#4f46e5;padding:1px 7px;border-radius:4px;font-weight:600">' + escHtml(s.school) + '</span>' : '')
+    + (s.phone  ? '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.44 2.68h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.6-.6a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 19z"/></svg>' + escHtml(s.phone)  + '</span>' : '')
+    + (s.parent ? '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' + escHtml(s.parent) + '</span>' : '')
     + (s.code4 ? '<span style="background:#f5f3ff;color:#7c3aed;padding:1px 7px;border-radius:4px;font-weight:700">출결코드 ' + s.code4 + '</span>' : '')
     + ((function(){
         var isOwner = (currentRole === 'owner' || currentRole === 'superadmin');
@@ -308,20 +308,20 @@ function makeStudentRow(s) {
         var arr = Array.isArray(s.assignedTo) ? s.assignedTo : [];
         if (arr.length === 0) return '<span style="background:#fef3c7;color:#b45309;padding:1px 7px;border-radius:4px;font-weight:600">미배정</span>';
         var names = arr.map(function(uid){ return teacherNameByUid(uid); }).join(', ');
-        return '<span style="background:#cffafe;color:#0e7490;padding:1px 7px;border-radius:4px;font-weight:600">담당: ' + names + '</span>';
+        return '<span style="background:#cffafe;color:#0e7490;padding:1px 7px;border-radius:4px;font-weight:600">담당: ' + escHtml(names) + '</span>';
       })())
     + '</div>'
     + '</div></div>'
     // 수정 폼
     + '<div id="student-edit-' + s.id + '" style="display:none;padding:10px;background:#f0f9ff;border-top:1.5px solid #bae6fd">'
     + '<div style="display:flex;gap:6px;margin-bottom:6px">'
-    + '<input id="edit-class-'  + s.id + '" value="' + (s.className||'') + '" placeholder="반" list="classListData" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
-    + '<input id="edit-name-'   + s.id + '" value="' + (s.name||'') + '" placeholder="이름" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
-    + '<input id="edit-grade-'  + s.id + '" value="' + (s.grade||'') + '" placeholder="학년" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
+    + '<input id="edit-class-'  + s.id + '" value="' + escHtml(s.className||'') + '" placeholder="반" list="classListData" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
+    + '<input id="edit-name-'   + s.id + '" value="' + escHtml(s.name||'') + '" placeholder="이름" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
+    + '<input id="edit-grade-'  + s.id + '" value="' + escHtml(s.grade||'') + '" placeholder="학년" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;flex:1;min-width:0">'
     + '</div>'
-    + '<input id="edit-school-' + s.id + '" value="' + (s.school||'') + '" placeholder="학교명" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;margin-bottom:6px">'
+    + '<input id="edit-school-' + s.id + '" value="' + escHtml(s.school||'') + '" placeholder="학교명" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;margin-bottom:6px">'
     + '<input id="edit-phone-'  + s.id + '" value="' + (s.phone||'') + '" placeholder="학생 번호" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;margin-bottom:6px">'
-    + '<input id="edit-parent-' + s.id + '" value="' + (s.parent||'') + '" placeholder="학부모 번호" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;margin-bottom:6px">'
+    + '<input id="edit-parent-' + s.id + '" value="' + escHtml(s.parent||'') + '" placeholder="학부모 번호" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;margin-bottom:6px">'
     + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">'
     + '<input id="edit-code-' + s.id + '" value="' + (s.code4||'') + '" inputmode="numeric" maxlength="4" placeholder="출결코드 4자리(선택)" oninput="this.value=this.value.replace(/[^0-9]/g,\'\');checkEditStudentCode(\'' + s.id + '\')" style="padding:6px 8px;border-radius:6px;border:1.5px solid #e2e8f0;font-size:12px;font-family:inherit;width:150px">'
     + '<span id="edit-code-msg-' + s.id + '" style="font-size:11px;font-weight:700"></span>'
