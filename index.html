@@ -4801,12 +4801,8 @@ function submitApply() {
 }
 
 function goToLanding() {
-  // 로그인 상태면 로그아웃 없이 랜딩 이동 안함
-  // 비로그인 상태에서만 랜딩으로 스크롤
-  if (!currentUser) {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    document.getElementById('landingPage').style.display = 'block';
-  }
+  // 랜딩(비로그인)에서 로고/EduNote 클릭 → 새로고침 (로그인 헤더 로고와 동일 동작)
+  if (!currentUser) { location.reload(); }
 }
 
 function showLoginModal() {

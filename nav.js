@@ -20,7 +20,10 @@ function switchTab(tab) {
   if (panelKey==='soon') { var st0=document.getElementById('soonTitle'); if(st0) st0.textContent=(meta&&meta.label)||'준비 중'; }
   document.body.classList.toggle('tab-input', tab==='input');
   if(tab!=='input'){ if(_lessonPreviewOpen) closeLessonPreview(); if(_mobileSheetOpen) closeMobileSheet(); }
-  else { if(_lessonPreviewOpen) setTimeout(renderLessonPreview,50); }
+  else {
+    if(_lessonPreviewOpen) setTimeout(renderLessonPreview,50);
+    else if(typeof _autoOpenPreviewDesktop==='function') setTimeout(_autoOpenPreviewDesktop,50); // 넓은 화면이면 자동 펼침
+  }
   navSyncActive(tab);
   if (tab==='dashboard') renderDashboard();
   if (tab==='checkin')    enterCheckinManage();
