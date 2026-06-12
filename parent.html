@@ -127,11 +127,13 @@
       <button id="tab-hw" class="on" onclick="showTab('hw')">과제 <span class="cnt" id="cnt-hw"></span></button>
       <button id="tab-no" onclick="showTab('no')">알림장 <span class="cnt" id="cnt-no"></span></button>
       <button id="tab-at" onclick="showTab('at')">출결 <span class="cnt" id="cnt-at"></span></button>
+      <button id="tab-st" onclick="showTab('st')">통계</button>
     </div>
     <div class="body">
       <div id="pane-hw"></div>
       <div id="pane-no" class="hidden"></div>
       <div id="pane-at" class="hidden"></div>
+    <div id="pane-st" class="hidden"></div>
     </div>
     <div class="foot">EduNote · 읽기전용 학습 안내</div>
   </div>
@@ -423,9 +425,84 @@ function renderAttendance(att){
   return html;
 }
 
+// ── 학부모 통계 (과제 이행률 · 출결 · 알림장) ──────────────
+function renderParentStats(recs, nots, att){
+  recs = recs || []; nots = nots || []; att = att || {};
+
+  // 과제 이행률: 레슨블록(today/reading/grammar/exam/etc/supplement Comp) + 지난과제 comp 평균
+  var comps = [];
+  recs.forEach(function(r){
+    ['today','reading','grammar','exam','etc','supplement'].forEach(function(b){
+      for(var i=1;i<=5;i++){ var c=r[b+i+'Comp']; if(typeof c==='number' && c>=0 && r[b+i]) comps.push(c); }
+    });
+    if(typeof r.readingComp==='number' && r.readingComp>=0 && r.reading) comps.push(r.readingComp);
+    if(typeof r.grammarComp==='number' && r.grammarComp>=0 && r.grammar) comps.push(r.grammarComp);
+    try { getLastHomeworks(r).forEach(function(it){ if(typeof it.comp==='number' && it.comp>=0) comps.push(it.comp); }); } catch(e){}
+  });
+  var avgComp = comps.length ? Math.round(comps.reduce(function(a,b){return a+b;},0)/comps.length) : null;
+
+  // 출결: 수업 출결(classAttendance) status 집계
+  var ca = att.classAttendance || [];
+  var cnt = { onTime:0, late:0, absent:0 };
+  ca.forEach(function(a){
+    if(a.status==='정시도착') cnt.onTime++;
+    else if(a.status==='15분이내' || a.status==='15분이상') cnt.late++;
+    else if(a.status==='결석') cnt.absent++;
+  });
+  var totalAtt = cnt.onTime + cnt.late + cnt.absent;
+  var attendRate = totalAtt ? Math.round((cnt.onTime + cnt.late) / totalAtt * 100) : null;
+
+  // 평균 이행률 색상(LEVELS 근사)
+  function compColor(v){
+    if(v==null) return '#94a3b8';
+    if(v>=80) return '#16a34a'; if(v>=50) return '#d97706'; if(v>=25) return '#f97316'; return '#ef4444';
+  }
+
+  function box(val, label, color){
+    return '<div style="flex:1;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 8px;text-align:center">'
+      + '<div style="font-size:22px;font-weight:900;color:'+color+'">'+val+'</div>'
+      + '<div style="font-size:11px;color:#94a3b8;margin-top:3px">'+label+'</div></div>';
+  }
+
+  var html = '';
+  // 요약 3박스
+  html += '<div style="display:flex;gap:8px;margin-bottom:14px">'
+    + box(recs.length, '과제 기록', '#6366f1')
+    + box(avgComp==null?'—':avgComp+'%', '평균 이행률', compColor(avgComp))
+    + box(attendRate==null?'—':attendRate+'%', '출석률', attendRate==null?'#94a3b8':(attendRate>=80?'#16a34a':'#d97706'))
+    + '</div>';
+
+  // 출결 분포
+  if(totalAtt){
+    function pill(label, n, color, bg){
+      return '<div style="flex:1;background:'+bg+';border-radius:10px;padding:10px;text-align:center">'
+        + '<div style="font-size:18px;font-weight:900;color:'+color+'">'+n+'</div>'
+        + '<div style="font-size:10px;color:'+color+';margin-top:2px;font-weight:700">'+label+'</div></div>';
+    }
+    html += '<div class="sec"><span class="lbl" style="background:#0891b2">출결 현황</span>'
+      + '<div style="display:flex;gap:8px;margin-top:8px">'
+      + pill('정시', cnt.onTime, '#16a34a', '#f0fdf4')
+      + pill('지각', cnt.late, '#d97706', '#fffbeb')
+      + pill('결석', cnt.absent, '#dc2626', '#fef2f2')
+      + '</div>'
+      + '<div style="font-size:11px;color:#94a3b8;margin-top:8px;text-align:center">수업 출결 총 '+totalAtt+'회 기준</div>'
+      + '</div>';
+  }
+
+  // 알림장
+  html += '<div class="sec" style="margin-top:14px"><span class="lbl" style="background:#7c3aed">알림장</span>'
+    + '<div style="font-size:13px;color:#334155;margin-top:8px">받은 알림장 <b style="color:#7c3aed">'+nots.length+'</b>건</div>'
+    + '</div>';
+
+  if(!recs.length && !totalAtt && !nots.length){
+    return '<div class="empty">아직 통계로 보여줄 기록이 없습니다.</div>';
+  }
+  return html;
+}
+
 // ── 탭 ────────────────────────────────────────────────
 window.showTab = function(t){
-  ["hw","no","at"].forEach(function(k){
+  ["hw","no","at","st"].forEach(function(k){
     q("tab-"+k).classList.toggle("on", k===t);
     q("pane-"+k).classList.toggle("hidden", k!==t);
   });
@@ -464,6 +541,7 @@ function showError(title, sub){
     q("pane-hw").innerHTML = recs.length ? recs.map(renderRecord).join("") : '<div class="empty">등록된 과제가 없습니다.</div>';
     q("pane-no").innerHTML = nots.length ? nots.map(renderNotice).join("") : '<div class="empty">알림장이 없습니다.</div>';
     q("pane-at").innerHTML = renderAttendance(att);
+    q("pane-st").innerHTML = renderParentStats(recs, nots, att);
 
     q("stateView").classList.add("hidden");
     q("mainView").classList.remove("hidden");
