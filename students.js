@@ -677,3 +677,131 @@ function showParentLinkModal(name, url) {
     } else { showToast('직접 길게 눌러 복사해주세요.', 'info'); }
   };
 }
+
+// ── 일괄 전송 (날짜 그룹) ─────────────────────────────────────────────────────
+// 그 날짜에 보이는 학생들을 모아(학생 단위 dedup) 다이얼로그로 일괄 전송.
+// 학부모 번호 없는 학생은 흐릿+"번호 미등록"으로 선택 불가. 실발송은 솔라피 연동 시 교체.
+function bulkSendByDate(date) {
+  if (typeof records === 'undefined' || !Array.isArray(records)) { showToast('기록을 찾을 수 없습니다.', 'error'); return; }
+  var isOwner = (currentRole === 'owner' || currentRole === 'superadmin');
+  var filterVal = (document.getElementById('filterStudent') || {}).value || '';
+  var teacherFilter = '';
+  if (isOwner) { var tSel = document.getElementById('filterTeacher'); teacherFilter = tSel ? tSel.value : ''; }
+
+  var inDate = records.filter(function (r) {
+    if (String(r.date) !== String(date)) return false;
+    if (!isOwner && r.teacher !== currentUser) return false;
+    if (isOwner && teacherFilter && r.teacher !== teacherFilter) return false;
+    if (filterVal && r.student !== filterVal) return false;
+    return true;
+  });
+  if (!inDate.length) { showToast('해당 날짜 기록이 없습니다.', 'error'); return; }
+
+  var seen = {}, list = [];
+  inDate.forEach(function (r) {
+    var sid = r.studentId || (typeof resolveStudentId === 'function' ? resolveStudentId(r) : '');
+    var keyId = sid || ('name:' + (r.student || '') + '|' + (r.className || ''));
+    if (seen[keyId]) return; seen[keyId] = 1;
+    var st = _findStudentForSend(sid, r);
+    list.push({
+      sid: sid,
+      name: (st && st.name) || r.student || '학생',
+      className: (st && st.className) || r.className || '',
+      parent: (st && st.parent) || ''
+    });
+  });
+  list.sort(function (a, b) { return (a.name || '').localeCompare(b.name || '', 'ko'); });
+  openBulkSendDialog(date, list);
+}
+
+function closeBulkSendDialog() {
+  var el = document.getElementById('bulkSendDialog');
+  if (el) el.parentNode.removeChild(el);
+}
+
+function openBulkSendDialog(date, list) {
+  closeBulkSendDialog();
+  var sendable = list.filter(function (x) { return !!x.parent; }).length;
+
+  var rowsHtml = list.map(function (x, i) {
+    var hasPhone = !!x.parent;
+    var sentAt = 0; try { sentAt = parseInt(localStorage.getItem('kms_psent_' + x.sid) || '0', 10) || 0; } catch (e) {}
+    var sentTag = (hasPhone && sentAt) ? '<span style="font-size:10px;font-weight:800;color:#b45309;background:#fef3c7;padding:1px 7px;border-radius:999px;margin-left:6px">전송됨</span>' : '';
+    return '<label style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid #f1f5f9;cursor:' + (hasPhone ? 'pointer' : 'not-allowed') + ';opacity:' + (hasPhone ? '1' : '.5') + '">'
+      + '<input type="checkbox" class="bulkChk" data-sid="' + escHtml(x.sid) + '" data-name="' + escHtml(x.name) + '" ' + (hasPhone ? 'checked' : 'disabled') + ' style="width:17px;height:17px;accent-color:#0891b2;flex:0 0 auto">'
+      + '<span style="font-size:13px;font-weight:700;color:#334155">' + escHtml(x.name) + '</span>'
+      + (x.className ? '<span style="font-size:11px;color:#94a3b8">' + escHtml(x.className) + '</span>' : '')
+      + sentTag
+      + '<span style="margin-left:auto;font-size:11px;color:' + (hasPhone ? '#64748b' : '#cbd5e1') + '">' + (hasPhone ? escHtml(x.parent) : '번호 미등록') + '</span>'
+      + '</label>';
+  }).join('');
+
+  var ov = document.createElement('div');
+  ov.id = 'bulkSendDialog';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML =
+    '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.3);font-family:inherit;overflow:hidden">'
+    + '<div style="padding:18px 18px 10px">'
+    + '<div style="font-size:15px;font-weight:800;color:#0e7490;margin-bottom:2px">일괄 전송</div>'
+    + '<div style="font-size:12px;color:#64748b">' + escHtml(date) + ' · 학습기록 등록 알림을 학부모에게 전송합니다.</div>'
+    + '</div>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px;background:#f8fafc;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7">'
+    + '<span style="font-size:11px;font-weight:800;color:#94a3b8">받는 학생 ' + list.length + '명 · 전송 가능 ' + sendable + '명</span>'
+    + '<button id="bulkToggleAll" style="font-size:11px;font-weight:700;color:#0891b2;background:none;border:none;cursor:pointer;font-family:inherit">모두 해제</button>'
+    + '</div>'
+    + '<div style="overflow-y:auto;flex:1 1 auto">' + rowsHtml + '</div>'
+    + '<div style="padding:12px 18px 16px;border-top:1px solid #eef2f7">'
+    + (sendable
+        ? '<div style="font-size:12px;color:#64748b;margin-bottom:10px">예상 차감 <b id="bulkCreditEst" style="color:#0e7490">' + sendable + '</b> 크레딧 · 알림톡(실패 시 문자)</div>'
+        : '<div style="font-size:12px;color:#dc2626;font-weight:700;margin-bottom:10px">학부모 번호가 등록된 학생이 없습니다.</div>')
+    + '<div style="display:flex;gap:8px">'
+    + '<button id="bulkGo" ' + (sendable ? '' : 'disabled') + ' style="flex:1;background:' + (sendable ? '#0891b2' : '#cbd5e1') + ';color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:800;cursor:' + (sendable ? 'pointer' : 'not-allowed') + ';font-family:inherit">전송</button>'
+    + '<button id="bulkCancel" style="flex:0 0 auto;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>'
+    + '</div></div></div>';
+
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function (e) { if (e.target === ov) closeBulkSendDialog(); });
+  document.getElementById('bulkCancel').onclick = closeBulkSendDialog;
+
+  function checks() { return Array.prototype.slice.call(ov.querySelectorAll('.bulkChk')); }
+  function recount() {
+    var n = checks().filter(function (c) { return c.checked && !c.disabled; }).length;
+    var est = document.getElementById('bulkCreditEst'); if (est) est.textContent = String(n);
+    var go = document.getElementById('bulkGo');
+    if (go && sendable) { go.disabled = (n === 0); go.style.background = (n === 0) ? '#cbd5e1' : '#0891b2'; go.style.cursor = (n === 0) ? 'not-allowed' : 'pointer'; }
+    var tg = document.getElementById('bulkToggleAll');
+    if (tg) tg.textContent = (n === 0) ? '모두 선택' : '모두 해제';
+  }
+  checks().forEach(function (c) { c.addEventListener('change', recount); });
+  document.getElementById('bulkToggleAll').onclick = function () {
+    var anyOn = checks().some(function (c) { return c.checked && !c.disabled; });
+    checks().forEach(function (c) { if (!c.disabled) c.checked = !anyOn; });
+    recount();
+  };
+
+  if (sendable) {
+    document.getElementById('bulkGo').onclick = function () {
+      var sel = checks().filter(function (c) { return c.checked && !c.disabled; })
+        .map(function (c) { return { sid: c.getAttribute('data-sid'), name: c.getAttribute('data-name') }; });
+      if (!sel.length) { showToast('보낼 학생을 선택해주세요.', 'error'); return; }
+      _bulkTestSend(sel);
+    };
+  }
+}
+
+// 일괄 테스트 발송: 선택 학생 각각 링크 발급(get-or-create) + 전송됨 마커. 실발송은 솔라피 연동 시 단일 CF로 교체.
+function _bulkTestSend(sel) {
+  if (!window.fbCallable) { showToast('잠시 후 다시 시도해주세요.', 'error'); return; }
+  var go = document.getElementById('bulkGo');
+  if (go) { go.disabled = true; go.textContent = '전송 중...'; }
+  var jobs = sel.map(function (s) {
+    return window.fbCallable('issueParentToken')({ studentId: String(s.sid) })
+      .then(function () { try { localStorage.setItem('kms_psent_' + s.sid, String(Date.now())); } catch (e) {} return true; })
+      .catch(function () { return false; });
+  });
+  Promise.all(jobs).then(function (results) {
+    var ok = results.filter(Boolean).length, fail = results.length - ok;
+    closeBulkSendDialog();
+    showToast(ok + '명 전송(테스트) 완료' + (fail ? ' · 실패 ' + fail + '명' : ''));
+  });
+}
