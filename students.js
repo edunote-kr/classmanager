@@ -99,38 +99,7 @@ function renderStudents() {
 
   let html = '';
 
-  // 원장: 선생님별 배정 요약 (접기/펼치기)
-  if (isOwner && _schoolTeachers.length > 0) {
-    html += '<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'
-      + '<div onclick="toggleAssignSummary()" style="background:#ecfeff;padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
-      + '<span style="font-size:12px;font-weight:800;color:#0891b2">선생님별 배정 현황</span>'
-      + '<span id="assignSummaryArrow" style="color:#0891b2;font-size:11px">▼</span>'
-      + '</div>'
-      + '<div id="assignSummaryBody" style="padding:10px 12px">';
-    // 각 선생님별 배정 학생
-    _schoolTeachers.forEach(function(t){
-      var assigned = _act.filter(function(s){ return Array.isArray(s.assignedTo) && s.assignedTo.indexOf(t.uid) !== -1; });
-      html += '<div style="margin-bottom:8px">'
-        + '<div style="font-size:12px;font-weight:700;color:#0e7490;margin-bottom:3px">' + escapeNotice(t.name) + ' <span style="color:#94a3b8;font-weight:600">' + assigned.length + '명</span></div>';
-      if (assigned.length === 0) {
-        html += '<div style="font-size:11px;color:#cbd5e1;padding-left:6px">배정된 학생 없음</div>';
-      } else {
-        html += '<div style="font-size:11px;color:#475569;padding-left:6px;line-height:1.6">'
-          + assigned.map(function(s){ return escapeNotice(s.name) + (s.className ? '<span style="color:#94a3b8">('+escapeNotice(s.className)+')</span>' : ''); }).join(', ')
-          + '</div>';
-      }
-      html += '</div>';
-    });
-    // 미배정 학생
-    var unassigned = _act.filter(function(s){ return !Array.isArray(s.assignedTo) || s.assignedTo.length === 0; });
-    html += '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e2e8f0">'
-      + '<div style="font-size:12px;font-weight:700;color:#b45309;margin-bottom:3px">미배정 <span style="color:#94a3b8;font-weight:600">' + unassigned.length + '명</span></div>'
-      + (unassigned.length > 0
-          ? '<div style="font-size:11px;color:#475569;padding-left:6px;line-height:1.6">' + unassigned.map(function(s){ return escapeNotice(s.name); }).join(', ') + '</div>'
-          : '<div style="font-size:11px;color:#cbd5e1;padding-left:6px">없음</div>')
-      + '</div>';
-    html += '</div></div>';
-  }
+  // (선생님별 배정 현황 카드는 업무관리>반배정 관리 패널로 이동 → renderAssignSummary)
 
   // 반별 그룹핑 (원장/선생님 동일)
   const groups = {};
@@ -223,6 +192,44 @@ function toggleAssignSummary() {
   var open = body.style.display !== 'none';
   body.style.display = open ? 'none' : 'block';
   if (arrow) arrow.textContent = open ? '▶' : '▼';
+}
+
+// 선생님별 배정 현황 카드 (업무관리>반배정 관리 패널 상단 — 원생목록에서 이동)
+function renderAssignSummary() {
+  var box = document.getElementById('assignSummaryContainer');
+  if (!box) return;
+  if (!isOwnerOrAdmin() || !_schoolTeachers || _schoolTeachers.length === 0) { box.innerHTML = ''; return; }
+  var _act = students.filter(isActiveStu);
+  var html = '<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'
+    + '<div onclick="toggleAssignSummary()" style="background:#ecfeff;padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
+    + '<span style="font-size:12px;font-weight:800;color:#0891b2">선생님별 배정 현황</span>'
+    + '<span id="assignSummaryArrow" style="color:#0891b2;font-size:11px">▼</span>'
+    + '</div>'
+    + '<div id="assignSummaryBody" style="padding:10px 12px">';
+  // 각 선생님별 배정 학생
+  _schoolTeachers.forEach(function(t){
+    var assigned = _act.filter(function(s){ return Array.isArray(s.assignedTo) && s.assignedTo.indexOf(t.uid) !== -1; });
+    html += '<div style="margin-bottom:8px">'
+      + '<div style="font-size:12px;font-weight:700;color:#0e7490;margin-bottom:3px">' + escapeNotice(t.name) + ' <span style="color:#94a3b8;font-weight:600">' + assigned.length + '명</span></div>';
+    if (assigned.length === 0) {
+      html += '<div style="font-size:11px;color:#cbd5e1;padding-left:6px">배정된 학생 없음</div>';
+    } else {
+      html += '<div style="font-size:11px;color:#475569;padding-left:6px;line-height:1.6">'
+        + assigned.map(function(s){ return escapeNotice(s.name) + (s.className ? '<span style="color:#94a3b8">('+escapeNotice(s.className)+')</span>' : ''); }).join(', ')
+        + '</div>';
+    }
+    html += '</div>';
+  });
+  // 미배정 학생
+  var unassigned = _act.filter(function(s){ return !Array.isArray(s.assignedTo) || s.assignedTo.length === 0; });
+  html += '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e2e8f0">'
+    + '<div style="font-size:12px;font-weight:700;color:#b45309;margin-bottom:3px">미배정 <span style="color:#94a3b8;font-weight:600">' + unassigned.length + '명</span></div>'
+    + (unassigned.length > 0
+        ? '<div style="font-size:11px;color:#475569;padding-left:6px;line-height:1.6">' + unassigned.map(function(s){ return escapeNotice(s.name); }).join(', ') + '</div>'
+        : '<div style="font-size:11px;color:#cbd5e1;padding-left:6px">없음</div>')
+    + '</div>';
+  html += '</div></div>';
+  box.innerHTML = html;
 }
 
 // 학년 레벨 분류 + 칩 필터
@@ -412,6 +419,7 @@ function _drawTeacherAssign() {
   var sel = document.getElementById('assignTeacherSelect');
   var grid = document.getElementById('assignStudentGrid');
   if (!sel || !grid) return;
+  renderAssignSummary();
   if (!_schoolTeachers || _schoolTeachers.length === 0) {
     sel.innerHTML = '<option value="">소속 선생님 없음</option>';
     grid.innerHTML = '<div style="color:#94a3b8;font-size:12px;text-align:center;padding:18px">소속 선생님이 없습니다.<br><span style="font-size:11px">선생님이 같은 학원 코드로 가입하면 표시됩니다.</span></div>';
@@ -481,5 +489,6 @@ function saveBulkAssign() {
   }
   localStorage.setItem(stuKey(), JSON.stringify(students));
   showToast(changed.length+'명 배정이 업데이트되었습니다.');
+  renderAssignSummary();
   if (typeof renderStudents==='function') renderStudents();
 }

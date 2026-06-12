@@ -1219,6 +1219,7 @@
     <div class="card">
       <div class="card-title" style="color:#0891b2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 선생님별 학생 배정</div>
       <div style="font-size:11px;color:#94a3b8;margin:-4px 0 12px;line-height:1.5">학생을 선택해 선생님에게 일괄 배정합니다. 선생님은 자신에게 배정된 학생만 원생목록에서 보게 됩니다.</div>
+      <div id="assignSummaryContainer"></div>
       <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:4px">선생님 선택</label>
       <select id="assignTeacherSelect" onchange="renderTeacherAssign()" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:12px"></select>
       <input id="assignStuSearch" oninput="filterAssignList()" placeholder="학생 검색 (이름·반·학년)" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:8px">
