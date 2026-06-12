@@ -607,19 +607,25 @@ function openSendDialog(rec, sid) {
       if (pe && pe.checked) recips.push('학부모');
       if (se && se.checked) recips.push('학생');
       if (!recips.length) { showToast('받는 사람을 선택해주세요.', 'error'); return; }
-      _testSend(sid, name, recips);
+      _testSend(sid, name, recips, rec && rec.id);
     };
   }
 }
 
 // 테스트 발송: 실제 알림톡 대신 링크 발급/복사로 흐름 확인 (솔라피 연동 시 실발송+크레딧 차감으로 교체)
-function _testSend(sid, name, recips) {
+function _testSend(sid, name, recips, recId) {
   if (!window.fbCallable) { showToast('잠시 후 다시 시도해주세요.', 'error'); return; }
   showToast('전송 준비 중...', 'info');
   window.fbCallable('issueParentToken')({ studentId: String(sid) }).then(function (res) {
     var url = res && res.data && res.data.url;
     if (!url) { showToast('링크 생성에 실패했습니다.', 'error'); return; }
     try { localStorage.setItem('kms_psent_' + sid, String(Date.now())); } catch (e) {}
+    // 발송 이력 서버 기록 (실발송 stub — status='test')
+    try {
+      var _rt = (recips || []).map(function (r) { return r === '학부모' ? 'parent' : (r === '학생' ? 'student' : r); })
+        .filter(function (r) { return r === 'parent' || r === 'student'; });
+      if (_rt.length) window.fbCallable('logParentSend')({ studentId: String(sid), recId: String(recId || ''), channel: 'alimtalk', recipients: _rt }).catch(function () {});
+    } catch (e) {}
     if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(url).catch(function () {}); }
     closeSendDialog();
     _showSendResult(name, recips, url);
@@ -828,7 +834,11 @@ function _bulkTestSend(sel) {
   if (go) { go.disabled = true; go.textContent = '전송 중...'; }
   var jobs = sel.map(function (s) {
     return window.fbCallable('issueParentToken')({ studentId: String(s.sid) })
-      .then(function () { try { localStorage.setItem('kms_psent_' + s.sid, String(Date.now())); } catch (e) {} return true; })
+      .then(function () {
+        try { localStorage.setItem('kms_psent_' + s.sid, String(Date.now())); } catch (e) {}
+        try { window.fbCallable('logParentSend')({ studentId: String(s.sid), recId: '', channel: 'alimtalk', recipients: ['parent'] }).catch(function () {}); } catch (e) {}
+        return true;
+      })
       .catch(function () { return false; });
   });
   Promise.all(jobs).then(function (results) {
