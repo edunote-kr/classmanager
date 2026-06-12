@@ -597,19 +597,19 @@ function renderParentStatsFull(recs){
 
     var canvasId='pwc'+mi;
     charts.push({ canvasId:canvasId, recs:mrecs });
-    var clsBadge = clsLabel ? ' <span style="font-weight:400;opacity:0.85;font-size:10px;background:rgba(255,255,255,0.18);padding:1px 7px;border-radius:10px">'+esc(clsLabel)+'</span>' : '';
     var monLabel = mon.slice(0,4)+'년 '+mon.slice(5)+'월';
+    var open = (mi===0); // 최신월만 펼침, 지난 월은 접힘
 
-    return '<div style="margin-bottom:14px">'
-      // 월 헤더
-      +'<div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:14px;background:#6366f1;border-radius:2px"></span>'+monLabel+'</div>'
-      // 학생 카드 헤더 (정보만 · 버튼 없음)
-      +'<div style="display:flex;align-items:center;justify-content:space-between;background:#334155;border-radius:8px 8px 0 0;padding:9px 13px">'
-      +'<span style="color:#fff;font-size:13px;font-weight:700"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+esc(sname)+clsBadge+' <span style="font-weight:400;opacity:0.7;font-size:11px">'+cnt+'회</span></span>'
-      +'<span style="background:'+lv.bg+';color:'+lv.color+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">'+lv.emoji+' '+stuAvg+'%</span>'
+    return '<div style="margin-bottom:10px;border:1px solid #e8edf3;border-radius:10px;overflow:hidden;background:#fff">'
+      // 월 헤더 = 토글 (접혔을 때 요약: 월·회차·평균 이행률)
+      +'<div onclick="toggleStatMonth(\''+mi+'\',this)" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;padding:11px 13px">'
+      +'<span style="display:inline-block;width:3px;height:14px;background:#6366f1;border-radius:2px;flex-shrink:0"></span>'
+      +'<span style="flex:1;font-size:13px;font-weight:800;color:#1e293b">'+monLabel+' <span style="font-weight:600;color:#94a3b8;font-size:11px">'+cnt+'회</span></span>'
+      +'<span style="background:'+lv.bg+';color:'+lv.color+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0">'+lv.emoji+' '+stuAvg+'%</span>'
+      +'<span class="pst-arrow" style="font-size:13px;color:#94a3b8;transition:transform .2s;display:inline-block;flex-shrink:0'+(open?';transform:rotate(90deg)':'')+'">▶</span>'
       +'</div>'
-      // 본문
-      +'<div style="background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;padding:16px 18px">'
+      // 본문 (접힘 대상)
+      +'<div id="pst-body-'+mi+'" class="pst-body" style="'+(open?'':'display:none;')+'border-top:1px solid #eef2f7;padding:16px 18px">'
       +'<div style="margin-bottom:10px"><span style="font-size:11px;font-weight:800;color:#0891b2">출결 달력</span><div style="margin-top:6px">'+_statsCalendarHTML(mrecs, mon, sname)+'</div>'
         +'<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:7px;font-size:10px;color:#64748b"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#16a34a;vertical-align:middle;margin-right:3px"></span>출</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#ca8a04;vertical-align:middle;margin-right:3px"></span>지각</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#dc2626;vertical-align:middle;margin-right:3px"></span>결석</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#7c3aed;vertical-align:middle;margin-right:3px"></span>보충</span></div></div>'
       +(attitudeHTML?'<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:800;color:#475569">수업태도</span><br><div style="margin-top:4px">'+attitudeHTML+'</div></div>':'')
@@ -639,6 +639,19 @@ function drawParentStatCharts(charts){
     else { canvas.style.display='none'; if(empty){ empty.style.display='block'; empty.textContent = buildTestDetailHTML(c.recs) ? '대표 시험(TEST 1) 점수가 없어 그래프는 생략됩니다' : 'TEST 기록 없음'; } }
   });
 }
+
+// 통계 월 카드 접기/펼치기 — 펼칠 때 그 달 차트를 폭 재측정해서 다시 그림.
+window.toggleStatMonth = function(mi, el){
+  var body=document.getElementById('pst-body-'+mi); if(!body) return;
+  var willOpen = (body.style.display==='none');
+  body.style.display = willOpen ? '' : 'none';
+  var arrow = el && el.querySelector ? el.querySelector('.pst-arrow') : null;
+  if(arrow) arrow.style.transform = willOpen ? 'rotate(90deg)' : '';
+  if(willOpen && window._parentStatCharts){
+    var c = window._parentStatCharts.find(function(x){ return x.canvasId==='pwc'+mi; });
+    if(c) drawParentStatCharts([c]);
+  }
+};
 
 // ── 과제: 월별 묶음 + 최신만 펼침/나머지 접기 아코디언 ──────────────
 function renderHomeworkAccordion(recs){
