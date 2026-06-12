@@ -455,3 +455,10 @@ textarea { resize:vertical; }
       100% { width:0%;   margin-left:100% }
     }
   
+
+/* ── 선택저장(과제목록/통계 체크박스 모드) ── */
+.rec-sel-box, .stu-sel-box { display:none; }
+body.sel-mode-list .rec-sel-box { display:flex; }
+body.sel-mode-stat .stu-sel-box { display:flex; }
+.rec-sel-wrap.sel-on > .rec-card { outline:2.5px solid #6366f1; outline-offset:-3px; }
+.stu-sel-wrap.sel-on { box-shadow:0 0 0 2.5px #6366f1; border-radius:9px; }

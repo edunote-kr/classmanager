@@ -1072,6 +1072,14 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg> 엑셀 불러오기<input type="file" id="importFile" accept=".xlsx,.xls" style="display:none" onchange="importDataXlsx(event)">
       </label>
       <button onclick="deleteAllRecords()" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fee2e2;color:#dc2626"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> 전체삭제</button>
+      <button onclick="toggleListSelectMode()" id="listSelBtn" style="padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#ede9fe;color:#4f46e5;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 선택저장</button>
+    </div>
+    <div id="listSelBar" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;padding:8px 12px;margin-bottom:10px">
+      <span id="listSelCount" style="font-size:12px;font-weight:800;color:#4f46e5">0개 선택</span>
+      <button onclick="selectAllRecs(true)" style="margin-left:auto;padding:5px 11px;border:1.5px solid #c7d2fe;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fff;color:#4f46e5">전체선택</button>
+      <button onclick="selectAllRecs(false)" style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fff;color:#64748b">해제</button>
+      <button id="listSelSaveBtn" onclick="saveSelectedRecs()" style="padding:5px 13px;border:none;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> 선택 저장</button>
+      <button onclick="toggleListSelectMode()" style="padding:5px 11px;border:1.5px solid #fecaca;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fff;color:#dc2626">취소</button>
     </div>
     <div id="recordList"></div>
   </div>
@@ -5684,7 +5692,7 @@ function renderList() {
     var calIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>';
     var sendAllBtn = (currentRole==='owner'||currentRole==='superadmin'||currentRole==='teacher') ? '<button onclick="event.stopPropagation();bulkSendByDate(\'' + key + '\');" style="background:rgba(255,255,255,0.95);border:1.5px solid #fff;color:#0e7490;font-size:11px;font-weight:800;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;margin-left:8px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0e7490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg> 일괄전송</button>' : '';
     var saveBtn = '<button onclick="event.stopPropagation();saveAllByDate(\'' + key + '\');" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.6);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;margin-left:8px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> \uc804\uccb4\uc800\uc7a5</button>';
-    return '<div style="margin-bottom:10px"><div class="group-header" onclick="toggleGroup(\'' + gid + '\')"><span>' + calIcon + ' ' + esc(key) + ' <span style="font-weight:400;opacity:0.8;font-size:11px;margin-left:6px">' + recs.length + '\uac1c \uae30\ub85d</span></span><span style="display:flex;align-items:center;gap:8px">' + sendAllBtn + saveBtn + '<span class="' + arrowClass + '" id="ga-' + gid + '">\u25b6</span></span></div><div class="' + bodyClass + '" id="gb-' + gid + '" style="' + bodyStyle + '">' + recs.map(makeCard).join('') + '</div></div>';
+    return '<div style="margin-bottom:10px"><div class="group-header" onclick="toggleGroup(\'' + gid + '\')"><span>' + calIcon + ' ' + esc(key) + ' <span style="font-weight:400;opacity:0.8;font-size:11px;margin-left:6px">' + recs.length + '\uac1c \uae30\ub85d</span></span><span style="display:flex;align-items:center;gap:8px">' + sendAllBtn + saveBtn + '<span class="' + arrowClass + '" id="ga-' + gid + '">\u25b6</span></span></div><div class="' + bodyClass + '" id="gb-' + gid + '" style="' + bodyStyle + '">' + recs.map(_selRecWrap).join('') + '</div></div>';
   }
 
   // \ud559\uc0dd\ubcc4 \uadf8\ub8f9 (\uadf8\ub8f9\ubaa8\ub4dc student)
@@ -5695,7 +5703,7 @@ function renderList() {
     container.innerHTML = skeys.map(function(key,i){
       var recs=smap[key], gid='g'+i;
       var personIcon='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
-      return '<div style="margin-bottom:10px"><div class="group-header" onclick="toggleGroup(\''+gid+'\')"><span>'+personIcon+' '+esc(key)+' <span style="font-weight:400;opacity:0.8;font-size:11px;margin-left:6px">'+recs.length+'\uac1c \uae30\ub85d</span></span><span style="display:flex;align-items:center;gap:8px"><span class="group-arrow" id="ga-'+gid+'">\u25b6</span></span></div><div class="group-body collapsed" id="gb-'+gid+'" style="max-height:0">'+recs.map(makeCard).join('')+'</div></div>';
+      return '<div style="margin-bottom:10px"><div class="group-header" onclick="toggleGroup(\''+gid+'\')"><span>'+personIcon+' '+esc(key)+' <span style="font-weight:400;opacity:0.8;font-size:11px;margin-left:6px">'+recs.length+'\uac1c \uae30\ub85d</span></span><span style="display:flex;align-items:center;gap:8px"><span class="group-arrow" id="ga-'+gid+'">\u25b6</span></span></div><div class="group-body collapsed" id="gb-'+gid+'" style="max-height:0">'+recs.map(_selRecWrap).join('')+'</div></div>';
     }).join('');
     return;
   }
@@ -5894,8 +5902,9 @@ function renderStats() {
         var canvasId = 'wc-'+gid;
         var clsBadge = clsLabel ? ' <span style="font-weight:400;opacity:0.85;font-size:10px;background:rgba(255,255,255,0.18);padding:1px 7px;border-radius:10px">'+esc(clsLabel)+'</span>' : '';
 
-        return '<div style="margin-bottom:6px" id="stucard-'+gid+'">'
+        return '<div class="stu-sel-wrap" data-stugid="'+gid+'" style="margin-bottom:6px" id="stucard-'+gid+'">'
           +'<div style="display:flex;align-items:center;gap:4px">'
+          +'<label class="stu-sel-box" style="align-items:center;justify-content:center;width:30px;height:30px;background:#fff;border:2px solid #6366f1;border-radius:7px;cursor:pointer;flex-shrink:0"><input type="checkbox" onchange="toggleStuSel(\''+gid+'\',this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:#6366f1"></label>'
           +'<div style="flex:1;display:flex;align-items:center;justify-content:space-between;background:#334155;border-radius:8px;padding:8px 12px;cursor:pointer" onclick="toggleGroup(\''+gid+'\')">'
           +'<span style="color:#fff;font-size:13px;font-weight:700"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+esc(sname)+clsBadge+' <span style="font-weight:400;opacity:0.7;font-size:11px">'+cnt+'회</span></span>'
           +'<span style="display:flex;align-items:center;gap:6px">'
@@ -5953,7 +5962,17 @@ function renderStats() {
     stuWrap.style.cssText = 'margin-top:16px;width:100%;';
     document.getElementById('panel-stats').appendChild(stuWrap);
   }
-  stuWrap.innerHTML = '<div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:10px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 학생별 통계</div>'
+  stuWrap.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+    + '<div style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 학생별 통계</div>'
+    + '<button onclick="toggleStatSelectMode()" id="statSelBtn" style="margin-left:auto;padding:5px 12px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#ede9fe;color:#4f46e5;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 선택저장</button>'
+    + '</div>'
+    + '<div id="statSelBar" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;padding:8px 12px;margin-bottom:10px">'
+    + '<span id="statSelCount" style="font-size:12px;font-weight:800;color:#4f46e5">0명 선택</span>'
+    + '<button onclick="selectAllStu(true)" style="margin-left:auto;padding:5px 11px;border:1.5px solid #c7d2fe;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fff;color:#4f46e5">전체선택</button>'
+    + '<button onclick="selectAllStu(false)" style="padding:5px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fff;color:#64748b">해제</button>'
+    + '<button id="statSelSaveBtn" onclick="saveSelectedStu()" style="padding:5px 13px;border:none;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> 선택 저장</button>'
+    + '<button onclick="toggleStatSelectMode()" style="padding:5px 11px;border:1.5px solid #fecaca;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#fff;color:#dc2626">취소</button>'
+    + '</div>'
     + stuHTML;
 }
 
@@ -6479,6 +6498,101 @@ function openPrint() {
   // 콘텐츠 높이에 맞게 printArea 자동 조정
   const pa = document.getElementById('printArea');
   pa.style.height = 'auto';
+}
+
+// ══ 선택저장: 과제목록 ══════════════════════════
+window._selRecIds = window._selRecIds || new Set();
+function _selRecWrap(r){
+  var id = r.id;
+  var checked = window._selRecIds.has(String(id));
+  return '<div class="rec-sel-wrap'+(checked?' sel-on':'')+'" data-recid="'+id+'" style="position:relative">'
+    + '<label class="rec-sel-box" style="position:absolute;top:10px;right:10px;z-index:6;align-items:center;justify-content:center;width:30px;height:30px;background:#fff;border:2px solid #6366f1;border-radius:7px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.18)">'
+    + '<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleRecSel(\''+id+'\',this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:#6366f1"></label>'
+    + makeCard(r) + '</div>';
+}
+function toggleListSelectMode(){
+  var on = document.body.classList.toggle('sel-mode-list');
+  var bar = document.getElementById('listSelBar'); if(bar) bar.style.display = on?'flex':'none';
+  var btn = document.getElementById('listSelBtn');
+  if(btn){ btn.style.background = on?'linear-gradient(135deg,#6366f1,#4f46e5)':'#ede9fe'; btn.style.color = on?'#fff':'#4f46e5'; }
+  if(!on){ window._selRecIds.clear(); renderList(); }
+  _updateRecSelCount();
+}
+function toggleRecSel(id, checked){
+  if(checked) window._selRecIds.add(String(id)); else window._selRecIds.delete(String(id));
+  var w = document.querySelector('.rec-sel-wrap[data-recid="'+id+'"]'); if(w) w.classList.toggle('sel-on', checked);
+  _updateRecSelCount();
+}
+function selectAllRecs(on){
+  document.querySelectorAll('#recordList .rec-sel-wrap').forEach(function(w){
+    var id = w.getAttribute('data-recid');
+    var cb = w.querySelector('input[type=checkbox]'); if(cb) cb.checked = on;
+    if(on) window._selRecIds.add(String(id)); else window._selRecIds.delete(String(id));
+    w.classList.toggle('sel-on', on);
+  });
+  _updateRecSelCount();
+}
+function _updateRecSelCount(){
+  var n = window._selRecIds.size;
+  var c = document.getElementById('listSelCount'); if(c) c.textContent = n+'개 선택';
+  var b = document.getElementById('listSelSaveBtn'); if(b) b.innerHTML = b.innerHTML.replace(/선택 저장.*$/, '선택 저장'+(n?' ('+n+')':''));
+}
+function saveSelectedRecs(){
+  var ids = Array.from(window._selRecIds);
+  if(!ids.length){ showToast('선택된 학생이 없습니다.','error'); return; }
+  showToast(ids.length+'개 이미지 저장 중...','info');
+  function go(){
+    var i=0;
+    function next(){ if(i>=ids.length){ showToast(ids.length+'개 저장 완료!'); return; } saveListCard(ids[i++]); setTimeout(next,1200); }
+    next();
+  }
+  if(window.html2canvas){ go(); return; }
+  var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; s.onload=go; document.head.appendChild(s);
+}
+
+// ══ 선택저장: 통계 ══════════════════════════════
+window._selStuGids = window._selStuGids || new Set();
+function toggleStatSelectMode(){
+  var on = document.body.classList.toggle('sel-mode-stat');
+  var bar = document.getElementById('statSelBar'); if(bar) bar.style.display = on?'flex':'none';
+  var btn = document.getElementById('statSelBtn');
+  if(btn){ btn.style.background = on?'linear-gradient(135deg,#6366f1,#4f46e5)':'#ede9fe'; btn.style.color = on?'#fff':'#4f46e5'; }
+  if(!on){
+    window._selStuGids.clear();
+    document.querySelectorAll('.stu-sel-wrap.sel-on').forEach(function(w){ w.classList.remove('sel-on'); });
+    document.querySelectorAll('.stu-sel-box input[type=checkbox]').forEach(function(cb){ cb.checked=false; });
+  }
+  _updateStuSelCount();
+}
+function toggleStuSel(gid, checked){
+  if(checked) window._selStuGids.add(gid); else window._selStuGids.delete(gid);
+  var w = document.querySelector('.stu-sel-wrap[data-stugid="'+gid+'"]'); if(w) w.classList.toggle('sel-on', checked);
+  _updateStuSelCount();
+}
+function selectAllStu(on){
+  document.querySelectorAll('.stu-sel-wrap').forEach(function(w){
+    var gid = w.getAttribute('data-stugid');
+    var cb = w.querySelector('input[type=checkbox]'); if(cb) cb.checked = on;
+    if(on) window._selStuGids.add(gid); else window._selStuGids.delete(gid);
+    w.classList.toggle('sel-on', on);
+  });
+  _updateStuSelCount();
+}
+function _updateStuSelCount(){
+  var n = window._selStuGids.size;
+  var c = document.getElementById('statSelCount'); if(c) c.textContent = n+'명 선택';
+}
+function saveSelectedStu(){
+  var gids = Array.from(window._selStuGids);
+  if(!gids.length){ showToast('선택된 학생이 없습니다.','error'); return; }
+  showToast(gids.length+'명 저장 중...','info');
+  function go(){
+    var i=0;
+    function next(){ if(i>=gids.length){ showToast(gids.length+'명 저장 완료!'); return; } captureStuStat(gids[i++], next); }
+    next();
+  }
+  if(window.html2canvas){ go(); return; }
+  var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; s.onload=go; document.head.appendChild(s);
 }
 
 function saveAllByDate(date) {
