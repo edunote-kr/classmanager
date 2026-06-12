@@ -7510,6 +7510,10 @@ function showToast(msg, type='success') {
     s.status=status;
     if(status==='active'){ s.leaveDate=''; }
     else { s.leaveDate=_today(); }
+    // 퇴원 시 학부모 링크 차단(revoke) — 미성년 데이터 열람 차단. 복원 후 전송하면 새 링크 발급됨.
+    if(status==='withdrawn' && window.fbCallable){
+      window.fbCallable('revokeParentToken')({ studentId: String(id) }).catch(function(){});
+    }
     if(typeof persistStudents==='function') persistStudents();
     if(typeof renderStudents==='function') renderStudents();
     if(typeof renderLeavers==='function') renderLeavers();

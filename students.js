@@ -499,7 +499,7 @@ function _parentLinkCore(studentId, name) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(function () { showToast('학부모 링크가 복사되었습니다.'); }).catch(function () {});
     }
-    showParentLinkModal(name, url);
+    showParentLinkModal(studentId, name, url);
   }).catch(function (err) {
     showToast((err && err.message) ? err.message : '링크 생성에 실패했습니다.', 'error');
   });
@@ -518,6 +518,10 @@ function sendRecordLink(recId) {
   if (!rec) { showToast('과제를 찾을 수 없습니다.', 'error'); return; }
   var sid = rec.studentId || (typeof resolveStudentId === 'function' ? resolveStudentId(rec) : '');
   if (!sid) { showToast('이 과제에 연결된 학생이 없습니다.', 'error'); return; }
+  var _st = _findStudentForSend(sid, rec);
+  if (_st && typeof stuStatus === 'function' && stuStatus(_st) !== 'active') {
+    showToast((_st.name || '학생') + ' 학생은 휴·퇴원 상태라 전송할 수 없습니다.', 'error'); return;
+  }
   openSendDialog(rec, sid);
 }
 
@@ -651,30 +655,54 @@ function _showSendResult(name, recips, url) {
   };
 }
 
-function showParentLinkModal(name, url) {
+function showParentLinkModal(studentId, name, url) {
   var old = document.getElementById('parentLinkModal');
   if (old) old.parentNode.removeChild(old);
+  var curUrl = url;
   var ov = document.createElement('div');
   ov.id = 'parentLinkModal';
   ov.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML =
     '<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.3);font-family:inherit">'
-    + '<div style="font-size:15px;font-weight:800;color:#0e7490;margin-bottom:4px">학부모 링크 발급 완료</div>'
+    + '<div style="font-size:15px;font-weight:800;color:#0e7490;margin-bottom:4px">학부모 링크</div>'
     + '<div style="font-size:12px;color:#64748b;margin-bottom:12px">' + escHtml(name || '학생') + ' · 카톡으로 보낼 읽기전용 링크입니다. 로그인 없이 열립니다.</div>'
-    + '<div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:12px;color:#334155;word-break:break-all;user-select:all;margin-bottom:12px">' + escHtml(url) + '</div>'
-    + '<div style="display:flex;gap:8px">'
+    + '<div id="parentLinkUrl" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:12px;color:#334155;word-break:break-all;user-select:all;margin-bottom:12px">' + escHtml(curUrl) + '</div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:8px">'
     + '<button id="parentLinkCopy" style="flex:1;background:#0891b2;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">복사</button>'
     + '<button id="parentLinkOpen" style="flex:1;background:#ecfeff;color:#0e7490;border:1px solid #67e8f9;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">열기</button>'
     + '<button id="parentLinkClose" style="flex:0 0 auto;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">닫기</button>'
-    + '</div></div>';
+    + '</div>'
+    + (studentId ? '<button id="parentLinkReissue" style="width:100%;background:#fff;color:#b91c1c;border:1px solid #fecaca;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">재발급 (기존 링크 폐기)</button>' : '')
+    + '</div>';
   document.body.appendChild(ov);
   ov.addEventListener('click', function (e) { if (e.target === ov) ov.parentNode.removeChild(ov); });
   document.getElementById('parentLinkClose').onclick = function () { ov.parentNode.removeChild(ov); };
-  document.getElementById('parentLinkOpen').onclick = function () { window.open(url, '_blank'); };
+  document.getElementById('parentLinkOpen').onclick = function () { window.open(curUrl, '_blank'); };
   document.getElementById('parentLinkCopy').onclick = function () {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(function () { showToast('복사되었습니다.'); }).catch(function () { showToast('직접 길게 눌러 복사해주세요.', 'info'); });
+      navigator.clipboard.writeText(curUrl).then(function () { showToast('복사되었습니다.'); }).catch(function () { showToast('직접 길게 눌러 복사해주세요.', 'info'); });
     } else { showToast('직접 길게 눌러 복사해주세요.', 'info'); }
+  };
+  var reBtn = document.getElementById('parentLinkReissue');
+  if (reBtn) reBtn.onclick = function () {
+    if (!confirm('새 링크로 재발급할까요?\n기존 링크는 더 이상 열리지 않습니다.')) return;
+    if (!window.fbCallable) { showToast('잠시 후 다시 시도해주세요.', 'error'); return; }
+    reBtn.disabled = true; reBtn.textContent = '재발급 중...';
+    window.fbCallable('revokeParentToken')({ studentId: String(studentId) })
+      .then(function () { return window.fbCallable('issueParentToken')({ studentId: String(studentId) }); })
+      .then(function (res) {
+        var nu = res && res.data && res.data.url;
+        if (!nu) { showToast('재발급에 실패했습니다.', 'error'); reBtn.disabled = false; reBtn.textContent = '재발급 (기존 링크 폐기)'; return; }
+        curUrl = nu;
+        var box = document.getElementById('parentLinkUrl'); if (box) box.textContent = nu;
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(nu).catch(function () {});
+        showToast('재발급 완료 · 새 링크 복사됨');
+        reBtn.disabled = false; reBtn.textContent = '재발급 (기존 링크 폐기)';
+      })
+      .catch(function (err) {
+        showToast((err && err.message) ? err.message : '재발급에 실패했습니다.', 'error');
+        reBtn.disabled = false; reBtn.textContent = '재발급 (기존 링크 폐기)';
+      });
   };
 }
 
@@ -697,12 +725,13 @@ function bulkSendByDate(date) {
   });
   if (!inDate.length) { showToast('해당 날짜 기록이 없습니다.', 'error'); return; }
 
-  var seen = {}, list = [];
+  var seen = {}, list = [], excluded = 0;
   inDate.forEach(function (r) {
     var sid = r.studentId || (typeof resolveStudentId === 'function' ? resolveStudentId(r) : '');
     var keyId = sid || ('name:' + (r.student || '') + '|' + (r.className || ''));
     if (seen[keyId]) return; seen[keyId] = 1;
     var st = _findStudentForSend(sid, r);
+    if (st && typeof stuStatus === 'function' && stuStatus(st) !== 'active') { excluded++; return; } // 휴·퇴원 제외
     list.push({
       sid: sid,
       name: (st && st.name) || r.student || '학생',
@@ -710,8 +739,9 @@ function bulkSendByDate(date) {
       parent: (st && st.parent) || ''
     });
   });
+  if (!list.length) { showToast('전송할 재원생이 없습니다.' + (excluded ? ' (휴·퇴원 ' + excluded + '명 제외)' : ''), 'info'); return; }
   list.sort(function (a, b) { return (a.name || '').localeCompare(b.name || '', 'ko'); });
-  openBulkSendDialog(date, list);
+  openBulkSendDialog(date, list, excluded);
 }
 
 function closeBulkSendDialog() {
@@ -719,9 +749,10 @@ function closeBulkSendDialog() {
   if (el) el.parentNode.removeChild(el);
 }
 
-function openBulkSendDialog(date, list) {
+function openBulkSendDialog(date, list, excluded) {
   closeBulkSendDialog();
   var sendable = list.filter(function (x) { return !!x.parent; }).length;
+  var exNote = excluded ? ' · 휴·퇴원 ' + excluded + '명 제외' : '';
 
   var rowsHtml = list.map(function (x, i) {
     var hasPhone = !!x.parent;
@@ -746,7 +777,7 @@ function openBulkSendDialog(date, list) {
     + '<div style="font-size:12px;color:#64748b">' + escHtml(date) + ' · 학습기록 등록 알림을 학부모에게 전송합니다.</div>'
     + '</div>'
     + '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 18px;background:#f8fafc;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7">'
-    + '<span style="font-size:11px;font-weight:800;color:#94a3b8">받는 학생 ' + list.length + '명 · 전송 가능 ' + sendable + '명</span>'
+    + '<span style="font-size:11px;font-weight:800;color:#94a3b8">받는 학생 ' + list.length + '명 · 전송 가능 ' + sendable + '명' + exNote + '</span>'
     + '<button id="bulkToggleAll" style="font-size:11px;font-weight:700;color:#0891b2;background:none;border:none;cursor:pointer;font-family:inherit">모두 해제</button>'
     + '</div>'
     + '<div style="overflow-y:auto;flex:1 1 auto">' + rowsHtml + '</div>'
