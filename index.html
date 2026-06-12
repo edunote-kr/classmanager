@@ -375,7 +375,7 @@
   <!-- 관리자 탭 -->
   <div style="background:#fff;border-bottom:2px solid #e2e8f0;display:flex;gap:0;padding:0 20px;overflow-x:auto">
     <button id="atab-overview" onclick="switchAdminTab('overview')" style="padding:12px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid #6366f1;color:#6366f1;background:none;cursor:pointer;font-family:inherit;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg> 현황</button>
-    <button id="atab-apply" onclick="switchAdminTab('apply')" style="padding:12px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;color:#94a3b8;background:none;cursor:pointer;font-family:inherit;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> 신청 <span id="applyBadge" style="display:none;background:#ef4444;color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:2px">0</span></button>
+    <button id="atab-apply" onclick="switchAdminTab('apply')" style="position:relative;padding:12px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;color:#94a3b8;background:none;cursor:pointer;font-family:inherit;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> 신청 <span id="applyBadge" style="display:none;position:absolute;top:5px;right:6px;min-width:17px;height:17px;align-items:center;justify-content:center;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:1;border-radius:9px;padding:0 4px;box-sizing:border-box;box-shadow:0 0 0 2px #fff">0</span></button>
     <button id="atab-schools" onclick="switchAdminTab('schools')" style="padding:12px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;color:#94a3b8;background:none;cursor:pointer;font-family:inherit;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg> 학원관리</button>
     <button id="atab-data" onclick="switchAdminTab('data')" style="padding:12px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;color:#94a3b8;background:none;cursor:pointer;font-family:inherit;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 학원별 데이터</button>
     <button id="atab-users" onclick="switchAdminTab('users')" style="padding:12px 16px;font-size:13px;font-weight:700;border:none;border-bottom:3px solid transparent;color:#94a3b8;background:none;cursor:pointer;font-family:inherit;white-space:nowrap"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 사용자</button>
@@ -4892,7 +4892,7 @@ function loadApplications() {
     var pending = apps.filter(function(a) { return a.status === 'pending'; }).length;
     var badge = document.getElementById('applyBadge');
     if (badge) {
-      badge.style.display = pending > 0 ? 'inline' : 'none';
+      badge.style.display = pending > 0 ? 'flex' : 'none';
       badge.textContent = pending;
     }
 
@@ -6071,7 +6071,7 @@ function captureStuStat(gid, done, mode) {
 
     // 로고 헤더
     var logo = document.createElement('div');
-    logo.style.cssText = 'background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:12px 12px 0 0;padding:14px 16px;';
+    logo.style.cssText = 'background:linear-gradient(135deg,#1e293b,#0f172a);border:2px solid #94a3b8;border-bottom:none;border-radius:12px 12px 0 0;padding:14px 16px;';
     var monStr = todayStr().slice(5,7).replace(/^0/,'')+'월';
 
     // 로고 이미지 createElement로 생성 (html2canvas 호환)
@@ -6091,7 +6091,7 @@ function captureStuStat(gid, done, mode) {
 
     // 내용 복사
     var innerClone = inner.cloneNode(true);
-    innerClone.style.cssText = 'background:#fff;border-radius:0 0 12px 12px;padding:14px 16px;width:100%;box-sizing:border-box;overflow:visible;';
+    innerClone.style.cssText = 'background:#fff;border:2px solid #94a3b8;border-top:none;border-radius:0 0 12px 12px;padding:14px 16px;width:100%;box-sizing:border-box;overflow:visible;';
     wrapper.appendChild(innerClone);
     document.body.appendChild(wrapper);
 
@@ -6678,7 +6678,7 @@ function saveListCard(id, mode) {
   function capture() {
     // 고정 너비 래퍼에 담아 캡처
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:560px;background:#fff;padding:16px;box-sizing:border-box;font-family:Noto Sans KR,Apple SD Gothic Neo,sans-serif;';
+    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:560px;background:#fff;border:2px solid #94a3b8;border-radius:14px;padding:16px;box-sizing:border-box;font-family:Noto Sans KR,Apple SD Gothic Neo,sans-serif;';
 
     // 헤더 (로고 + 학원명 + 전화번호)
     const hdr = document.createElement('div');
@@ -6792,7 +6792,7 @@ function saveListCard(id, mode) {
       hdr.insertBefore(logoCanvas, hdr.firstChild);
 
     html2canvas(wrapper, {
-      scale: 2, useCORS: true, backgroundColor: '#ffffff',
+      scale: 2, useCORS: true, backgroundColor: '#f1f5f9',
       width: 560, windowWidth: 560,
     }).then(async canvas => {
       document.body.removeChild(wrapper);
@@ -6857,7 +6857,7 @@ function saveNoticeCard(id, mode) {
 
   function capture() {
     var wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:480px;background:#fff;padding:20px;box-sizing:border-box;font-family:Noto Sans KR,Apple SD Gothic Neo,sans-serif;';
+    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:480px;background:#fff;border:2px solid #94a3b8;border-radius:14px;padding:20px;box-sizing:border-box;font-family:Noto Sans KR,Apple SD Gothic Neo,sans-serif;';
     var hdr = document.createElement('div');
     hdr.style.cssText = 'display:flex;align-items:center;gap:10px;border-bottom:2px solid #0891b2;padding-bottom:10px;margin-bottom:12px;';
     var hdrInfo = document.createElement('div');
@@ -6900,7 +6900,7 @@ function saveNoticeCard(id, mode) {
     drawLogoToCanvas(48, function(logoCanvas){
       logoCanvas.style.cssText = 'width:48px;height:48px;aspect-ratio:1/1;border-radius:10px;border:2px solid #0891b2;flex:0 0 48px;object-fit:contain;background:#fff';
       hdr.insertBefore(logoCanvas, hdr.firstChild);
-      html2canvas(wrapper, { scale:2, useCORS:true, backgroundColor:'#ffffff', width:480, windowWidth:480 })
+      html2canvas(wrapper, { scale:2, useCORS:true, backgroundColor:'#f1f5f9', width:480, windowWidth:480 })
         .then(async function(canvas){
           document.body.removeChild(wrapper);
           if (mode === 'share') { shareCanvasImage(canvas, fname); return; }
