@@ -2029,7 +2029,6 @@ function resetForm() {
   // setComp already handles lastCompletion reset above
   document.getElementById('saveBtn').innerHTML    = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> 저장';
   document.getElementById('cancelBtn').style.display = 'none';
-  document.getElementById('tab-input').innerHTML   = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 수업내용 입력';
   updateRing();
 }
 
@@ -2131,7 +2130,6 @@ function editRecord(id) {
   document.getElementById('f-memo').value            = rec.memo           || '';
   document.getElementById('saveBtn').textContent     = '수정 완료';
   document.getElementById('cancelBtn').style.display = 'inline-block';
-  document.getElementById('tab-input').innerHTML   = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 수업내용 입력 (수정 중)';
   updateRing();
   updateSubRing('reading');
   updateSubRing('grammar');
