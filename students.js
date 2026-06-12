@@ -485,23 +485,40 @@ function saveBulkAssign() {
   if (typeof renderStudents==='function') renderStudents();
 }
 
-// ── 학부모 읽기전용 링크 발급 (원장/슈퍼, 알림톡 착지용) ───────────────────────
-// CF issueParentToken 호출 → 추측불가 토큰 링크 발급(기존 링크 자동 무효) → 모달로 표시·복사.
-// 검증/데이터는 서버(getParentView). 학부모 페이지는 parent.html (로그인 불필요).
-function issueParentLink(id, name) {
+// ── 학부모 읽기전용 링크 (원장/슈퍼, 알림톡 착지용) ──────────────────────────
+// CF issueParentToken = get-or-create(기존 활성 토큰 재사용 → 링크 고정). parent.html(로그인 불필요)로 착지.
+//   issueParentLink : 학생 카드 버튼 → 그 학생 링크 발급/복사
+//   sendRecordLink  : 과제 카드 [전송] 버튼 → 그 과제의 학생 링크 발급/복사 (실발송은 다음 라운드)
+function _parentLinkCore(studentId, name) {
   if (!window.fbCallable) { showToast('잠시 후 다시 시도해주세요.', 'error'); return; }
-  if (!confirm((name || '학생') + ' 학부모 링크를 발급할까요?\n기존에 발급한 링크가 있으면 무효화됩니다.')) return;
-  showToast('링크 발급 중...', 'info');
-  window.fbCallable('issueParentToken')({ studentId: String(id) }).then(function (res) {
+  if (!studentId) { showToast('학생 정보를 찾을 수 없습니다.', 'error'); return; }
+  showToast('링크 준비 중...', 'info');
+  window.fbCallable('issueParentToken')({ studentId: String(studentId) }).then(function (res) {
     var url = res && res.data && res.data.url;
-    if (!url) { showToast('발급에 실패했습니다.', 'error'); return; }
+    if (!url) { showToast('링크 생성에 실패했습니다.', 'error'); return; }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(function () { showToast('학부모 링크가 복사되었습니다.'); }).catch(function () {});
     }
     showParentLinkModal(name, url);
   }).catch(function (err) {
-    showToast((err && err.message) ? err.message : '발급에 실패했습니다.', 'error');
+    showToast((err && err.message) ? err.message : '링크 생성에 실패했습니다.', 'error');
   });
+}
+
+function issueParentLink(id, name) {
+  _parentLinkCore(id, name);
+}
+
+// 과제 카드 [전송]: 그 과제의 학생을 찾아 링크 발급·복사 (구현 확인용 — 실제 알림톡 발송은 추후)
+function sendRecordLink(recId) {
+  var rec = null;
+  if (typeof records !== 'undefined' && Array.isArray(records)) {
+    rec = records.filter(function (r) { return String(r.id) === String(recId); })[0];
+  }
+  if (!rec) { showToast('과제를 찾을 수 없습니다.', 'error'); return; }
+  var sid = rec.studentId || (typeof resolveStudentId === 'function' ? resolveStudentId(rec) : '');
+  if (!sid) { showToast('이 과제에 연결된 학생이 없습니다.', 'error'); return; }
+  _parentLinkCore(sid, rec.student || '학생');
 }
 
 function showParentLinkModal(name, url) {
