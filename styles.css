@@ -462,3 +462,27 @@ body.sel-mode-list .rec-sel-box { display:flex; }
 body.sel-mode-stat .stu-sel-box { display:flex; }
 .rec-sel-wrap.sel-on > .rec-card { outline:2.5px solid #6366f1; outline-offset:-3px; }
 .stu-sel-wrap.sel-on { box-shadow:0 0 0 2.5px #6366f1; border-radius:9px; }
+
+/* ───────── 랜딩페이지 (lp-) ───────── */
+.lp-section { max-width:1000px; margin:0 auto; padding:66px 20px; }
+.lp-row { display:flex; gap:48px; align-items:center; }
+.lp-row.lp-rev { flex-direction:row-reverse; }
+.lp-col { flex:1 1 0; min-width:0; }
+.lp-illust { flex:1 1 0; min-width:0; }
+.lp-illust img { width:100%; height:auto; display:block; }
+.lp-eyebrow { display:inline-block; font-size:12px; font-weight:800; letter-spacing:.03em; color:#4f46e5; background:#eef2ff; padding:5px 13px; border-radius:999px; margin-bottom:15px; }
+.lp-badge-soon { display:inline-block; font-size:10px; font-weight:800; color:#b45309; background:#fef3c7; padding:3px 9px; border-radius:999px; margin-left:7px; vertical-align:middle; letter-spacing:0; }
+.lp-h2 { font-size:26px; font-weight:900; color:#0f172a; line-height:1.34; margin:0 0 15px; letter-spacing:-.01em; }
+.lp-p { font-size:14.5px; color:#475569; line-height:1.8; margin:0 0 18px; }
+.lp-list { list-style:none; padding:0; margin:0; }
+.lp-list li { position:relative; padding-left:30px; font-size:13.5px; color:#334155; line-height:1.5; margin-bottom:11px; font-weight:600; }
+.lp-list li::before { content:"✓"; position:absolute; left:0; top:0; width:20px; height:20px; line-height:20px; text-align:center; font-size:12px; font-weight:900; color:#fff; background:linear-gradient(135deg,#6366f1,#4f46e5); border-radius:7px; }
+.lp-hero { background:linear-gradient(160deg,#eef2ff 0%,#f8fafc 100%); }
+.lp-hero .lp-h1 { font-size:32px; font-weight:900; color:#0f172a; line-height:1.3; letter-spacing:-.015em; margin:0 0 16px; }
+@media (max-width:760px) {
+  .lp-section { padding:46px 18px; }
+  .lp-row, .lp-row.lp-rev { flex-direction:column; gap:28px; }
+  .lp-h2 { font-size:22px; }
+  .lp-hero .lp-h1 { font-size:25px; }
+  .lp-illust { max-width:340px; margin:0 auto; }
+}
