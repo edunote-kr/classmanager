@@ -307,9 +307,11 @@ function loadSchoolStats() {
       return;
     }
 
-    // 학생 수 병렬 카운트 (schools/{id}/students). 재원/휴·퇴원 구분.
+    // 학생 수 + 이번 달 발송 병렬 카운트 (학원당 students 1쿼리 + sendLogs 1쿼리)
+    var _now = new Date();
+    var _monthStart = new Date(_now.getFullYear(), _now.getMonth(), 1).getTime();
     return Promise.all(schools.map(function(s){
-      return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools', s.id, 'students'))
+      var pStu = window.fbGetDocs(window.fbCollection(window.fbDb, 'schools', s.id, 'students'))
         .then(function(stuSnap){
           var total = 0, active = 0;
           stuSnap.forEach(function(sd){
@@ -320,6 +322,17 @@ function loadSchoolStats() {
           s._stuTotal = total; s._stuActive = active;
         })
         .catch(function(){ s._stuTotal = null; s._stuActive = null; });
+      var pSend = window.fbGetDocs(window.fbQuery(
+          window.fbCollection(window.fbDb, 'schools', s.id, 'sendLogs'),
+          window.fbWhere('sentAt', '>=', _monthStart)
+        ))
+        .then(function(snap){
+          var sms = 0, alim = 0;
+          snap.forEach(function(d){ var r = d.data() || {}; if (r.channel === 'sms') sms++; else alim++; });
+          s._sendSms = sms; s._sendAlim = alim;
+        })
+        .catch(function(){ s._sendSms = 0; s._sendAlim = 0; });
+      return Promise.all([pStu, pSend]);
     })).then(function(){ renderSchoolStatCards(el, schools, userSnap); });
   }).catch(function(e){
     el.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px;font-size:13px">불러오기 실패: ' + (e && (e.code||e.message) || '') + '</div>';
@@ -374,6 +387,10 @@ function _statActiveBadge(lastActiveAt){
   return '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:'+bg+';color:'+color+'">마지막 활동 '+txt+'</span>';
 }
 
+// 발송 단가(원/건, 추정 — 실단가는 solapi.com/pricing 확인 후 조정)
+var SEND_COST = { sms: 20, alimtalk: 10 };
+function _estSendCost(sms, alim){ return (sms||0)*SEND_COST.sms + (alim||0)*SEND_COST.alimtalk; }
+
 function renderSchoolStatCards(el, schools, userSnap){
   var now = new Date();
   // 학원별 마지막 활동 = 멤버 user lastActiveAt 최댓값
@@ -389,7 +406,7 @@ function renderSchoolStatCards(el, schools, userSnap){
   });
   // 전체 집계
   var total = schools.length;
-  var activeN = 0, soonN = 0, expiredN = 0, paidN = 0, trialN = 0, totSms = 0, totAlim = 0, dormantN = 0;
+  var activeN = 0, soonN = 0, expiredN = 0, paidN = 0, trialN = 0, totSms = 0, totAlim = 0, dormantN = 0, sendSmsN = 0, sendAlimN = 0;
   schools.forEach(function(s){
     if(s.status === 'active') activeN++;
     if(s.expiresAt){
@@ -407,6 +424,8 @@ function renderSchoolStatCards(el, schools, userSnap){
     var sm = n.sms || {}, al = n.alimtalk || {};
     totSms  += (sm.free||0) + (sm.paid||0);
     totAlim += (al.free||0) + (al.paid||0);
+    sendSmsN  += (s._sendSms||0);
+    sendAlimN += (s._sendAlim||0);
   });
 
   var summary = '<div style="background:linear-gradient(135deg,#f8fafc,#eef2ff);border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:6px">'
@@ -422,6 +441,10 @@ function renderSchoolStatCards(el, schools, userSnap){
     + _statSummaryBox(expiredN, '만료됨', expiredN>0?'#dc2626':'#94a3b8')
     + _statSummaryBox(dormantN, '휴면(14일+)', dormantN>0?'#dc2626':'#94a3b8')
     + _statSummaryBox(totSms+totAlim, '총 크레딧', '#0891b2')
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px">'
+    + _statSummaryBox((sendSmsN+sendAlimN)+'건', '이번 달 발송 (문자'+sendSmsN+'·알림톡'+sendAlimN+')', '#0891b2')
+    + _statSummaryBox('₩'+_estSendCost(sendSmsN, sendAlimN).toLocaleString(), '추정 원가', '#dc2626')
     + '</div>'
     + '</div>';
 
@@ -461,9 +484,14 @@ function renderSchoolStatCards(el, schools, userSnap){
       + '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;background:' + (isActive ? '#dcfce7' : '#fee2e2') + ';color:' + (isActive ? '#16a34a' : '#dc2626') + '">' + (isActive ? '활성' : '비활성') + '</span>'
       + '</div>'
       // 크레딧
-      + '<div style="display:flex;gap:8px;margin-bottom:12px">'
+      + '<div style="display:flex;gap:8px;margin-bottom:8px">'
       + _statCreditBox('문자 크레딧', '#0891b2', notif.sms)
       + _statCreditBox('알림톡 크레딧', '#7c3aed', notif.alimtalk)
+      + '</div>'
+      // 이번 달 발송 + 추정원가
+      + '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 11px;background:#f8fafc;border-radius:8px;margin-bottom:12px;font-size:11px">'
+      + '<span style="color:#64748b">이번 달 발송 <b style="color:#0891b2">' + ((s._sendSms||0)+(s._sendAlim||0)) + '건</b> <span style="color:#cbd5e1">(문자' + (s._sendSms||0) + '·알림톡' + (s._sendAlim||0) + ')</span></span>'
+      + '<span style="color:#64748b">추정원가 <b style="color:#dc2626">₩' + _estSendCost(s._sendSms, s._sendAlim).toLocaleString() + '</b></span>'
       + '</div>'
       // 인원 통계 (원장/선생님/학생/대기)
       + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">'
