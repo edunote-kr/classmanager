@@ -195,7 +195,7 @@ function requestRenewal() {
   window.fbGetDoc(window.fbDoc(window.fbDb, 'users', uid)).then(function(snap) {
     if (!snap.exists()) return;
     var data = snap.data();
-    return window.fbAddDoc(window.fbCollection(window.fbDb, 'inquiries'), {
+    return window.fbCallable('submitInquiry')({
       type: 'renewal',
       name: data.name || '',
       schoolName: data.schoolName || '',

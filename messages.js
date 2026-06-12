@@ -174,7 +174,7 @@ function sendMessageReply() {
 
   window.fbGetDoc(window.fbDoc(window.fbDb, 'users', uid)).then(function(snap) {
     var data = snap.exists() ? snap.data() : {};
-    return window.fbAddDoc(window.fbCollection(window.fbDb, 'inquiries'), {
+    return window.fbCallable('submitInquiry')({
       type: orig ? (orig.type || 'cs') : 'cs',
       name: data.name || '',
       schoolName: data.schoolName || '',
@@ -225,7 +225,7 @@ function submitMyInquiry() {
 
   window.fbGetDoc(window.fbDoc(window.fbDb, 'users', uid)).then(function(snap) {
     var data = snap.exists() ? snap.data() : {};
-    return window.fbAddDoc(window.fbCollection(window.fbDb, 'inquiries'), {
+    return window.fbCallable('submitInquiry')({
       type: 'cs',
       name: data.name || '',
       schoolName: data.schoolName || '',

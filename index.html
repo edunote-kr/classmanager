@@ -4176,7 +4176,7 @@ function submitActivateApply() {
 function _unusedActivateApplySave() {
   var p = {}, profile = {}, teachers = 0, uid = '', resultEl = {style:{}};
   // (구버전 보존용 — 사용 안 함)
-  window.fbAddDoc(window.fbCollection(window.fbDb, 'applications'), {
+  window.fbCallable('submitApplication')({
     schoolName:   profile.schoolName || '',
     name:         profile.name || '',
     phone:        profile.phone || '',
@@ -4500,7 +4500,7 @@ function submitCreditApply() {
   var uid = subscribeUser.fbUser.uid;
   var channel = selectedCharge.channel, count = selectedCharge.count, amount = selectedCharge.amount;
   var chanName = channel === 'sms' ? '문자' : '알림톡';
-  window.fbAddDoc(window.fbCollection(window.fbDb, 'applications'), {
+  window.fbCallable('submitApplication')({
     schoolName: profile.schoolName || '', schoolId: profile.schoolId || '',
     name: name, depositor: depositor || name,
     userId: userId, phone: phone, teachType: teachType, uid: uid,
@@ -4689,7 +4689,7 @@ function submitSubscribeApply() {
   }
 
   // ── 유료 플랜: 신청 저장 + 입금 안내 ──
-  window.fbAddDoc(window.fbCollection(window.fbDb, 'applications'), {
+  window.fbCallable('submitApplication')({
     schoolName:    profile.schoolName || school || '',
     name:          name,
     depositor:     depositor || name,   // 예금주 미입력 시 신청자명
@@ -4791,7 +4791,7 @@ function submitApply() {
   }
 
   var p = PLANS[applyPlan];
-  window.fbAddDoc(window.fbCollection(window.fbDb, 'applications'), {
+  window.fbCallable('submitApplication')({
     schoolName:   school,
     name:         name,
     phone:        phone,
@@ -4853,7 +4853,7 @@ function submitInquiry() {
   // Firestore에 문의 저장
   if (window.fbDb) {
     var inqUid = (window.fbAuth && window.fbAuth.currentUser) ? window.fbAuth.currentUser.uid : null;
-    window.fbAddDoc(window.fbCollection(window.fbDb, 'inquiries'), {
+    window.fbCallable('submitInquiry')({
       type: 'cs',
       name: name,
       phone: phone,
