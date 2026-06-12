@@ -56,7 +56,7 @@ function renderLessonPreview(){
   bodies.forEach(function(bd){ if(bd) bd.innerHTML=html; });
 }
 function _autoOpenPreviewDesktop(){
-  if(window.innerWidth < 1024) return;                 // 데스크톱(웹)만 자동 팝업
+  if(window.innerWidth < 1200) return;                 // 데스크톱(웹, 넓은 화면)만 자동 팝업
   if(typeof activeTab!=='undefined' && activeTab!=='input') return;
   if(_lessonPreviewOpen) return;
   if(_previewUserToggled) return;                      // 사용자가 직접 닫았으면 존중
@@ -64,7 +64,7 @@ function _autoOpenPreviewDesktop(){
 }
 function previewAfterLoad(){
   // 불러오기 시: 데스크톱은 미리보기 자동 팝업(닫아놨어도 다시 열어 보여줌)
-  if(window.innerWidth >= 1024 && (typeof activeTab==='undefined' || activeTab==='input')){
+  if(window.innerWidth >= 1200 && (typeof activeTab==='undefined' || activeTab==='input')){
     _previewUserToggled=false;
     if(!_lessonPreviewOpen) openLessonPreview(); else renderLessonPreview();
   } else if(_lessonPreviewOpen||_mobileSheetOpen){ renderLessonPreview(); }

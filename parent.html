@@ -126,13 +126,11 @@
     <div class="tabs">
       <button id="tab-hw" class="on" onclick="showTab('hw')">과제 <span class="cnt" id="cnt-hw"></span></button>
       <button id="tab-no" onclick="showTab('no')">알림장 <span class="cnt" id="cnt-no"></span></button>
-      <button id="tab-at" onclick="showTab('at')">출결 <span class="cnt" id="cnt-at"></span></button>
       <button id="tab-st" onclick="showTab('st')">통계</button>
     </div>
     <div class="body">
       <div id="pane-hw"></div>
       <div id="pane-no" class="hidden"></div>
-      <div id="pane-at" class="hidden"></div>
     <div id="pane-st" class="hidden"></div>
     </div>
     <div class="foot">EduNote · 읽기전용 학습 안내</div>
@@ -425,87 +423,266 @@ function renderAttendance(att){
   return html;
 }
 
-// ── 학부모 통계 (과제 이행률 · 출결 · 알림장) ──────────────
-function renderParentStats(recs, nots, att){
-  recs = recs || []; nots = nots || []; att = att || {};
+// ════════════════════════════════════════════════════════════
+//  통계 (원장/선생 앱 통계 카드 그대로 — 정보만 표시, 버튼 없음)
+// ════════════════════════════════════════════════════════════
+function levelOf(v){ return LEVELS.find(function(l){ return l.value===v; })||LEVELS[0]; }
+var TEST_COLORS = ['#0891b2','#7c3aed','#d97706','#16a34a','#dc2626','#db2777'];
 
-  // 과제 이행률: 레슨블록(today/reading/grammar/exam/etc/supplement Comp) + 지난과제 comp 평균
-  var comps = [];
-  recs.forEach(function(r){
-    ['today','reading','grammar','exam','etc','supplement'].forEach(function(b){
-      for(var i=1;i<=5;i++){ var c=r[b+i+'Comp']; if(typeof c==='number' && c>=0 && r[b+i]) comps.push(c); }
-    });
-    if(typeof r.readingComp==='number' && r.readingComp>=0 && r.reading) comps.push(r.readingComp);
-    if(typeof r.grammarComp==='number' && r.grammarComp>=0 && r.grammar) comps.push(r.grammarComp);
-    try { getLastHomeworks(r).forEach(function(it){ if(typeof it.comp==='number' && it.comp>=0) comps.push(it.comp); }); } catch(e){}
+// 기록에서 TEST 추출 (메인 앱 extractTests 동일)
+function extractTests(r){
+  var arr = [];
+  if(r.testsJson){ try { var p=JSON.parse(r.testsJson); if(Array.isArray(p)) arr=p; } catch(e){} }
+  if(arr.length===0 && (r.wordTest || r.wordScore)){ arr=[{range:r.wordTest||'', score:r.wordScore||''}]; }
+  return arr.map(function(t){
+    var s=parseInt(String(t&&t.score).replace(/[^0-9]/g,''));
+    return { range:((t&&t.range)||'').toString(), score:isNaN(s)?null:s };
   });
-  var avgComp = comps.length ? Math.round(comps.reduce(function(a,b){return a+b;},0)/comps.length) : null;
+}
 
-  // 출결: 수업 출결(classAttendance) status 집계
-  var ca = att.classAttendance || [];
-  var cnt = { onTime:0, late:0, absent:0 };
-  ca.forEach(function(a){
-    if(a.status==='정시도착') cnt.onTime++;
-    else if(a.status==='15분이내' || a.status==='15분이상') cnt.late++;
-    else if(a.status==='결석') cnt.absent++;
+// 대표 시험(첫 TEST) 점수 추이 단선 차트 — 메인 앱 drawRepTestChart 동일. 반환: 점 개수
+function drawRepTestChart(canvas, recs, W, H, dprOverride){
+  if(!canvas) return 0;
+  var pts=[];
+  recs.forEach(function(r){ var t=extractTests(r)[0]; if(t && t.score!==null && t.score>0) pts.push({label:(r.date||'').slice(5), score:t.score}); });
+  if(!pts.length) return 0;
+  var dpr=dprOverride||window.devicePixelRatio||1;
+  canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  var padL=36,padR=12,padT=20,padB=32;
+  var chartW=W-padL-padR, chartH=H-padT-padB;
+  var scores=pts.map(function(p){return p.score;});
+  var maxS=Math.max.apply(null,scores), minS=Math.min.apply(null,scores);
+  var yMax=Math.min(100,maxS+10), yMin=Math.max(0,minS-10);
+  if(yMax<=yMin) yMax=yMin+10;
+  var n=pts.length;
+  function xAt(i){ return padL+chartW*(n<=1?0.5:i/(n-1)); }
+  function yAt(s){ return padT+chartH*(1-(s-yMin)/(yMax-yMin)); }
+  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1;
+  for(var g=0;g<=4;g++){ var gy=padT+chartH*g/4; ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(padL+chartW,gy); ctx.stroke();
+    ctx.fillStyle='#94a3b8'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.fillText(Math.round(yMax-(yMax-yMin)*g/4), padL-4, gy+4); }
+  ctx.fillStyle='#94a3b8'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+  var step=Math.max(1,Math.ceil(n/6));
+  pts.forEach(function(p,i){ if(i%step!==0) return; ctx.fillText(p.label, xAt(i), H-padB+14); });
+  ctx.beginPath(); ctx.strokeStyle='#0891b2'; ctx.lineWidth=2.5; ctx.lineJoin='round';
+  pts.forEach(function(p,i){ var x=xAt(i),y=yAt(p.score); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke();
+  ctx.beginPath();
+  pts.forEach(function(p,i){ var x=xAt(i),y=yAt(p.score); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.lineTo(xAt(n-1),padT+chartH); ctx.lineTo(xAt(0),padT+chartH); ctx.closePath();
+  var grad=ctx.createLinearGradient(0,padT,0,padT+chartH); grad.addColorStop(0,'rgba(8,145,178,0.2)'); grad.addColorStop(1,'rgba(8,145,178,0)');
+  ctx.fillStyle=grad; ctx.fill();
+  pts.forEach(function(p,i){ var x=xAt(i),y=yAt(p.score);
+    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle='#0891b2'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#0f172a'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center'; ctx.fillText(p.score+'점', x, y-8); });
+  return n;
+}
+
+// 차트 아래 시험 내역 리스트 (메인 앱 buildTestDetailHTML 동일)
+function buildTestDetailHTML(recs){
+  if(!recs.length) return '';
+  var rows = recs.map(function(r){
+    var tests=extractTests(r).filter(function(t){ return t.score!==null && t.score>0; });
+    if(!tests.length) return '';
+    var items=tests.map(function(t,i){
+      var col=TEST_COLORS[i%TEST_COLORS.length];
+      var mainTag=(i===0)?'<span style="font-size:8px;font-weight:800;color:#0891b2;background:#cffafe;padding:1px 4px;border-radius:6px;margin-left:3px">대표</span>':'';
+      return '<span style="display:inline-flex;align-items:center;gap:3px;margin-right:10px;white-space:nowrap">'
+        + '<span style="width:7px;height:7px;border-radius:50%;background:'+col+';display:inline-block;flex-shrink:0"></span>'
+        + (t.range?'<span style="color:#334155">'+esc(t.range)+'</span>':'<span style="color:#94a3b8">TEST'+(i+1)+'</span>')
+        + ' <strong style="color:'+col+'">'+t.score+'점</strong>'+mainTag+'</span>';
+    }).join('');
+    return '<div style="font-size:11px;padding:4px 0;border-top:1px solid #f1f5f9;display:flex;flex-wrap:wrap;align-items:center">'
+      + '<span style="color:#94a3b8;font-weight:700;margin-right:8px;min-width:40px">'+esc((r.date||'').slice(5))+'</span>'
+      + '<span style="flex:1">'+items+'</span></div>';
+  }).filter(Boolean).join('');
+  if(!rows) return '';
+  return '<div style="margin-top:8px"><div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:2px">시험 내역</div>'+rows+'</div>';
+}
+
+// 출결 달력 (메인 앱 _statsCalendarHTML 동일 — 학부모는 _attEntries 없으므로 recs 경로 사용)
+function _statsCalendarHTML(recs, ym, studentName){
+  var y=parseInt(ym.slice(0,4),10), m=parseInt(ym.slice(5,7),10);
+  var byDate={};
+  (recs||[]).forEach(function(r){
+    if((r.date||'').slice(0,7)!==ym) return;
+    var d=parseInt((r.date||'').slice(8,10),10); if(!d) return;
+    if(!byDate[d]) byDate[d]={att:'',mk:false,count:0};
+    if(r.attendance) byDate[d].att=r.attendance;
+    if(r.makeup) byDate[d].mk=true;
+    byDate[d].count=(byDate[d].count||0)+1;
   });
-  var totalAtt = cnt.onTime + cnt.late + cnt.absent;
-  var attendRate = totalAtt ? Math.round((cnt.onTime + cnt.late) / totalAtt * 100) : null;
-
-  // 평균 이행률 색상(LEVELS 근사)
-  function compColor(v){
-    if(v==null) return '#94a3b8';
-    if(v>=80) return '#16a34a'; if(v>=50) return '#d97706'; if(v>=25) return '#f97316'; return '#ef4444';
-  }
-
-  function box(val, label, color){
-    return '<div style="flex:1;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 8px;text-align:center">'
-      + '<div style="font-size:22px;font-weight:900;color:'+color+'">'+val+'</div>'
-      + '<div style="font-size:11px;color:#94a3b8;margin-top:3px">'+label+'</div></div>';
-  }
-
-  var html = '';
-  // 요약 3박스
-  html += '<div style="display:flex;gap:8px;margin-bottom:14px">'
-    + box(recs.length, '과제 기록', '#6366f1')
-    + box(avgComp==null?'—':avgComp+'%', '평균 이행률', compColor(avgComp))
-    + box(attendRate==null?'—':attendRate+'%', '출석률', attendRate==null?'#94a3b8':(attendRate>=80?'#16a34a':'#d97706'))
-    + '</div>';
-
-  // 출결 분포
-  if(totalAtt){
-    function pill(label, n, color, bg){
-      return '<div style="flex:1;background:'+bg+';border-radius:10px;padding:10px;text-align:center">'
-        + '<div style="font-size:18px;font-weight:900;color:'+color+'">'+n+'</div>'
-        + '<div style="font-size:10px;color:'+color+';margin-top:2px;font-weight:700">'+label+'</div></div>';
+  var firstDow=new Date(y,m-1,1).getDay();
+  var days=new Date(y,m,0).getDate();
+  var attColor={'정시도착':['#dcfce7','#16a34a'],'15분이내':['#fef9c3','#ca8a04'],'15분이상':['#fef9c3','#ca8a04'],'결석':['#fee2e2','#dc2626']};
+  var wk=['일','월','화','수','목','금','토'];
+  var html='<table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:3px;font-family:inherit">';
+  html+='<tr>'+wk.map(function(w,i){ return '<td style="text-align:center;font-size:9px;font-weight:700;padding:1px 0;color:'+(i===0?'#dc2626':(i===6?'#2563eb':'#94a3b8'))+'">'+w+'</td>'; }).join('')+'</tr>';
+  var cells=[]; var b;
+  for(b=0;b<firstDow;b++) cells.push('');
+  for(b=1;b<=days;b++) cells.push(b);
+  while(cells.length%7!==0) cells.push('');
+  for(var i=0;i<cells.length;i+=7){
+    html+='<tr>';
+    for(var j=0;j<7;j++){
+      var day=cells[i+j];
+      if(day===''){ html+='<td style="height:26px"></td>'; continue; }
+      var info=byDate[day];
+      var bg='#f8fafc', col='#334155', bd='#eef2f7';
+      if(info && info.att && attColor[info.att]){ bg=attColor[info.att][0]; col=attColor[info.att][1]; bd=bg; }
+      var mk=(info && info.mk);
+      if(mk && !(info && info.att && attColor[info.att])){ bg='#f5f3ff'; col='#7c3aed'; }
+      var _bd=mk?'2px solid #7c3aed':('1px solid '+bd);
+      var dot=mk?'<div style="width:6px;height:6px;border-radius:50%;background:#7c3aed;margin:2px auto 0"></div>':'';
+      var _cnt=(info&&info.count)||0;
+      var _cb=(_cnt>=2)?'<span style="position:absolute;top:0;right:1px;font-size:8px;font-weight:800;color:#0891b2">'+_cnt+'</span>':'';
+      html+='<td style="position:relative;height:26px;text-align:center;vertical-align:middle;border-radius:5px;border:'+_bd+';background:'+bg+';color:'+col+';font-size:10px;font-weight:700">'+day+dot+_cb+'</td>';
     }
-    html += '<div class="sec"><span class="lbl" style="background:#0891b2">출결 현황</span>'
-      + '<div style="display:flex;gap:8px;margin-top:8px">'
-      + pill('정시', cnt.onTime, '#16a34a', '#f0fdf4')
-      + pill('지각', cnt.late, '#d97706', '#fffbeb')
-      + pill('결석', cnt.absent, '#dc2626', '#fef2f2')
-      + '</div>'
-      + '<div style="font-size:11px;color:#94a3b8;margin-top:8px;text-align:center">수업 출결 총 '+totalAtt+'회 기준</div>'
-      + '</div>';
+    html+='</tr>';
   }
-
-  // 알림장
-  html += '<div class="sec" style="margin-top:14px"><span class="lbl" style="background:#7c3aed">알림장</span>'
-    + '<div style="font-size:13px;color:#334155;margin-top:8px">받은 알림장 <b style="color:#7c3aed">'+nots.length+'</b>건</div>'
-    + '</div>';
-
-  if(!recs.length && !totalAtt && !nots.length){
-    return '<div class="empty">아직 통계로 보여줄 기록이 없습니다.</div>';
-  }
+  html+='</table>';
   return html;
 }
 
+// 월별 학생 통계 카드 (메인 앱 학생별 통계 카드 그대로 · 정보만 · 버튼/체크박스/저장·공유 제거)
+// 반환: { html, charts:[{canvasId, recs}] } — innerHTML 주입 후 drawParentStatCharts 로 그래프 그림.
+function renderParentStatsFull(recs){
+  recs = recs || [];
+  if(!recs.length) return { html:'<div class="empty">아직 통계로 보여줄 기록이 없습니다.</div>', charts:[] };
+
+  var monMap={}, order=[];
+  recs.forEach(function(r){ var mon=(r.date||'').slice(0,7); if(!mon) return; if(!monMap[mon]){monMap[mon]=[];order.push(mon);} monMap[mon].push(r); });
+  order.sort(function(a,b){ return b.localeCompare(a); }); // 최신월 위
+
+  var charts=[];
+  var html = order.map(function(mon, mi){
+    var mrecs = monMap[mon].slice().sort(function(a,b){ return a.date>b.date?1:-1; });
+    var sname = (mrecs[0] && mrecs[0].student) || '';
+    var classes={}; mrecs.forEach(function(r){ if(r.className) classes[r.className]=true; });
+    var clsLabel = Object.keys(classes).sort().join(', ');
+    var cnt = mrecs.length;
+
+    var _sv = mrecs.filter(function(b){ return b.lastCompletion!==undefined && b.lastCompletion>=0; });
+    var stuAvg = _sv.length ? Math.round(_sv.reduce(function(a,b){ return a+b.lastCompletion; },0)/_sv.length) : 0;
+    var lv = levelOf(stuAvg);
+
+    // 출결 집계
+    var attMap={}; mrecs.forEach(function(r){ if(r.attendance) attMap[r.attendance]=(attMap[r.attendance]||0)+1; });
+    var attHTML = Object.keys(attMap).map(function(a){
+      var c={'정시도착':['#dcfce7','#16a34a'],'15분이내':['#fef9c3','#ca8a04'],'15분이상':['#fee2e2','#dc2626'],'결석':['#f1f5f9','#475569']};
+      var bg=(c[a]||['#f1f5f9','#475569'])[0], col=(c[a]||['#f1f5f9','#475569'])[1];
+      return '<span style="background:'+bg+';color:'+col+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-right:4px">'+esc(a)+' '+attMap[a]+'회</span>';
+    }).join('');
+    var _mkCnt = mrecs.filter(function(r){ return r.makeup; }).length;
+    if(_mkCnt>0) attHTML += '<span style="background:#f5f3ff;color:#7c3aed;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-right:4px">보충 '+_mkCnt+'회</span>';
+
+    // 수업태도 집계
+    var attitudeMap={}; mrecs.forEach(function(r){ if(r.attitude) attitudeMap[r.attitude]=(attitudeMap[r.attitude]||0)+1; });
+    var attitudeHTML = Object.keys(attitudeMap).map(function(a){
+      var c={'최상':['#fef9c3','#ca8a04'],'상':['#dcfce7','#16a34a'],'중':['#eff6ff','#2563eb'],'하':['#fee2e2','#dc2626'],'결석':['#f1f5f9','#475569']};
+      var bg=(c[a]||['#f1f5f9','#475569'])[0], col=(c[a]||['#f1f5f9','#475569'])[1];
+      return '<span style="background:'+bg+';color:'+col+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-right:4px">'+esc(a)+' '+attitudeMap[a]+'회</span>';
+    }).join('');
+
+    // 월 이행률 막대
+    var _vc = mrecs.filter(function(r){ return r.lastCompletion!==undefined && r.lastCompletion>=0; });
+    var monBarHTML='';
+    if(_vc.length){
+      var avg2=Math.round(_vc.reduce(function(a,b){return a+b.lastCompletion;},0)/_vc.length), lvm=levelOf(avg2);
+      monBarHTML = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">'
+        +'<span style="font-size:11px;color:#475569;font-weight:700;min-width:50px">'+mon.slice(5)+'월</span>'
+        +'<div style="flex:1;background:#f1f5f9;border-radius:4px;height:8px"><div style="width:'+avg2+'%;background:'+lvm.color+';height:8px;border-radius:4px"></div></div>'
+        +'<span style="font-size:11px;font-weight:700;color:'+lvm.color+';min-width:36px;text-align:right">'+avg2+'%</span>'
+        +'<span style="font-size:10px;color:#94a3b8">('+_vc.length+'회)</span></div>';
+    }
+
+    var canvasId='pwc'+mi;
+    charts.push({ canvasId:canvasId, recs:mrecs });
+    var clsBadge = clsLabel ? ' <span style="font-weight:400;opacity:0.85;font-size:10px;background:rgba(255,255,255,0.18);padding:1px 7px;border-radius:10px">'+esc(clsLabel)+'</span>' : '';
+    var monLabel = mon.slice(0,4)+'년 '+mon.slice(5)+'월';
+
+    return '<div style="margin-bottom:14px">'
+      // 월 헤더
+      +'<div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:14px;background:#6366f1;border-radius:2px"></span>'+monLabel+'</div>'
+      // 학생 카드 헤더 (정보만 · 버튼 없음)
+      +'<div style="display:flex;align-items:center;justify-content:space-between;background:#334155;border-radius:8px 8px 0 0;padding:9px 13px">'
+      +'<span style="color:#fff;font-size:13px;font-weight:700"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:3px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+esc(sname)+clsBadge+' <span style="font-weight:400;opacity:0.7;font-size:11px">'+cnt+'회</span></span>'
+      +'<span style="background:'+lv.bg+';color:'+lv.color+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">'+lv.emoji+' '+stuAvg+'%</span>'
+      +'</div>'
+      // 본문
+      +'<div style="background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;padding:16px 18px">'
+      +'<div style="margin-bottom:10px"><span style="font-size:11px;font-weight:800;color:#0891b2">출결 달력</span><div style="margin-top:6px">'+_statsCalendarHTML(mrecs, mon, sname)+'</div>'
+        +'<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:7px;font-size:10px;color:#64748b"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#16a34a;vertical-align:middle;margin-right:3px"></span>출</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#ca8a04;vertical-align:middle;margin-right:3px"></span>지각</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#dc2626;vertical-align:middle;margin-right:3px"></span>결석</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#7c3aed;vertical-align:middle;margin-right:3px"></span>보충</span></div></div>'
+      +(attitudeHTML?'<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:800;color:#475569">수업태도</span><br><div style="margin-top:4px">'+attitudeHTML+'</div></div>':'')
+      +(monBarHTML?'<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:800;color:#7c3aed">월 이행률</span><div style="margin-top:6px">'+monBarHTML+'</div></div>':'')
+      +'<div><span style="font-size:11px;font-weight:800;color:#0891b2">대표 시험 점수 추이 <span style="font-size:9px;font-weight:700;color:#94a3b8">(TEST 1)</span></span>'
+      +'<canvas id="'+canvasId+'" style="width:100%;max-height:200px;margin-top:8px"></canvas>'
+      +'<div id="'+canvasId+'-empty" style="text-align:center;color:#94a3b8;font-size:12px;padding:12px;display:none">TEST 기록 없음</div>'
+      +'<div id="'+canvasId+'-detail"></div>'
+      +'</div>'
+      +'</div></div>';
+  }).join('');
+
+  return { html:html, charts:charts };
+}
+
+// pane-st 가 보일 때(폭 측정 가능) 그래프를 그림. showTab('st') 진입 시 재호출(폭 재측정).
+function drawParentStatCharts(charts){
+  (charts||[]).forEach(function(c){
+    var canvas=document.getElementById(c.canvasId);
+    var empty=document.getElementById(c.canvasId+'-empty');
+    var detail=document.getElementById(c.canvasId+'-detail');
+    if(!canvas) return;
+    if(detail) detail.innerHTML = buildTestDetailHTML(c.recs);
+    var W=(canvas.parentElement?canvas.parentElement.offsetWidth-24:0); if(!W||W<100) W=300;
+    var n=drawRepTestChart(canvas, c.recs, W, 180);
+    if(n>0){ canvas.style.display='block'; if(empty) empty.style.display='none'; }
+    else { canvas.style.display='none'; if(empty){ empty.style.display='block'; empty.textContent = buildTestDetailHTML(c.recs) ? '대표 시험(TEST 1) 점수가 없어 그래프는 생략됩니다' : 'TEST 기록 없음'; } }
+  });
+}
+
+// ── 과제: 월별 묶음 + 최신만 펼침/나머지 접기 아코디언 ──────────────
+function renderHomeworkAccordion(recs){
+  recs = recs || [];
+  if(!recs.length) return '<div class="empty">등록된 과제가 없습니다.</div>';
+  var sorted = recs.slice().sort(function(a,b){ return (a.date||'')>(b.date||'')?-1:1; }); // 최신순
+  var monMap={}, order=[];
+  sorted.forEach(function(r){ var m=(r.date||'').slice(0,7)||'기타'; if(!monMap[m]){monMap[m]=[];order.push(m);} monMap[m].push(r); });
+  var idx=0, html='';
+  order.forEach(function(mon){
+    var monLabel = /^\d{4}-\d{2}$/.test(mon) ? (mon.slice(0,4)+'년 '+mon.slice(5)+'월') : mon;
+    html += '<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:800;color:#475569;padding:6px 2px 8px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:3px;height:13px;background:#6366f1;border-radius:2px"></span>'+esc(monLabel)+' <span style="font-weight:600;color:#94a3b8">'+monMap[mon].length+'건</span></div>';
+    monMap[mon].forEach(function(rec){
+      var id='hw'+(idx++);
+      var open = (idx===1); // 전체에서 가장 최신 1건만 펼침
+      var badges='';
+      if(rec.className) badges+='<span style="font-size:11px;font-weight:700;color:#1d4ed8;background:#dbeafe;padding:1px 8px;border-radius:20px;margin-left:6px">'+esc(rec.className)+'</span>';
+      html += '<div style="margin-bottom:8px;border:1px solid #e8edf3;border-radius:10px;overflow:hidden;background:#fff">'
+        + '<div onclick="toggleHw(\''+id+'\',this)" style="display:flex;align-items:center;gap:8px;padding:11px 13px;cursor:pointer;user-select:none">'
+        + '<span style="flex:1;font-size:13px;font-weight:800;color:#334155">'+esc(fmtDate(rec.date))+badges+'</span>'
+        + '<span class="hw-arrow" style="font-size:13px;color:#94a3b8;transition:transform .2s;display:inline-block'+(open?';transform:rotate(90deg)':'')+'">▶</span>'
+        + '</div>'
+        + '<div id="'+id+'" class="hw-body" style="'+(open?'':'display:none;')+'padding:0 8px 8px">'+renderRecord(rec)+'</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  });
+  return html;
+}
+window.toggleHw = function(id, el){
+  var body=document.getElementById(id); if(!body) return;
+  var willOpen = (body.style.display==='none');
+  body.style.display = willOpen ? '' : 'none';
+  var arrow = el && el.querySelector ? el.querySelector('.hw-arrow') : null;
+  if(arrow) arrow.style.transform = willOpen ? 'rotate(90deg)' : '';
+};
+
 // ── 탭 ────────────────────────────────────────────────
 window.showTab = function(t){
-  ["hw","no","at","st"].forEach(function(k){
+  ["hw","no","st"].forEach(function(k){
     q("tab-"+k).classList.toggle("on", k===t);
     q("pane-"+k).classList.toggle("hidden", k!==t);
   });
+  if(t==='st' && window._parentStatCharts){ drawParentStatCharts(window._parentStatCharts); }
 };
 
 function showError(title, sub){
@@ -532,16 +709,16 @@ function showError(title, sub){
       q("stuClass").classList.remove("hidden");
     }
 
-    var recs = d.records || [], nots = d.notices || [], att = d.attendance || {};
+    var recs = d.records || [], nots = d.notices || [];
     q("cnt-hw").textContent = recs.length ? recs.length : "";
     q("cnt-no").textContent = nots.length ? nots.length : "";
-    var atCnt = ((att.checkins||[]).length) + ((att.classAttendance||[]).length);
-    q("cnt-at").textContent = atCnt ? atCnt : "";
 
-    q("pane-hw").innerHTML = recs.length ? recs.map(renderRecord).join("") : '<div class="empty">등록된 과제가 없습니다.</div>';
+    q("pane-hw").innerHTML = renderHomeworkAccordion(recs);
     q("pane-no").innerHTML = nots.length ? nots.map(renderNotice).join("") : '<div class="empty">알림장이 없습니다.</div>';
-    q("pane-at").innerHTML = renderAttendance(att);
-    q("pane-st").innerHTML = renderParentStats(recs, nots, att);
+    var _st = renderParentStatsFull(recs);
+    q("pane-st").innerHTML = _st.html;
+    window._parentStatCharts = _st.charts;
+    drawParentStatCharts(_st.charts);
 
     q("stateView").classList.add("hidden");
     q("mainView").classList.remove("hidden");

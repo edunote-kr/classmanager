@@ -435,8 +435,8 @@ textarea { resize:vertical; }
 #lessonPreviewToggle{display:none;position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:7000;background:#4f46e5;color:#fff;border:none;border-radius:10px 0 0 10px;width:30px;height:72px;font-size:20px;cursor:pointer;box-shadow:-2px 0 8px rgba(0,0,0,0.12);font-family:inherit;align-items:center;justify-content:center}
 #lessonPreviewPane{position:fixed;top:0;right:0;bottom:0;width:min(440px,44vw);background:#eef2f7;border-left:1px solid #d8dee9;z-index:6990;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;box-shadow:-6px 0 20px rgba(0,0,0,0.08)}
 #lessonPreviewPane.open{transform:translateX(0)}
-@media (min-width:1024px){ body.tab-input #lessonPreviewToggle{display:flex} body.preview-open #lessonPreviewToggle{right:min(440px,44vw)} body.preview-open #mainContent{padding-right:calc(min(440px,44vw) + 24px)} }
-@media (max-width:1023px){ #lessonPreviewPane,#lessonPreviewToggle{display:none !important} }
+@media (min-width:1200px){ body.tab-input #lessonPreviewToggle{display:flex} body.preview-open #lessonPreviewToggle{right:min(440px,44vw) !important} body.preview-open #mainContent{padding-right:calc(min(440px,44vw) + 24px) !important} }
+@media (max-width:1199px){ #lessonPreviewPane,#lessonPreviewToggle{display:none !important} }
 
 /* 미리보기 추가: 토글 라벨 + 모바일 시트 + 입력카드 폭 */
 #lessonPreviewToggle{flex-direction:column;height:auto;min-height:84px;padding:12px 2px;width:36px}
@@ -444,9 +444,9 @@ textarea { resize:vertical; }
 #lessonPreviewBackdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9450}
 #lessonPreviewSheet{position:fixed;left:0;right:0;bottom:0;height:64vh;background:#fff;border-radius:18px 18px 0 0;z-index:9500;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .28s ease;box-shadow:0 -6px 24px rgba(0,0,0,.18)}
 #lessonPreviewSheet.open{transform:translateY(0)}
-@media (max-width:1023px){ body.tab-input #lessonPreviewFab{display:flex} }
+@media (max-width:1199px){ body.tab-input #lessonPreviewFab{display:flex} }
 @media (max-width:640px){ #lessonPreviewFab{right:12px;bottom:100px} }
-@media (min-width:1024px){ #lessonPreviewFab,#lessonPreviewBackdrop,#lessonPreviewSheet{display:none !important} #panel-input{max-width:780px} }
+@media (min-width:1200px){ #lessonPreviewFab,#lessonPreviewBackdrop,#lessonPreviewSheet{display:none !important} #panel-input{max-width:780px} }
 
 /* ── init loader keyframe (moved from inline) ── */
     @keyframes loaderSlide {

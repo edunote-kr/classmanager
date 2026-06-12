@@ -3686,17 +3686,23 @@ function renderSendHistory(channel){
   if(!window.fbDb || !currentSchoolId){
     list.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">학원 정보를 불러오지 못했습니다.</div>'; return;
   }
+  var _isOwner = (typeof isOwnerOrAdmin==='function') ? isOwnerOrAdmin() : false;
+  var _myUid = (window.fbAuth && window.fbAuth.currentUser) ? window.fbAuth.currentUser.uid : null;
+  var _hint = _isOwner ? '' : '<div style="font-size:11px;color:#94a3b8;padding:0 2px 8px;line-height:1.5">선생님 계정은 <b style="color:#64748b">본인이 보낸 발송 내역</b>만 표시됩니다.</div>';
   try {
     var col = window.fbCollection(window.fbDb, 'schools', currentSchoolId, 'sendLogs');
-    var q = window.fbQuery(col, window.fbWhere('channel', '==', channel));
+    // 원장/슈퍼: 채널별 전체. 선생님: 본인 발송분만(규칙상 sentBy==본인만 read 허용 → sentBy 쿼리로 통과). 채널은 클라에서 필터.
+    var q = _isOwner
+      ? window.fbQuery(col, window.fbWhere('channel', '==', channel))
+      : window.fbQuery(col, window.fbWhere('sentBy', '==', _myUid || '__none__'));
     window.fbGetDocs(q).then(function(snap){
       var rows = [];
-      snap.forEach(function(d){ rows.push(d.data()); });
+      snap.forEach(function(d){ var v = d.data(); if(_isOwner || v.channel === channel) rows.push(v); });
       rows.sort(function(a,b){ return (b.sentAt||0) - (a.sentAt||0); });
       if(!rows.length){
-        list.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">발송 이력이 없습니다.</div>'; return;
+        list.innerHTML = _hint + '<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">발송 이력이 없습니다.</div>'; return;
       }
-      list.innerHTML = rows.map(function(r){
+      list.innerHTML = _hint + rows.map(function(r){
         var d = new Date(r.sentAt||0);
         var when = (d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
         var rt = r.recipientType==='parent'?'학부모':(r.recipientType==='student'?'학생':(r.recipientType||''));
@@ -7363,8 +7369,8 @@ function showToast(msg, type='success') {
         {id:'bill-sales', label:'월별 매출내역', soon:true} ]},
     { id:'message', label:'메세지관리', icon:I('<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>'), leaves:[
         {id:'msg-send', label:'문자/알림톡 발송', soon:true},
-        {id:'msg-sms-log', label:'문자 발송 이력', owner:true},
-        {id:'msg-alim-log', label:'알림톡 발송 이력', owner:true},
+        {id:'msg-sms-log', label:'문자 발송 이력'},
+        {id:'msg-alim-log', label:'알림톡 발송 이력'},
         {id:'msg-charge', label:'충전/충전설정', action:'openChargeFromNav', owner:true},
         {id:'msg-charge-log', label:'충전 내역', soon:true, owner:true} ]},
     { id:'work', label:'업무관리', owner:true, icon:I('<rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'), leaves:[
