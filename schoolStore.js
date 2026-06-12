@@ -292,23 +292,12 @@ function loadSchoolStats() {
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px">로딩 중...</div>';
 
-  // 학원 + 사용자 동시 조회
   Promise.all([
     window.fbGetDocs(window.fbCollection(window.fbDb, 'schools')),
     window.fbGetDocs(window.fbCollection(window.fbDb, 'users'))
   ]).then(function(results) {
     var schoolSnap = results[0];
     var userSnap   = results[1];
-
-    // 사용자를 schoolId/schoolName 기준으로 그룹핑
-    var userMap = {}; // schoolId or schoolName → [users]
-    userSnap.forEach(function(d) {
-      var u = d.data();
-      if (u.role === 'superadmin') return;
-      var key = u.schoolId || u.schoolName || '미배정';
-      if (!userMap[key]) userMap[key] = [];
-      userMap[key].push(u);
-    });
 
     var schools = [];
     schoolSnap.forEach(function(d) { schools.push(Object.assign({id: d.id}, d.data())); });
@@ -318,65 +307,166 @@ function loadSchoolStats() {
       return;
     }
 
-    el.innerHTML = schools.map(function(s) {
-      // 해당 학원 사용자 수집
-      var members = [];
-      userSnap.forEach(function(d) {
-        var u = d.data();
-        if (u.role === 'superadmin') return;
-        if (u.schoolId === s.id ||
-            u.schoolId === s.ownerCode ||
-            u.schoolId === s.teacherCode ||
-            (u.schoolName && s.name && u.schoolName.trim() === s.name.trim())) {
-          members.push(u);
-        }
-      });
-
-      var ownerCount   = members.filter(function(u) { return u.role === 'owner'; }).length;
-      var teacherCount = members.filter(function(u) { return u.role === 'teacher'; }).length;
-      var activeCount  = members.filter(function(u) { return u.status === 'active'; }).length;
-      var waitCount    = members.filter(function(u) { return u.status !== 'active'; }).length;
-      var maxTeachers  = s.teacherCount !== undefined ? s.teacherCount : (s.maxTeachers ? s.maxTeachers - 1 : 0);
-      var usageRate    = maxTeachers > 0 ? Math.round(teacherCount / maxTeachers * 100) : 0;
-      var isActive     = s.status === 'active';
-      var couponUsed   = members.some(function(u){ return u.role === 'owner' && u.freeTrialUsed; });
-
-      return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:16px;background:#fff">'
-        // 학원명 + 상태
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
-        + '<div>'
-        + '<div style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>' + escHtml(s.name) + '</div>'
-        + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + (s.plan||'basic') + ' · 생성: ' + (s.createdAt ? s.createdAt.slice(0,10) : '-') + '</div>'
-        + '<div style="margin-top:4px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:' + (couponUsed ? '#fef3c7' : '#f1f5f9') + ';color:' + (couponUsed ? '#d97706' : '#94a3b8') + '">무료체험 쿠폰 ' + (couponUsed ? '사용됨' : '미사용') + '</span></div>'
-        + '</div>'
-        + '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:' + (isActive ? '#dcfce7' : '#fee2e2') + ';color:' + (isActive ? '#16a34a' : '#dc2626') + '">' + (isActive ? '활성' : '비활성') + '</span>'
-        + '</div>'
-        // 인원 통계
-        + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">'
-        + '<div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center">'
-        + '<div style="font-size:18px;font-weight:900;color:#6366f1">' + ownerCount + '</div>'
-        + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">원장</div></div>'
-        + '<div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center">'
-        + '<div style="font-size:18px;font-weight:900;color:#0891b2">' + teacherCount + ' <span style="font-size:11px;color:#94a3b8">/ ' + maxTeachers + '</span></div>'
-        + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">선생님</div></div>'
-        + '<div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center">'
-        + '<div style="font-size:18px;font-weight:900;color:#16a34a">' + activeCount + '</div>'
-        + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">활성</div></div>'
-        + '<div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center">'
-        + '<div style="font-size:18px;font-weight:900;color:#f59e0b">' + waitCount + '</div>'
-        + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">대기</div></div>'
-        + '</div>'
-        // 선생님 사용률 바
-        + '<div style="margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">'
-        + '<span style="font-size:11px;color:#64748b">선생님 사용률</span>'
-        + '<span style="font-size:11px;font-weight:700;color:#6366f1">' + usageRate + '%</span>'
-        + '</div>'
-        + '<div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">'
-        + '<div style="height:100%;width:' + Math.min(usageRate,100) + '%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:3px;transition:width 0.5s"></div>'
-        + '</div>'
-        + '</div>';
-    }).join('');
+    // 학생 수 병렬 카운트 (schools/{id}/students). 재원/휴·퇴원 구분.
+    return Promise.all(schools.map(function(s){
+      return window.fbGetDocs(window.fbCollection(window.fbDb, 'schools', s.id, 'students'))
+        .then(function(stuSnap){
+          var total = 0, active = 0;
+          stuSnap.forEach(function(sd){
+            total++;
+            var st = (sd.data() || {}).status;
+            if (st !== 'withdrawn' && st !== 'leave') active++;
+          });
+          s._stuTotal = total; s._stuActive = active;
+        })
+        .catch(function(){ s._stuTotal = null; s._stuActive = null; });
+    })).then(function(){ renderSchoolStatCards(el, schools, userSnap); });
+  }).catch(function(e){
+    el.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px;font-size:13px">불러오기 실패: ' + (e && (e.code||e.message) || '') + '</div>';
   });
+}
+
+// ── 학원 통계 헬퍼 ──────────────────────────
+function _statPlanBadge(plan){
+  plan = plan || 'basic';
+  var m = {
+    basic:    ['#eef2ff','#4f46e5','베이직'],
+    standard: ['#ecfeff','#0891b2','스탠다드'],
+    premium:  ['#fef3c7','#d97706','프리미엄'],
+    free:     ['#f1f5f9','#64748b','무료']
+  };
+  var c = m[plan] || ['#f1f5f9','#64748b', plan];
+  return '<span style="font-size:10px;font-weight:800;padding:2px 9px;border-radius:6px;background:'+c[0]+';color:'+c[1]+'">'+c[2]+'</span>';
+}
+function _statDdayBadge(expiresAt){
+  if(!expiresAt) return '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:#f1f5f9;color:#94a3b8">만료일 없음</span>';
+  var exp = new Date(expiresAt);
+  var diff = Math.ceil((exp - new Date()) / 86400000);
+  var color, bg, txt;
+  if(diff < 0){ color='#dc2626'; bg='#fee2e2'; txt='만료 '+Math.abs(diff)+'일 경과'; }
+  else if(diff <= 7){ color='#dc2626'; bg='#fee2e2'; txt='D-'+diff+' 임박'; }
+  else if(diff <= 30){ color='#d97706'; bg='#fef3c7'; txt='D-'+diff; }
+  else { color='#16a34a'; bg='#f0fdf4'; txt='D-'+diff; }
+  return '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:'+bg+';color:'+color+'">'+expiresAt.slice(0,10)+' · '+txt+'</span>';
+}
+function _statCreditBox(label, color, ch){
+  ch = ch || {};
+  var free = ch.free || 0, paid = ch.paid || 0, tot = free + paid;
+  return '<div style="flex:1;background:#f8fafc;border-radius:8px;padding:8px 10px;min-width:0">'
+    + '<div style="font-size:10px;color:#94a3b8;margin-bottom:2px">'+label+'</div>'
+    + '<div style="font-size:16px;font-weight:900;color:'+color+'">'+tot+'<span style="font-size:10px;color:#94a3b8;font-weight:600"> 건</span></div>'
+    + '<div style="font-size:9px;color:#94a3b8">무료 '+free+' · 충전 '+paid+'</div>'
+    + '</div>';
+}
+function _statSummaryBox(val, label, color){
+  return '<div style="background:#fff;border-radius:10px;padding:10px 8px;text-align:center;border:1px solid #e2e8f0">'
+    + '<div style="font-size:18px;font-weight:900;color:'+color+'">'+val+'</div>'
+    + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">'+label+'</div></div>';
+}
+
+function renderSchoolStatCards(el, schools, userSnap){
+  var now = new Date();
+  // 전체 집계
+  var total = schools.length;
+  var activeN = 0, soonN = 0, expiredN = 0, paidN = 0, trialN = 0, totSms = 0, totAlim = 0;
+  schools.forEach(function(s){
+    if(s.status === 'active') activeN++;
+    if(s.expiresAt){
+      var d = Math.ceil((new Date(s.expiresAt) - now) / 86400000);
+      if(d < 0) expiredN++;
+      else if(d <= 30) soonN++;
+    }
+    var p = s.plan || 'basic';
+    if(p === 'free' || !s.plan) trialN++; else paidN++;
+    var n = s.notif || {};
+    var sm = n.sms || {}, al = n.alimtalk || {};
+    totSms  += (sm.free||0) + (sm.paid||0);
+    totAlim += (al.free||0) + (al.paid||0);
+  });
+
+  var summary = '<div style="background:linear-gradient(135deg,#f8fafc,#eef2ff);border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:6px">'
+    + '<div style="font-size:12px;font-weight:800;color:#475569;margin-bottom:10px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg> 전체 요약</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">'
+    + _statSummaryBox(total, '총 학원', '#1e293b')
+    + _statSummaryBox(activeN, '활성', '#16a34a')
+    + _statSummaryBox(paidN, '유료', '#6366f1')
+    + _statSummaryBox(trialN, '체험', '#f59e0b')
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">'
+    + _statSummaryBox(soonN, '만료 임박', soonN>0?'#d97706':'#94a3b8')
+    + _statSummaryBox(expiredN, '만료됨', expiredN>0?'#dc2626':'#94a3b8')
+    + _statSummaryBox(totSms, '문자 잔여', '#0891b2')
+    + _statSummaryBox(totAlim, '알림톡 잔여', '#7c3aed')
+    + '</div>'
+    + '</div>';
+
+  var cards = schools.map(function(s) {
+    var members = [];
+    userSnap.forEach(function(d) {
+      var u = d.data();
+      if (u.role === 'superadmin') return;
+      if (u.schoolId === s.id ||
+          u.schoolId === s.ownerCode ||
+          u.schoolId === s.teacherCode ||
+          (u.schoolName && s.name && u.schoolName.trim() === s.name.trim())) {
+        members.push(u);
+      }
+    });
+
+    var ownerCount   = members.filter(function(u) { return u.role === 'owner'; }).length;
+    var teacherCount = members.filter(function(u) { return u.role === 'teacher'; }).length;
+    var activeCount  = members.filter(function(u) { return u.status === 'active'; }).length;
+    var waitCount    = members.filter(function(u) { return u.status !== 'active'; }).length;
+    var maxTeachers  = s.teacherCount !== undefined ? s.teacherCount : (s.maxTeachers ? s.maxTeachers - 1 : 0);
+    var usageRate    = maxTeachers > 0 ? Math.round(teacherCount / maxTeachers * 100) : 0;
+    var isActive     = s.status === 'active';
+    var couponUsed   = members.some(function(u){ return u.role === 'owner' && u.freeTrialUsed; });
+    var notif        = s.notif || {};
+    var stuLabel     = (s._stuTotal == null) ? '-' : (s._stuActive + (s._stuTotal !== s._stuActive ? ' <span style="font-size:11px;color:#94a3b8">/ '+s._stuTotal+'</span>' : ''));
+
+    return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:16px;background:#fff">'
+      // 학원명 + 상태
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      + '<div style="min-width:0">'
+      + '<div style="font-size:14px;font-weight:800;color:#1e293b"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>' + escHtml(s.name) + '</div>'
+      + '<div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">' + _statPlanBadge(s.plan) + _statDdayBadge(s.expiresAt) + '</div>'
+      + '<div style="font-size:11px;color:#94a3b8;margin-top:6px">생성: ' + (s.createdAt ? s.createdAt.slice(0,10) : '-') + '</div>'
+      + '<div style="margin-top:4px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:' + (couponUsed ? '#fef3c7' : '#f1f5f9') + ';color:' + (couponUsed ? '#d97706' : '#94a3b8') + '">무료체험 쿠폰 ' + (couponUsed ? '사용됨' : '미사용') + '</span></div>'
+      + '</div>'
+      + '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;background:' + (isActive ? '#dcfce7' : '#fee2e2') + ';color:' + (isActive ? '#16a34a' : '#dc2626') + '">' + (isActive ? '활성' : '비활성') + '</span>'
+      + '</div>'
+      // 크레딧
+      + '<div style="display:flex;gap:8px;margin-bottom:12px">'
+      + _statCreditBox('문자 크레딧', '#0891b2', notif.sms)
+      + _statCreditBox('알림톡 크레딧', '#7c3aed', notif.alimtalk)
+      + '</div>'
+      // 인원 통계 (원장/선생님/학생/대기)
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">'
+      + '<div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center">'
+      + '<div style="font-size:18px;font-weight:900;color:#6366f1">' + ownerCount + '</div>'
+      + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">원장</div></div>'
+      + '<div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center">'
+      + '<div style="font-size:18px;font-weight:900;color:#0891b2">' + teacherCount + ' <span style="font-size:11px;color:#94a3b8">/ ' + maxTeachers + '</span></div>'
+      + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">선생님</div></div>'
+      + '<div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center">'
+      + '<div style="font-size:18px;font-weight:900;color:#16a34a">' + stuLabel + '</div>'
+      + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">학생</div></div>'
+      + '<div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center">'
+      + '<div style="font-size:18px;font-weight:900;color:#f59e0b">' + waitCount + '</div>'
+      + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">대기</div></div>'
+      + '</div>'
+      // 선생님 사용률 바
+      + '<div style="margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">'
+      + '<span style="font-size:11px;color:#64748b">선생님 사용률</span>'
+      + '<span style="font-size:11px;font-weight:700;color:#6366f1">' + usageRate + '%</span>'
+      + '</div>'
+      + '<div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">'
+      + '<div style="height:100%;width:' + Math.min(usageRate,100) + '%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:3px;transition:width 0.5s"></div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  el.innerHTML = summary + cards;
 }
 
 function loadSchools() {
