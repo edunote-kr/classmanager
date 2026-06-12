@@ -509,7 +509,7 @@ function issueParentLink(id, name) {
   _parentLinkCore(id, name);
 }
 
-// 과제 카드 [전송]: 그 과제의 학생을 찾아 링크 발급·복사 (구현 확인용 — 실제 알림톡 발송은 추후)
+// 과제 카드 [전송]: 전송 다이얼로그 오픈 (수신자 선택 + 재전송 확인)
 function sendRecordLink(recId) {
   var rec = null;
   if (typeof records !== 'undefined' && Array.isArray(records)) {
@@ -518,7 +518,137 @@ function sendRecordLink(recId) {
   if (!rec) { showToast('과제를 찾을 수 없습니다.', 'error'); return; }
   var sid = rec.studentId || (typeof resolveStudentId === 'function' ? resolveStudentId(rec) : '');
   if (!sid) { showToast('이 과제에 연결된 학생이 없습니다.', 'error'); return; }
-  _parentLinkCore(sid, rec.student || '학생');
+  openSendDialog(rec, sid);
+}
+
+function _findStudentForSend(sid, rec) {
+  if (typeof students === 'undefined' || !Array.isArray(students)) return null;
+  var st = students.filter(function (s) { return String(s.id) === String(sid); })[0];
+  if (!st && rec) st = students.filter(function (s) { return s.name === rec.student && (s.className || '') === (rec.className || ''); })[0];
+  return st || null;
+}
+
+function _fmtSentTime(ms) {
+  var d = new Date(ms), now = new Date();
+  var hh = ('0' + d.getHours()).slice(-2), mm = ('0' + d.getMinutes()).slice(-2);
+  var sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  return (sameDay ? '오늘 ' : (d.getMonth() + 1) + '/' + d.getDate() + ' ') + hh + ':' + mm;
+}
+
+function closeSendDialog() {
+  var el = document.getElementById('sendDialog');
+  if (el) el.parentNode.removeChild(el);
+}
+
+function openSendDialog(rec, sid) {
+  var st = _findStudentForSend(sid, rec);
+  var name = (st && st.name) || rec.student || '학생';
+  var parentPhone = (st && st.parent) || '';
+  var stuPhone = (st && st.phone) || '';
+  var dateStr = rec.date || '';
+  var hasAny = !!(parentPhone || stuPhone);
+
+  var sentAt = 0; try { sentAt = parseInt(localStorage.getItem('kms_psent_' + sid) || '0', 10) || 0; } catch (e) {}
+
+  closeSendDialog();
+  var ov = document.createElement('div');
+  ov.id = 'sendDialog';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+
+  function row(id, label, phone, checked, enabled) {
+    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid ' + (enabled ? '#e2e8f0' : '#f1f5f9') + ';border-radius:10px;margin-bottom:8px;cursor:' + (enabled ? 'pointer' : 'not-allowed') + ';opacity:' + (enabled ? '1' : '.55') + '">'
+      + '<input type="checkbox" id="' + id + '" ' + (checked ? 'checked' : '') + ' ' + (enabled ? '' : 'disabled') + ' style="width:18px;height:18px;accent-color:#0891b2">'
+      + '<span style="font-size:13px;font-weight:700;color:#334155;flex:0 0 auto">' + label + '</span>'
+      + '<span style="font-size:12px;color:' + (enabled ? '#64748b' : '#cbd5e1') + ';margin-left:auto">' + (phone ? escHtml(phone) : '번호 없음') + '</span>'
+      + '</label>';
+  }
+
+  ov.innerHTML =
+    '<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.3);font-family:inherit">'
+    + '<div style="font-size:15px;font-weight:800;color:#0e7490;margin-bottom:2px">학습기록 등록 알림 전송</div>'
+    + '<div style="font-size:12px;color:#64748b;margin-bottom:' + (sentAt ? '10px' : '14px') + '">' + escHtml(name) + (dateStr ? ' · ' + escHtml(dateStr) : '') + ' 기록을 학부모에게 알립니다.</div>'
+    + (sentAt ? '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:12px;color:#92400e;font-weight:700;margin-bottom:12px">⚠ 이 학생에게 ' + _fmtSentTime(sentAt) + ' 전송됨 — 다시 보낼까요?</div>' : '')
+    + '<div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:6px">받는 사람</div>'
+    + row('sendToParent', '학부모', parentPhone, !!parentPhone, !!parentPhone)
+    + row('sendToStudent', '학생', stuPhone, false, !!stuPhone)
+    + (hasAny
+        ? '<div style="font-size:12px;color:#64748b;margin:4px 2px 14px">예상 차감 <b id="sendCreditEst" style="color:#0e7490">1</b> 크레딧 · 알림톡(실패 시 문자)</div>'
+        : '<div style="font-size:12px;color:#dc2626;font-weight:700;margin:4px 2px 14px">등록된 번호가 없어 전송할 수 없습니다. 학생 정보에서 번호를 입력해주세요.</div>')
+    + '<div style="display:flex;gap:8px">'
+    + '<button id="sendGo" ' + (hasAny ? '' : 'disabled') + ' style="flex:1;background:' + (hasAny ? '#0891b2' : '#cbd5e1') + ';color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:800;cursor:' + (hasAny ? 'pointer' : 'not-allowed') + ';font-family:inherit">전송</button>'
+    + '<button id="sendCancel" style="flex:0 0 auto;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>'
+    + '</div></div>';
+
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function (e) { if (e.target === ov) closeSendDialog(); });
+  document.getElementById('sendCancel').onclick = closeSendDialog;
+
+  function recount() {
+    var n = 0;
+    var p = document.getElementById('sendToParent'), s = document.getElementById('sendToStudent');
+    if (p && p.checked) n++;
+    if (s && s.checked) n++;
+    var est = document.getElementById('sendCreditEst');
+    if (est) est.textContent = String(n);
+    var go = document.getElementById('sendGo');
+    if (go && hasAny) { go.disabled = (n === 0); go.style.background = (n === 0) ? '#cbd5e1' : '#0891b2'; go.style.cursor = (n === 0) ? 'not-allowed' : 'pointer'; }
+  }
+  var pe = document.getElementById('sendToParent'), se = document.getElementById('sendToStudent');
+  if (pe) pe.addEventListener('change', recount);
+  if (se) se.addEventListener('change', recount);
+
+  if (hasAny) {
+    document.getElementById('sendGo').onclick = function () {
+      var recips = [];
+      if (pe && pe.checked) recips.push('학부모');
+      if (se && se.checked) recips.push('학생');
+      if (!recips.length) { showToast('받는 사람을 선택해주세요.', 'error'); return; }
+      _testSend(sid, name, recips);
+    };
+  }
+}
+
+// 테스트 발송: 실제 알림톡 대신 링크 발급/복사로 흐름 확인 (솔라피 연동 시 실발송+크레딧 차감으로 교체)
+function _testSend(sid, name, recips) {
+  if (!window.fbCallable) { showToast('잠시 후 다시 시도해주세요.', 'error'); return; }
+  showToast('전송 준비 중...', 'info');
+  window.fbCallable('issueParentToken')({ studentId: String(sid) }).then(function (res) {
+    var url = res && res.data && res.data.url;
+    if (!url) { showToast('링크 생성에 실패했습니다.', 'error'); return; }
+    try { localStorage.setItem('kms_psent_' + sid, String(Date.now())); } catch (e) {}
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(url).catch(function () {}); }
+    closeSendDialog();
+    _showSendResult(name, recips, url);
+  }).catch(function (err) {
+    showToast((err && err.message) ? err.message : '전송에 실패했습니다.', 'error');
+  });
+}
+
+function _showSendResult(name, recips, url) {
+  var old = document.getElementById('parentLinkModal');
+  if (old) old.parentNode.removeChild(old);
+  var ov = document.createElement('div');
+  ov.id = 'parentLinkModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML =
+    '<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.3);font-family:inherit">'
+    + '<div style="font-size:15px;font-weight:800;color:#0e7490;margin-bottom:4px">전송 (테스트) 완료</div>'
+    + '<div style="font-size:12px;color:#64748b;margin-bottom:12px">' + escHtml(name) + ' · 받는 사람: ' + escHtml(recips.join(', ')) + '<br>실제 알림톡 발송은 솔라피 연동 후 동작합니다. 지금은 링크 확인용입니다.</div>'
+    + '<div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:12px;color:#334155;word-break:break-all;user-select:all;margin-bottom:12px">' + escHtml(url) + '</div>'
+    + '<div style="display:flex;gap:8px">'
+    + '<button id="parentLinkCopy" style="flex:1;background:#0891b2;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">복사</button>'
+    + '<button id="parentLinkOpen" style="flex:1;background:#ecfeff;color:#0e7490;border:1px solid #67e8f9;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">열기</button>'
+    + '<button id="parentLinkClose" style="flex:0 0 auto;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">닫기</button>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function (e) { if (e.target === ov) ov.parentNode.removeChild(ov); });
+  document.getElementById('parentLinkClose').onclick = function () { ov.parentNode.removeChild(ov); };
+  document.getElementById('parentLinkOpen').onclick = function () { window.open(url, '_blank'); };
+  document.getElementById('parentLinkCopy').onclick = function () {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { showToast('복사되었습니다.'); }).catch(function () { showToast('직접 길게 눌러 복사해주세요.', 'info'); });
+    } else { showToast('직접 길게 눌러 복사해주세요.', 'info'); }
+  };
 }
 
 function showParentLinkModal(name, url) {
