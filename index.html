@@ -2613,7 +2613,7 @@ function buildLessonItems(){
     b.items.forEach(function(it){
       var x = (it.text||'').trim();
       if (!x) return;
-      items.push({ t: (LESSON_TYPES[b.type]?b.type:'today'), x: x, c: (it.comp>=0?it.comp:0) });
+      items.push({ t: (LESSON_TYPES[b.type]?b.type:'today'), x: x, c: (it.comp>=0?it.comp:-1) }); // 미선택(-1) 보존
     });
   });
   return items;
@@ -5627,8 +5627,8 @@ function makeCard(rec) {
         rec.lessonItems.forEach(function(it){
           var x = (it.x||''); if(!String(x).trim()) return;
           var ty = LESSON_TYPES[it.t] || LESSON_TYPES['today'];
-          var c = (typeof it.c==='number'?it.c:0);
-          var badge = (it.t==='supplement') ? '' : ('<br>'+compBadgeHTML(c));
+          var c = (typeof it.c==='number'?it.c:-1);
+          var badge = (it.t==='supplement'||c<0) ? '' : ('<br>'+compBadgeHTML(c));
           liRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:${ty.color}">${lessonIconHTML(it.t,11)} ${escHtml(ty.label)}</strong><br>${esc(x)}${badge}</div>`;
         });
         return `<div class="rec-row">
@@ -6539,9 +6539,9 @@ function openPrint() {
         rec.lessonItems.forEach(function(it){
           var x=(it.x||''); if(!String(x).trim()) return;
           var ty=LESSON_TYPES[it.t]||LESSON_TYPES['today'];
-          var c=(typeof it.c==='number'?it.c:0);
+          var c=(typeof it.c==='number'?it.c:-1);
           var lv=LEVELS.find(function(l){return l.value===c;})||LEVELS[0];
-          var badge=(it.t==='supplement')?'':(' <span class="po-badge" data-val="'+c+'" data-type="lesson" style="background:'+lv.bg+';color:'+lv.color+'">'+lv.emoji+' '+lv.label+'</span>');
+          var badge=(it.t==='supplement'||c<0)?'':(' <span class="po-badge" data-val="'+c+'" data-type="lesson" style="background:'+lv.bg+';color:'+lv.color+'">'+lv.emoji+' '+lv.label+'</span>');
           liRows += '<div style="font-size:11px;color:#334155;margin-bottom:2px"><span style="color:'+ty.color+';font-weight:700">'+lessonIconHTML(it.t,12)+' '+escHtml(ty.label)+'</span> '+esc(x)+badge+'</div>';
         });
         return '<div style="margin-bottom:6px"><div class="po-section" style="color:#000;font-weight:800">오늘 수업내용</div>'+liRows+'</div>';
@@ -7023,8 +7023,8 @@ function copyRecord(id) {
       rec.lessonItems.forEach(function(it){
         var x=(it.x||''); if(!String(x).trim()) return;
         var ty=LESSON_TYPES[it.t]||LESSON_TYPES['today'];
-        var c=(typeof it.c==='number'?it.c:0);
-        var b=(it.t==='supplement')?'':('  ['+(COMP[c]||'')+']');
+        var c=(typeof it.c==='number'?it.c:-1);
+        var b=(it.t==='supplement'||c<0)?'':('  ['+(COMP[c]||'')+']');
         lines.push('  '+lessonIconHTML(it.t,11)+' '+ty.label+': '+x+b);
       });
     } else {

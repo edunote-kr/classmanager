@@ -280,8 +280,8 @@ function renderRecord(rec) {
         rec.lessonItems.forEach(function(it){
           var x=(it.x||''); if(!String(x).trim()) return;
           var ty=LESSON_TYPES[it.t]||LESSON_TYPES['today'];
-          var c=(typeof it.c==='number'?it.c:0);
-          var badge=(it.t==='supplement')?'':('<br>'+compBadgeHTML(c));
+          var c=(typeof it.c==='number'?it.c:-1);
+          var badge=(it.t==='supplement'||c<0)?'':('<br>'+compBadgeHTML(c));
           liRows += '<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:'+ty.color+'">'+lessonIconHTML(it.t,11)+' '+ty.label+'</strong><br>'+esc(x)+badge+'</div>';
         });
         return '<div class="rec-row"><span class="po-section" style="color:#4f46e5">'+lessonIconHTML('today',12)+' 오늘 수업내용</span><br>'+liRows+'</div>';
