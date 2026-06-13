@@ -5623,7 +5623,7 @@ ${[rec.todayContent,rec.todayContent1,rec.todayContent2,rec.todayContent3,rec.to
       const [bg,col]=(m[rec.attitude]||['#f1f5f9','#475569']);
       return `<span class="po-badge att-badge" data-val="${esc(rec.attitude)}" data-type="attitude" style="background:${bg};color:${col};font-size:11px;padding:2px 10px;border-radius:20px;font-weight:700">수업태도: ${esc(rec.attitude)}</span>`;
     })() : '';
-    const makeupBadge = rec.makeup ? `<span class="po-badge" style="background:#f5f3ff;color:#7c3aed;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:700">보충 진행</span>` : '';
+    const makeupBadge = rec.makeup ? `<span class="po-badge makeup-badge" style="background:#f5f3ff;color:#7c3aed;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:700">보충 진행</span>` : '';
     const wordTest = (() => {
       var tests = [];
       if (rec.testsJson) {
@@ -6697,7 +6697,7 @@ function saveListCard(id, mode) {
       el.style.display = 'block';
       el.style.marginBottom = '4px';
     });
-    clone.querySelectorAll('.po-badge:not(.att-badge)').forEach(badge => {
+    clone.querySelectorAll('.po-badge:not(.att-badge):not(.makeup-badge)').forEach(badge => {
       const selectedVal = parseInt(badge.getAttribute('data-val') || '0');
       const wrap = document.createElement('span');
       wrap.style.cssText = 'display:inline-flex;gap:3px;flex-wrap:wrap;vertical-align:middle;margin-top:3px;';
