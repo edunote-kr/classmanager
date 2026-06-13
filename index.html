@@ -1956,11 +1956,31 @@ async function saveRecord() {
   showLoading(true);
   // Firestore에 저장
   if (window.fbDb && currentSchool && currentSchool.length > 10) {
-    var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(rec.id));
-    window.fbSetDoc(ref, rec)
-      .then(function(){ showToast('저장 완료!'); })
-      .catch(function(){ showToast('저장 실패. 다시 시도해주세요.', 'error'); })
-      .finally(function(){ showLoading(false); });
+    var _isMine = !rec.teacher || rec.teacher === currentUser;
+    if (_isMine) {
+      // 본인 기록 → 본인 서브컬렉션에 직접 저장
+      var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(rec.id));
+      window.fbSetDoc(ref, rec)
+        .then(function(){ showToast('저장 완료!'); })
+        .catch(function(){ showToast('저장 실패. 다시 시도해주세요.', 'error'); })
+        .finally(function(){ showLoading(false); });
+    } else if (typeof isOwnerOrAdmin === 'function' && isOwnerOrAdmin()) {
+      // 원장이 다른 선생님 기록 수정: 규칙상 직접 못 씀(쓰면 원장 uid 에 사본만 생기고
+      // 선생님 원본은 묵은 채 남아 학부모/통계에 옛 데이터가 보임).
+      // → 서버 함수(ownerUpdateRecord)로 원본(users/{선생uid}/records/{id})에 직접 덮어쓰기.
+      var _tUid = window.schoolUidByName && window.schoolUidByName[rec.teacher];
+      if (_tUid && window.fbCallable) {
+        window.fbCallable('ownerUpdateRecord')({ recordId: String(rec.id), teacherUid: _tUid, record: rec })
+          .then(function(){ showToast('저장 완료!'); })
+          .catch(function(){ showToast('서버에서 저장하지 못했습니다. 새로고침 후 다시 시도해주세요.', 'error'); })
+          .finally(function(){ showLoading(false); });
+      } else {
+        showLoading(false);
+        showToast('작성 선생님을 확인할 수 없어 서버 저장을 건너뛰었습니다. 새로고침 후 다시 시도해주세요.', 'error');
+      }
+    } else {
+      showLoading(false);
+    }
     mirrorClassAttendance(rec); // 출결만 학교 단위로 복제
   } else {
     showToast('저장 완료!');
@@ -2383,7 +2403,7 @@ function deserializeLastHomeworks(rec, isNewDay) {
   if (isNewDay) {
     // 새 날: 이전 오늘의 과제(무제한) → 지난 과제로 이동
     getHomeworks(rec).forEach(function(val) {
-      if (val) _lastHomeworks.push({text:val, comp:0}); // 지난 과제로 이동 시 미완료(0) 기본 활성화
+      if (val) _lastHomeworks.push({text:val, comp:-1});
     });
     // homework가 없으면 기존 lastHomework도 확인
     if (_lastHomeworks.length === 0) {
@@ -2613,7 +2633,7 @@ function buildLessonItems(){
     b.items.forEach(function(it){
       var x = (it.text||'').trim();
       if (!x) return;
-      items.push({ t: (LESSON_TYPES[b.type]?b.type:'today'), x: x, c: (it.comp>=0?it.comp:-1) }); // 미선택(-1) 보존
+      items.push({ t: (LESSON_TYPES[b.type]?b.type:'today'), x: x, c: (it.comp>=0?it.comp:0) });
     });
   });
   return items;
@@ -5627,8 +5647,8 @@ function makeCard(rec) {
         rec.lessonItems.forEach(function(it){
           var x = (it.x||''); if(!String(x).trim()) return;
           var ty = LESSON_TYPES[it.t] || LESSON_TYPES['today'];
-          var c = (typeof it.c==='number'?it.c:-1);
-          var badge = (it.t==='supplement'||c<0) ? '' : ('<br>'+compBadgeHTML(c));
+          var c = (typeof it.c==='number'?it.c:0);
+          var badge = (it.t==='supplement') ? '' : ('<br>'+compBadgeHTML(c));
           liRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:${ty.color}">${lessonIconHTML(it.t,11)} ${escHtml(ty.label)}</strong><br>${esc(x)}${badge}</div>`;
         });
         return `<div class="rec-row">
@@ -6532,20 +6552,7 @@ function openPrint() {
         ${rows}
       </div>`;
     })();
-    const todayC = (rec.todayContent||rec.reading||rec.grammar||(Array.isArray(rec.lessonItems)&&rec.lessonItems.length)) ? (() => {
-      // 신규: lessonItems(무한) 우선
-      if (Array.isArray(rec.lessonItems) && rec.lessonItems.some(function(it){ return it && (it.x||'').trim()!==''; })) {
-        var liRows = '';
-        rec.lessonItems.forEach(function(it){
-          var x=(it.x||''); if(!String(x).trim()) return;
-          var ty=LESSON_TYPES[it.t]||LESSON_TYPES['today'];
-          var c=(typeof it.c==='number'?it.c:-1);
-          var lv=LEVELS.find(function(l){return l.value===c;})||LEVELS[0];
-          var badge=(it.t==='supplement'||c<0)?'':(' <span class="po-badge" data-val="'+c+'" data-type="lesson" style="background:'+lv.bg+';color:'+lv.color+'">'+lv.emoji+' '+lv.label+'</span>');
-          liRows += '<div style="font-size:11px;color:#334155;margin-bottom:2px"><span style="color:'+ty.color+';font-weight:700">'+lessonIconHTML(it.t,12)+' '+escHtml(ty.label)+'</span> '+esc(x)+badge+'</div>';
-        });
-        return '<div style="margin-bottom:6px"><div class="po-section" style="color:#000;font-weight:800">오늘 수업내용</div>'+liRows+'</div>';
-      }
+    const todayC = (rec.todayContent||rec.reading||rec.grammar) ? (() => {
       const lR = LEVELS.find(l=>l.value===(rec.readingComp||0))||LEVELS[0];
       const lG = LEVELS.find(l=>l.value===(rec.grammarComp||0))||LEVELS[0];
       return `<div style="margin-bottom:6px">
@@ -7017,21 +7024,11 @@ function copyRecord(id) {
       lines.push(`  ${it.text}  [${COMP[it.comp]||'미완료'}]`);
     });
   }
-  if (rec.todayContent || rec.reading || rec.grammar || (Array.isArray(rec.lessonItems)&&rec.lessonItems.length)) {
+  if (rec.todayContent || rec.reading || rec.grammar) {
     lines.push(`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 오늘 수업내용:`);
-    if (Array.isArray(rec.lessonItems) && rec.lessonItems.some(function(it){ return it && (it.x||'').trim()!==''; })) {
-      rec.lessonItems.forEach(function(it){
-        var x=(it.x||''); if(!String(x).trim()) return;
-        var ty=LESSON_TYPES[it.t]||LESSON_TYPES['today'];
-        var c=(typeof it.c==='number'?it.c:-1);
-        var b=(it.t==='supplement'||c<0)?'':('  ['+(COMP[c]||'')+']');
-        lines.push('  '+lessonIconHTML(it.t,11)+' '+ty.label+': '+x+b);
-      });
-    } else {
     if (rec.todayContent) lines.push(`  ${rec.todayContent}`);
     if (rec.reading)  lines.push(`  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 독해: ${rec.reading.replace(/^독해\s*/,'')}  [${COMP[rec.readingComp]||''}]`);
     if (rec.grammar)  lines.push(`  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 문법: ${rec.grammar.replace(/^문법\s*/,'')}  [${COMP[rec.grammarComp]||''}]`);
-    }
   }
   var _hwsCopy = getHomeworks(rec);
   if (_hwsCopy.length === 1) {
@@ -7203,7 +7200,7 @@ function loadRecord() {
     // 과거 기록: rec의 오늘의 과제(무제한) → 지난 과제로 이동
     _lastHomeworks = [];
     getHomeworks(rec).forEach(function(val) {
-      if (val) _lastHomeworks.push({text: val, comp: 0}); // 지난 과제로 이동 시 미완료(0) 기본 활성화
+      if (val) _lastHomeworks.push({text: val, comp: -1});
     });
     // 오늘의 과제가 없으면 기존 지난 과제 값을 그대로 유지
     if (_lastHomeworks.length === 0) {
