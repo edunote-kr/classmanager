@@ -2383,7 +2383,7 @@ function deserializeLastHomeworks(rec, isNewDay) {
   if (isNewDay) {
     // 새 날: 이전 오늘의 과제(무제한) → 지난 과제로 이동
     getHomeworks(rec).forEach(function(val) {
-      if (val) _lastHomeworks.push({text:val, comp:-1});
+      if (val) _lastHomeworks.push({text:val, comp:0}); // 지난 과제로 이동 시 미완료(0) 기본 활성화
     });
     // homework가 없으면 기존 lastHomework도 확인
     if (_lastHomeworks.length === 0) {
@@ -7203,7 +7203,7 @@ function loadRecord() {
     // 과거 기록: rec의 오늘의 과제(무제한) → 지난 과제로 이동
     _lastHomeworks = [];
     getHomeworks(rec).forEach(function(val) {
-      if (val) _lastHomeworks.push({text: val, comp: -1});
+      if (val) _lastHomeworks.push({text: val, comp: 0}); // 지난 과제로 이동 시 미완료(0) 기본 활성화
     });
     // 오늘의 과제가 없으면 기존 지난 과제 값을 그대로 유지
     if (_lastHomeworks.length === 0) {
