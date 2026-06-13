@@ -6532,7 +6532,20 @@ function openPrint() {
         ${rows}
       </div>`;
     })();
-    const todayC = (rec.todayContent||rec.reading||rec.grammar) ? (() => {
+    const todayC = (rec.todayContent||rec.reading||rec.grammar||(Array.isArray(rec.lessonItems)&&rec.lessonItems.length)) ? (() => {
+      // 신규: lessonItems(무한) 우선
+      if (Array.isArray(rec.lessonItems) && rec.lessonItems.some(function(it){ return it && (it.x||'').trim()!==''; })) {
+        var liRows = '';
+        rec.lessonItems.forEach(function(it){
+          var x=(it.x||''); if(!String(x).trim()) return;
+          var ty=LESSON_TYPES[it.t]||LESSON_TYPES['today'];
+          var c=(typeof it.c==='number'?it.c:0);
+          var lv=LEVELS.find(function(l){return l.value===c;})||LEVELS[0];
+          var badge=(it.t==='supplement')?'':(' <span class="po-badge" data-val="'+c+'" data-type="lesson" style="background:'+lv.bg+';color:'+lv.color+'">'+lv.emoji+' '+lv.label+'</span>');
+          liRows += '<div style="font-size:11px;color:#334155;margin-bottom:2px"><span style="color:'+ty.color+';font-weight:700">'+lessonIconHTML(it.t,12)+' '+escHtml(ty.label)+'</span> '+esc(x)+badge+'</div>';
+        });
+        return '<div style="margin-bottom:6px"><div class="po-section" style="color:#000;font-weight:800">오늘 수업내용</div>'+liRows+'</div>';
+      }
       const lR = LEVELS.find(l=>l.value===(rec.readingComp||0))||LEVELS[0];
       const lG = LEVELS.find(l=>l.value===(rec.grammarComp||0))||LEVELS[0];
       return `<div style="margin-bottom:6px">
@@ -7004,11 +7017,21 @@ function copyRecord(id) {
       lines.push(`  ${it.text}  [${COMP[it.comp]||'미완료'}]`);
     });
   }
-  if (rec.todayContent || rec.reading || rec.grammar) {
+  if (rec.todayContent || rec.reading || rec.grammar || (Array.isArray(rec.lessonItems)&&rec.lessonItems.length)) {
     lines.push(`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 오늘 수업내용:`);
+    if (Array.isArray(rec.lessonItems) && rec.lessonItems.some(function(it){ return it && (it.x||'').trim()!==''; })) {
+      rec.lessonItems.forEach(function(it){
+        var x=(it.x||''); if(!String(x).trim()) return;
+        var ty=LESSON_TYPES[it.t]||LESSON_TYPES['today'];
+        var c=(typeof it.c==='number'?it.c:0);
+        var b=(it.t==='supplement')?'':('  ['+(COMP[c]||'')+']');
+        lines.push('  '+lessonIconHTML(it.t,11)+' '+ty.label+': '+x+b);
+      });
+    } else {
     if (rec.todayContent) lines.push(`  ${rec.todayContent}`);
     if (rec.reading)  lines.push(`  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> 독해: ${rec.reading.replace(/^독해\s*/,'')}  [${COMP[rec.readingComp]||''}]`);
     if (rec.grammar)  lines.push(`  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> 문법: ${rec.grammar.replace(/^문법\s*/,'')}  [${COMP[rec.grammarComp]||''}]`);
+    }
   }
   var _hwsCopy = getHomeworks(rec);
   if (_hwsCopy.length === 1) {

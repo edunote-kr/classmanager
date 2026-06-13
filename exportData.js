@@ -413,6 +413,8 @@ function exportDataXlsx() {
         '오늘과제3': r.homework3||'', '오늘과제4': r.homework4||'',
         '오늘과제5': r.homework5||'',
         '오늘과제전체': r.homeworksJson||'',
+        '지난과제전체': r.lastHomeworksJson||'',
+        '수업내용전체': (Array.isArray(r.lessonItems)&&r.lessonItems.length)?JSON.stringify(r.lessonItems):'',
         '특이사항': r.memo||'',
       };
     });
@@ -494,6 +496,8 @@ function importDataXlsx(e) {
                 .map(function(k){ return (row[k]||'').trim(); }).filter(function(t){ return t !== ''; });
               return a.length ? JSON.stringify(a) : '';
             })(),
+            lastHomeworksJson: row['지난과제전체'] || '',
+            lessonItems:   (function(){ try{ var a=JSON.parse(row['수업내용전체']||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } })(),
             memo:          row['특이사항'] || '',
           });
         });
