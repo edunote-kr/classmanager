@@ -127,6 +127,7 @@ function loadOwnerData(ownerUid) {
       if (u.name) uidByName[u.name] = d.id;
       if (d.id !== ownerUid) memberUids.push(d.id);
     });
+    window.schoolUidByName = uidByName; // 원장 삭제(ownerDeleteRecord)에서 이름→uid 역추적용
 
     // 하위컬렉션 읽기 타임아웃 래퍼: 매달리면 빈 결과로 처리하고 진행
     var _emptySnap = { forEach: function(){}, size: 0 };

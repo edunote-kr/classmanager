@@ -2117,8 +2117,21 @@ function deleteRecord(id) {
   persist();renderAll();showToast('삭제되었습니다.','info');
   // Firestore에서도 삭제
   if (window.fbDb && currentSchool && currentSchool.length > 10) {
-    var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(id));
-    window.fbDeleteDoc(ref).catch(function(){});
+    var isMine = !delRec || !delRec.teacher || delRec.teacher === currentUser;
+    if (isMine) {
+      var ref = window.fbDoc(window.fbDb, 'users', currentSchool, 'records', String(id));
+      window.fbDeleteDoc(ref).catch(function(){});
+    } else if (typeof isOwnerOrAdmin === 'function' && isOwnerOrAdmin()) {
+      // 원장이 다른 선생님 기록 삭제: 규칙상 타 선생님 records 는 직접 못 지움(재로그인 시 부활).
+      // → 서버 함수(ownerDeleteRecord)로 원본(users/{선생uid}/records/{id}) 삭제.
+      var _tUid = window.schoolUidByName && window.schoolUidByName[delRec.teacher];
+      if (_tUid && window.fbCallable) {
+        window.fbCallable('ownerDeleteRecord')({ recordId: String(id), teacherUid: _tUid })
+          .catch(function(){ showToast('서버에서 삭제하지 못했습니다. 새로고침 후 다시 시도해주세요.', 'error'); });
+      } else {
+        showToast('작성 선생님을 확인할 수 없어 서버 삭제를 건너뛰었습니다. 새로고침 후 다시 시도해주세요.', 'error');
+      }
+    }
   }
   if (delRec && typeof removeClassAttendanceSession==='function') removeClassAttendanceSession(delRec); // 출결 세션도 함께 제거
 }
@@ -5576,7 +5589,7 @@ function makeCard(rec) {
       for(var si=1;si<=5;si++){
         var sv=rec['supplement'+si], sc=rec['supplement'+si+'Comp']||0;
         if(!sv) continue;
-        supplementRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:#db2777"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M12 2v20M2 12h20"/></svg> 보충${si}</strong><br>${esc(sv)}<br>${compBadgeHTML(sc)}</div>`;
+        supplementRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:#db2777"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M12 2v20M2 12h20"/></svg> 보충${si}</strong><br>${esc(sv)}</div>`;
       }
       return `<div class="rec-row">
         <span class="po-section" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 오늘 수업내용</span><br>
