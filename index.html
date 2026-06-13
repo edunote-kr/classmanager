@@ -904,17 +904,26 @@
     </div>
     <div class="card">
       <div class="card-title" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:5px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>오늘 수업내용 및 이행도</div>
-      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 10px;line-height:1.45">전체 수업내용을 먼저 입력한 뒤, 항목별 이행도를 표시하려면 아래에 복사해서 각 항목의 이행도를 체크하세요.</div>
-      <label class="field-label">전체 수업 요약</label>
-      <textarea id="f-todayContent" rows="2" placeholder="전체 수업 내용을 입력하세요..." autocomplete="off"></textarea>
+      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 10px;line-height:1.45">오늘의 학습을 <b>한 줄에 하나씩</b> 입력하고 「↓ 이행도에 추가」를 누르면, 줄마다 이행도와 수업종류를 정할 수 있어요.</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin-bottom:4px">
+        <label class="field-label" style="margin:0">오늘의 학습</label>
+        <button type="button" onclick="spreadTodayToItems()" style="padding:6px 12px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">↓ 이행도에 추가</button>
+      </div>
+      <textarea id="f-todayContent" rows="3" placeholder="한 줄에 하나씩 입력하세요 (엔터로 구분)&#10;예) to부정사 150쪽&#10;시제 170쪽" autocomplete="off"></textarea>
+
+      <!-- 수업종류 일괄 적용 바 (항목 있을 때만 표시) -->
+      <div id="lessonBulkBar" style="display:none;align-items:center;gap:8px;margin-top:12px;padding:8px 10px;background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:700;color:#4338ca;white-space:nowrap">수업종류 일괄</span>
+        <select id="lessonBulkType" style="flex:1;min-width:90px;padding:6px 8px;border-radius:8px;border:1.5px solid #c7d2fe;font-size:13px;font-family:inherit;background:#fff;font-weight:700;color:#4f46e5"></select>
+        <button type="button" onclick="applyAllLessonType()" style="padding:6px 12px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">모두 적용</button>
+      </div>
 
       <!-- 동적 수업 블록 컨테이너 -->
       <div id="lessonBlocksWrap" style="margin-top:12px;display:flex;flex-direction:column;gap:10px"></div>
 
       <!-- 버튼 영역 -->
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button type="button" onclick="addLessonContent()" style="flex:1;padding:8px 12px;background:#ede9fe;color:#6366f1;border:1.5px solid #c4b5fd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 내용 추가</button>
-        <button type="button" onclick="addLessonBlock()" style="flex:1;padding:8px 12px;background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 수업내용 추가</button>
+        <button type="button" onclick="addLessonBlock()" style="flex:1;padding:8px 12px;background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 항목 직접 추가</button>
       </div>
 
       <!-- 숨겨진 기존 필드 (저장 호환용) -->
@@ -1579,6 +1588,7 @@ function normalizeRec(r) {
     homework5:      r.homework5      || '',
     homeworksJson:  r.homeworksJson  || '',
     memo:           r.memo           || '',
+    lessonItems:    Array.isArray(r.lessonItems) ? r.lessonItems.map(function(it){ return { t:(it&&it.t)||'today', x:(it&&it.x)||'', c:(Number(it&&it.c)||0) }; }) : [],
   };
 }
 
@@ -1899,6 +1909,7 @@ function collectRecordFromForm() {
     supplement5Comp: parseInt((document.getElementById('f-supplement5Comp')||{value:'0'}).value)||0,
 
   };
+  rec.lessonItems = buildLessonItems(); // 무한 수업항목 배열 (저장의 진실)
   return rec;
 }
 
@@ -2579,13 +2590,81 @@ function resetTests() {
 var _lessonBlocks = []; // [{type, items:[{text,comp}]}]
 
 var LESSON_TYPES = {
-  'today':  { label:'오늘의 학습', color:'#4f46e5', placeholder:'오늘의 학습 내용...' },
-  'reading':{ label:'독해',        color:'#0891b2', placeholder:'독해 내용...' },
-  'grammar':{ label:'문법',        color:'#7c3aed', placeholder:'문법 내용...' },
-  'exam':   { label:'내신대비',    color:'#0891b2', placeholder:'내신대비 내용...' },
-  'etc':    { label:'기타',        color:'#64748b', placeholder:'기타 내용...' },
-  'supplement': { label:'보충',    color:'#db2777', placeholder:'보충 내용...' },
+  'today':      { label:'오늘의 학습', color:'#4f46e5', placeholder:'오늘의 학습 내용...', icon:'<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>' },
+  'reading':    { label:'독해',        color:'#0891b2', placeholder:'독해 내용...',        icon:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>' },
+  'grammar':    { label:'문법',        color:'#7c3aed', placeholder:'문법 내용...',        icon:'<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>' },
+  'exam':       { label:'내신대비',    color:'#0891b2', placeholder:'내신대비 내용...',    icon:'<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>' },
+  'etc':        { label:'기타',        color:'#64748b', placeholder:'기타 내용...',        icon:'<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/>' },
+  'supplement': { label:'보충',        color:'#db2777', placeholder:'보충 내용...',        icon:'<path d="M12 2v20M2 12h20"/>' },
 };
+// type 키 순서 (드롭다운/직렬화 안정)
+var LESSON_TYPE_KEYS = ['today','reading','grammar','exam','etc','supplement'];
+
+function lessonIconHTML(type, size){
+  var ti = LESSON_TYPES[type] || LESSON_TYPES['today'];
+  var sz = size || 11;
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="'+ti.color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px">'+ti.icon+'</svg>';
+}
+
+// 편집모델 _lessonBlocks → 저장용 무한 배열 [{t:type, x:text, c:comp}]
+function buildLessonItems(){
+  var items = [];
+  _lessonBlocks.forEach(function(b){
+    b.items.forEach(function(it){
+      var x = (it.text||'').trim();
+      if (!x) return;
+      items.push({ t: (LESSON_TYPES[b.type]?b.type:'today'), x: x, c: (it.comp>=0?it.comp:0) });
+    });
+  });
+  return items;
+}
+
+// 일괄 적용 바 동기화(옵션 채우기 + 항목 유무로 표시 토글)
+function _syncLessonBulkBar(){
+  var bar = document.getElementById('lessonBulkBar');
+  var sel = document.getElementById('lessonBulkType');
+  if (!bar) return;
+  if (sel && !sel.options.length){
+    sel.innerHTML = LESSON_TYPE_KEYS.map(function(k){ return '<option value="'+k+'">'+LESSON_TYPES[k].label+'</option>'; }).join('');
+  }
+  var hasItem = _lessonBlocks.some(function(b){ return b.items.some(function(it){ return (it.text||'').trim()!==''; }); });
+  bar.style.display = hasItem ? 'flex' : 'none';
+}
+
+// 「오늘의 학습」 입력칸의 각 줄 → 이행도 항목으로 펼침(이미 있는 줄은 건너뜀, 무한)
+function spreadTodayToItems(){
+  var ta = document.getElementById('f-todayContent');
+  if (!ta) return;
+  var lines = (ta.value||'').split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l!==''; });
+  if (!lines.length){ showToast('먼저 오늘의 학습을 입력하세요.', 'error'); return; }
+  // 입력 내부 중복 제거
+  var seen = {}, uniq = [];
+  lines.forEach(function(l){ if(!seen[l]){ seen[l]=1; uniq.push(l); } });
+  // 이미 항목으로 존재하는 텍스트는 건너뜀(여러 번 눌러도 중복 안 생김)
+  var existing = {};
+  _lessonBlocks.forEach(function(b){ b.items.forEach(function(it){ var t=(it.text||'').trim(); if(t) existing[t]=1; }); });
+  var toAdd = uniq.filter(function(l){ return !existing[l]; });
+  if (!toAdd.length){ showToast('이미 모두 추가되어 있어요.'); return; }
+  // 빈 기본 블록 제거 후 1줄=1항목(오늘의 학습, 이행도 미선택) 추가
+  _lessonBlocks = _lessonBlocks.filter(function(b){ return b.items.some(function(it){ return (it.text||'').trim()!==''; }); });
+  toAdd.forEach(function(l){ _lessonBlocks.push({ type:'today', items:[{ text:l, comp:-1 }] }); });
+  renderLessonBlocks();
+  if (typeof _scheduleLessonPreview==='function') _scheduleLessonPreview();
+  showToast(toAdd.length+'개 항목을 추가했어요. 줄마다 이행도·수업종류를 정해보세요.', 'success');
+}
+
+// 모든 항목 수업종류 일괄 변경
+function applyAllLessonType(){
+  var sel = document.getElementById('lessonBulkType');
+  if (!sel) return;
+  var type = sel.value || 'today';
+  var has = _lessonBlocks.some(function(b){ return b.items.some(function(it){ return (it.text||'').trim()!==''; }); });
+  if (!has){ showToast('적용할 항목이 없어요.', 'error'); return; }
+  _lessonBlocks.forEach(function(b){ b.type = type; });
+  renderLessonBlocks();
+  if (typeof _scheduleLessonPreview==='function') _scheduleLessonPreview();
+  showToast('모든 항목을 「'+(LESSON_TYPES[type]||{}).label+'」(으)로 변경했어요.', 'success');
+}
 
 function renderLessonBlocks() {
   var wrap = document.getElementById('lessonBlocksWrap');
@@ -2640,6 +2719,7 @@ function renderLessonBlocks() {
     blockEl.innerHTML = header + items;
     wrap.appendChild(blockEl);
   });
+  _syncLessonBulkBar();
 }
 
 
@@ -2720,34 +2800,26 @@ function serializeLessonBlocks() {
   });
 }
 
-// 기존 hidden 필드 → 블록 데이터로 역직렬화 (불러올 때 호출)
+// 저장 데이터 → 편집 블록으로 역직렬화 (불러올 때 호출)
+// 신규: rec.lessonItems(무한 배열) 우선. 레거시(today1~5 등 5칸)는 폴백.
 function deserializeLessonBlocks(rec) {
   _lessonBlocks = [];
-  var typeMap = [
-    {type:'today',  base:'today'},
-    {type:'reading',base:'reading'},
-    {type:'grammar',base:'grammar'},
-    {type:'exam',   base:'exam'},
-    {type:'etc',    base:'etc'},
-    {type:'supplement', base:'supplement'},
-  ];
-  typeMap.forEach(function(tm) {
-    for (var n = 1; n <= 5; n++) {
-      var fn = tm.base + n;
-      var cn = tm.base + n + 'Comp';
-      var val  = rec[fn]  || '';
-      var comp = rec[cn] !== undefined ? rec[cn] : -1;
-      if (val) {
-        // 같은 타입의 기존 블록에 추가하거나 새 블록 생성
-        var existing = _lessonBlocks.find(function(b){ return b.type === tm.type; });
-        if (existing) {
-          existing.items.push({text:val, comp:comp});
-        } else {
-          _lessonBlocks.push({type:tm.type, items:[{text:val,comp:comp}]});
-        }
+  if (Array.isArray(rec.lessonItems) && rec.lessonItems.length) {
+    rec.lessonItems.forEach(function(it){
+      var type = (it && LESSON_TYPES[it.t]) ? it.t : 'today';
+      _lessonBlocks.push({ type:type, items:[{ text:(it&&it.x)||'', comp:(it&&typeof it.c==='number')?it.c:-1 }] });
+    });
+  } else {
+    // 레거시 폴백: type별 1~5 필드 → 1줄=1블록
+    LESSON_TYPE_KEYS.forEach(function(base){
+      for (var n = 1; n <= 5; n++) {
+        var fn = base + n, cn = base + n + 'Comp';
+        var val  = rec[fn]  || '';
+        var comp = rec[cn] !== undefined ? rec[cn] : -1;
+        if (val) _lessonBlocks.push({ type:base, items:[{text:val, comp:comp}] });
       }
-    }
-  });
+    });
+  }
   if (_lessonBlocks.length === 0) {
     _lessonBlocks = [{type:'today', items:[{text:'',comp:-1}]}];
   }
@@ -5549,6 +5621,21 @@ function makeCard(rec) {
       return rows ? `<div class="rec-row"><span class="po-section" style="color:#d97706"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> 지난 과제 이행도</span><br>${rows}</div>` : '';
     })();
     const todayC = hasAnyLessonContent(rec) ? (() => {
+      // 신규: lessonItems(무한 배열) 우선 렌더 — 줄마다 수업종류·이행도
+      if (Array.isArray(rec.lessonItems) && rec.lessonItems.some(function(it){ return it && (it.x||'').trim()!==''; })) {
+        var liRows = '';
+        rec.lessonItems.forEach(function(it){
+          var x = (it.x||''); if(!String(x).trim()) return;
+          var ty = LESSON_TYPES[it.t] || LESSON_TYPES['today'];
+          var c = (typeof it.c==='number'?it.c:0);
+          var badge = (it.t==='supplement') ? '' : ('<br>'+compBadgeHTML(c));
+          liRows += `<div style="margin-bottom:4px;white-space:pre-wrap"><strong style="color:${ty.color}">${lessonIconHTML(it.t,11)} ${escHtml(ty.label)}</strong><br>${esc(x)}${badge}</div>`;
+        });
+        return `<div class="rec-row">
+        <span class="po-section" style="color:#4f46e5"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:3px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> 오늘 수업내용</span><br>
+        ${liRows}
+      </div>`;
+      }
       const lR = LEVELS.find(l=>l.value===(rec.readingComp||0))||LEVELS[0];
       const lG = LEVELS.find(l=>l.value===(rec.grammarComp||0))||LEVELS[0];
       var todayRows = '';

@@ -47,6 +47,7 @@ function escapeMsg(s) {
 // 미리보기 has 가드·makeCard·텍스트export·saveRecord 검증에서 공용 사용(가드 drift 방지).
 function hasAnyLessonContent(rec){
   if(!rec) return false;
+  if(Array.isArray(rec.lessonItems) && rec.lessonItems.some(function(it){ return it && (it.x||'').trim()!==''; })) return true;
   if(rec.todayContent||rec.reading||rec.grammar) return true;
   if(rec.todayContent1||rec.todayContent2||rec.todayContent3||rec.todayContent4||rec.todayContent5) return true;
   for(var i=1;i<=5;i++){
