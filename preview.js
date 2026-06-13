@@ -71,6 +71,6 @@ function previewAfterLoad(){
 }
 function _scheduleLessonPreview(){ if(!_lessonPreviewOpen && !_mobileSheetOpen) return; clearTimeout(_previewTimer); _previewTimer=setTimeout(renderLessonPreview,250); }
 document.addEventListener('input', function(e){ if(!(e.target && e.target.closest && e.target.closest('#panel-input'))) return; if(_lessonPreviewOpen||_mobileSheetOpen){ _scheduleLessonPreview(); } else { _autoOpenPreviewDesktop(); } });
-document.addEventListener('change', function(e){ if(!(e.target && e.target.closest && e.target.closest('#panel-input'))) return; if(_lessonPreviewOpen||_mobileSheetOpen){ _scheduleLessonPreview(); } else { _autoOpenPreviewDesktop(); } });
+document.addEventListener('change', function(e){ if(!(e.target && e.target.closest && e.target.closest('#panel-input'))) return; if(_lessonPreviewOpen||_mobileSheetOpen){ _scheduleLessonPreview(); } /* blur(change) 시 자동 열림 제거: 레이아웃 점프로 버튼 첫 클릭이 소실되는 문제 방지. 자동 열림은 input(타이핑) 때만 */ });
 // 창 크기 변경(전체화면 전환 등) 시: 넓은 화면이면 미리보기 자동 펼침(사용자가 직접 닫았으면 존중)
 window.addEventListener('resize', function(){ clearTimeout(window._pvResizeTimer); window._pvResizeTimer=setTimeout(function(){ _autoOpenPreviewDesktop(); }, 200); });
